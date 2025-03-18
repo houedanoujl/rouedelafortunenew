@@ -92,6 +92,7 @@
 import { ref, computed } from 'vue';
 import { useSupabase } from '~/composables/useSupabase';
 import { useTranslation } from '~/composables/useTranslation';
+import { useParticipantCheck } from '~/composables/useParticipantCheck';
 
 const emit = defineEmits(['participant-registered']);
 const { t } = useTranslation();
@@ -106,15 +107,25 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
+// Utiliser le composable pour la vérification des participants
+const { checkParticipantByPhone, participantState } = useParticipantCheck();
+
 // Vérifier si Supabase est disponible
 let supabase;
 let mockMode = false;
+let supabaseConfig;
 
 try {
   const supabaseInstance = useSupabase();
   supabase = supabaseInstance.supabase;
   mockMode = !supabaseInstance.isReal;
+  supabaseConfig = supabaseInstance.config;
+  console.log('Supabase instance in RegistrationForm:', {
+    isReal: supabaseInstance.isReal,
+    config: supabaseInstance.config
+  });
 } catch (err) {
+  console.error('Error initializing Supabase in RegistrationForm:', err);
   mockMode = true;
 }
 
@@ -138,16 +149,22 @@ async function registerParticipant() {
   isLoading.value = true;
   
   try {
-    // Données du participant
+    // Données du participant avec validation et nettoyage
     const participantData = {
       first_name: firstName.value.trim(),
       last_name: lastName.value.trim(),
-      phone: phone.value.trim(),
-      email: email.value.trim() || null
+      phone: formatPhoneNumber(phone.value.trim()), // Formatage du numéro de téléphone
+      email: email.value.trim() || null,
+      created_at: new Date().toISOString(), // Ajouter la date de création
+      updated_at: new Date().toISOString()  // Ajouter la date de mise à jour
     };
+    
+    console.log('Participant data to register:', participantData);
+    console.log('Using Supabase config:', supabaseConfig);
     
     // Si Supabase n'est pas disponible ou en mode mock, utiliser les données simulées
     if (mockMode || !supabase) {
+      console.log('Using mock mode for registration');
       // Simuler un délai de traitement
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -163,6 +180,9 @@ async function registerParticipant() {
         ...participantData
       });
       
+      // Stocker le numéro de téléphone dans le stockage local
+      localStorage.setItem('participant_phone', participantData.phone);
+      
       // Réinitialiser le formulaire
       resetForm();
       
@@ -171,68 +191,143 @@ async function registerParticipant() {
     }
     
     // Vérifier d'abord si le participant existe déjà avec ce numéro de téléphone
-    const { data: existingParticipant, error: searchError } = await supabase
-      .from('participant')
-      .select('*')
-      .eq('phone', participantData.phone)
-      .single();
+    console.log('Checking for existing participant with phone:', participantData.phone);
     
-    if (searchError && searchError.code !== 'PGRST116') { // PGRST116 = not found
-      throw new Error(t('errors.supabase'));
+    // Utiliser notre composable pour vérifier si le participant existe
+    try {
+      const existingParticipant = await checkParticipantByPhone(participantData.phone);
+      
+      if (existingParticipant) {
+        console.log('Found existing participant:', existingParticipant);
+      } else {
+        console.log('No existing participant found, creating new one');
+      }
+      
+      let participant;
+      
+      if (existingParticipant) {
+        // Mettre à jour les informations du participant existant
+        console.log('Updating existing participant with ID:', existingParticipant.id);
+        const { data: updatedParticipant, error: updateError } = await supabase
+          .from('participant')
+          .update({
+            first_name: participantData.first_name,
+            last_name: participantData.last_name,
+            email: participantData.email,
+            updated_at: participantData.updated_at
+          })
+          .eq('id', existingParticipant.id)
+          .select();
+        
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw updateError;
+        }
+        
+        participant = updatedParticipant?.[0] || existingParticipant;
+      } else {
+        // Enregistrer le nouveau participant dans Supabase
+        console.log('Inserting new participant');
+        const { data: newParticipant, error: insertError } = await supabase
+          .from('participant')
+          .insert([participantData])
+          .select();
+        
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
+        
+        // Vérifier que nous avons obtenu des données
+        if (!newParticipant || newParticipant.length === 0) {
+          console.error('No data received from database after insert');
+          throw new Error('Aucune donnée reçue de la base de données');
+        }
+        
+        participant = newParticipant[0];
+      }
+      
+      // Stocker le numéro de téléphone dans le stockage local
+      localStorage.setItem('participant_phone', participantData.phone);
+      
+      // Message de succès
+      successMessage.value = t('registration.messages.success');
+      console.log('Registration successful, participant:', participant);
+      
+      // Émettre l'événement avec les données du participant
+      emit('participant-registered', participant);
+      
+      // Réinitialiser le formulaire
+      resetForm();
+    } catch (participantCheckError) {
+      console.error('Error checking participant:', participantCheckError);
+      throw participantCheckError;
     }
-    
-    let participant;
-    
-    if (existingParticipant) {
-      // Mettre à jour les informations du participant existant
-      
-      const { data: updatedParticipant, error: updateError } = await supabase
-        .from('participant')
-        .update({
-          first_name: participantData.first_name,
-          last_name: participantData.last_name,
-          email: participantData.email
-        })
-        .eq('id', existingParticipant.id)
-        .select();
-      
-      if (updateError) {
-        throw updateError;
-      }
-      
-      participant = updatedParticipant?.[0] || existingParticipant;
-    } else {
-      // Enregistrer le nouveau participant dans Supabase
-      const { data: newParticipant, error: insertError } = await supabase
-        .from('participant')
-        .insert([participantData])
-        .select();
-      
-      if (insertError) {
-        throw insertError;
-      }
-      
-      // Vérifier que nous avons obtenu des données
-      if (!newParticipant || newParticipant.length === 0) {
-        throw new Error('Aucune donnée reçue de la base de données');
-      }
-      
-      participant = newParticipant[0];
-    }
-    
-    // Message de succès
-    successMessage.value = t('registration.messages.success');
-    
-    // Émettre l'événement avec les données du participant
-    emit('participant-registered', participant);
-    
-    // Réinitialiser le formulaire
-    resetForm();
   } catch (error) {
-    errorMessage.value = t('registration.messages.error');
+    console.error('Registration error:', error);
+    
+    // Déterminer le type d'erreur pour afficher un message approprié
+    if (error.code) {
+      // Erreurs Supabase avec des codes
+      switch (error.code) {
+        case 'PGRST301':
+        case 'PGRST302':
+          errorMessage.value = t('errors.databaseAccess');
+          break;
+        case '23505': // Code PostgreSQL pour violation de contrainte unique
+          errorMessage.value = t('errors.duplicateEntry');
+          break;
+        case '23514': // Code PostgreSQL pour violation de contrainte de validation
+          errorMessage.value = t('errors.invalidData');
+          break;
+        case '42P01': // Table inexistante
+          errorMessage.value = t('errors.supabase') + ': Table non trouvée';
+          break;
+        case '42501': // Erreur de permission
+          errorMessage.value = t('errors.supabase') + ': Permissions insuffisantes';
+          break;
+        default:
+          if (error.message && error.message.includes('network')) {
+            errorMessage.value = t('registration.messages.networkError');
+          } else {
+            errorMessage.value = t('registration.messages.error') + (error.message ? ': ' + error.message : '');
+          }
+      }
+    } else if (error.message) {
+      // Erreurs avec un message mais sans code
+      if (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('connexion')) {
+        errorMessage.value = t('registration.messages.networkError');
+      } else if (error.message.toLowerCase().includes('validation') || error.message.toLowerCase().includes('invalid')) {
+        errorMessage.value = t('registration.messages.validationError');
+      } else if (error.message.toLowerCase().includes('database') || error.message.toLowerCase().includes('base de données')) {
+        errorMessage.value = t('registration.messages.databaseError');
+      } else {
+        errorMessage.value = t('registration.messages.error') + ': ' + error.message;
+      }
+    } else {
+      // Erreur inconnue
+      errorMessage.value = t('registration.messages.unknownError');
+    }
+    
+    // Ajouter des informations de débogage dans la console
+    console.log('Supabase config utilisée lors de l\'erreur:', supabaseConfig);
   } finally {
     isLoading.value = false;
   }
+}
+
+// Fonction pour formater le numéro de téléphone
+function formatPhoneNumber(phone) {
+  // Supprimer tous les caractères non numériques
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // S'assurer que le numéro commence par le code pays (par défaut +225 pour la Côte d'Ivoire)
+  if (!cleaned.startsWith('225') && cleaned.length <= 10) {
+    cleaned = '225' + cleaned;
+  }
+  
+  // Retourner le numéro formaté
+  return cleaned;
 }
 
 // Réinitialiser le formulaire

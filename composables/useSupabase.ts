@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { useRuntimeConfig } from '#imports';
 
 // Types pour les données mockées
 interface MockParticipant {
@@ -33,48 +32,53 @@ interface MockDatabase {
 
 // Initialize the Supabase client
 export const useSupabase = () => {
-  const config = useRuntimeConfig();
-  console.log('Runtime config:', config);
-  console.log('Process env:', process.env);
-  // ...
-  const supabaseUrl = config.public.supabaseUrl as string;
-  const supabaseKey = config.public.supabaseKey as string;
+  // Récupérer les variables d'environnement ou utiliser des valeurs par défaut
+  const supabaseUrl = process.env.SUPABASE_URL || 'https://qwlzxerivnbuxejqxjyu.supabase.co';
+  const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3bHp4ZXJpdm5idXhlanF4anl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzczODUxMTIsImV4cCI6MjA1Mjk2MTExMn0.0zbZQwhTjx0YfE-j18vHDM1rPmmOT9PLznVjNzE2Fhk';
   
   // Vérifier si les identifiants Supabase sont disponibles
-  const hasValidCredentials = 
-    supabaseUrl && 
-    supabaseKey && 
-    supabaseUrl !== 'https://example.supabase.co' && 
-    supabaseKey !== 'your-supabase-anon-key';
+  const hasValidCredentials = supabaseUrl && supabaseKey && 
+                             supabaseUrl.startsWith('https://') && 
+                             supabaseKey.length > 20;
   
-  // Afficher les valeurs des variables d'environnement
+  // Afficher les valeurs dans la console
   console.log('Supabase config:', { 
     url: supabaseUrl, 
-    key: supabaseKey,
+    key: supabaseKey ? `${supabaseKey.substring(0, 10)}...` : 'missing', // Ne pas afficher la clé complète
     valid: hasValidCredentials
   });
   
   // Créer un client Supabase, qu'il soit réel ou mock
   let supabase;
   
-  if (hasValidCredentials) {
-    try {
+  try {
+    if (hasValidCredentials) {
       supabase = createClient(supabaseUrl, supabaseKey);
-    } catch (error) {
-      supabase = createMockClient();
+      console.log('Supabase client created successfully');
+    } else {
+      console.log('Invalid Supabase credentials, using mock client');
+      throw new Error('Invalid Supabase credentials');
     }
-  } else {
+  } catch (error) {
+    console.error('Error creating Supabase client:', error);
     supabase = createMockClient();
   }
   
   return {
     supabase,
-    isReal: hasValidCredentials
+    isReal: hasValidCredentials,
+    config: {
+      url: supabaseUrl,
+      key: supabaseKey ? `${supabaseKey.substring(0, 10)}...` : 'missing', // Ne pas afficher la clé complète
+      valid: hasValidCredentials
+    }
   };
 };
 
 // Créer un client Supabase simulé pour le développement
 function createMockClient() {
+  console.log('Creating mock Supabase client for development');
+  
   // Valeurs simulées pour les tables
   const mockData: MockDatabase = {
     participant: [],
@@ -104,6 +108,14 @@ function createMockClient() {
             await delay(500);
             const data = mockData[table]?.filter((item: Record<string, any>) => item[column] === value) || [];
             return { data, error: null };
+          },
+          single: async () => {
+            await delay(500);
+            const items = mockData[table]?.filter((item: Record<string, any>) => item[column] === value) || [];
+            return { 
+              data: items.length > 0 ? items[0] : null, 
+              error: null 
+            };
           }
         }),
         single: async () => {
@@ -114,21 +126,37 @@ function createMockClient() {
           };
         }
       }),
-      insert: (item: any[]) => ({
+      insert: (items: any[]) => ({
         select: async () => {
           await delay(700);
-          const newItem = { ...item[0], id: Date.now() };
-          mockData[table] = [...(mockData[table] || []), newItem];
-          return { data: [newItem], error: null };
+          const newItems = items.map((item, index) => ({
+            ...item,
+            id: Date.now() + index
+          }));
+          
+          mockData[table] = [...(mockData[table] || []), ...newItems];
+          console.log(`Mock: Inserted ${newItems.length} items into ${table}`, newItems);
+          return { data: newItems, error: null };
         }
       }),
       update: (item: Record<string, any>) => ({
         eq: (column: string, value: any) => ({
+          select: async () => {
+            await delay(700);
+            const index = mockData[table]?.findIndex((i: Record<string, any>) => i[column] === value);
+            if (index !== -1 && mockData[table]) {
+              mockData[table][index] = { ...mockData[table][index], ...item };
+              console.log(`Mock: Updated item in ${table} where ${column}=${value}`, mockData[table][index]);
+              return { data: [mockData[table][index]], error: null };
+            }
+            return { data: null, error: null };
+          },
           execute: async () => {
             await delay(700);
             const index = mockData[table]?.findIndex((i: Record<string, any>) => i[column] === value);
             if (index !== -1 && mockData[table]) {
               mockData[table][index] = { ...mockData[table][index], ...item };
+              console.log(`Mock: Updated item in ${table} where ${column}=${value}`, mockData[table][index]);
               return { data: mockData[table][index], error: null };
             }
             return { data: null, error: null };

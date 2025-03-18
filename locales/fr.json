@@ -1,45 +1,53 @@
 {
   "app": {
-    "title": "Roue de la Fortune",
-    "subtitle": "Tentez votre chance et gagnez des lots exceptionnels !",
+    "title": "La Roue de la Fortune",
+    "subtitle": "Tentez votre chance et gagnez des prix incroyables !",
     "footer": {
-      "copyright": " 2025 Big Five Abidjan. Tous droits rservs.",
-      "disclaimer": "Les lots sont  rcuprer directement au magasin sur prsentation du SMS."
+      "copyright": "2023 La Roue de la Fortune. Tous droits réservés.",
+      "disclaimer": "Ce jeu est soumis à des conditions générales. Veuillez consulter le règlement pour plus d'informations."
     },
     "buttons": {
       "newParticipant": "Nouveau participant",
-      "backToHome": "Retour  l'accueil"
+      "backToHome": "Retour à l'accueil",
+      "tryAnotherParticipant": "Essayer avec un autre numéro"
     },
     "messages": {
-      "alreadyRegistered": "Vous tes dj inscrit en tant que",
+      "alreadyRegistered": "Vous êtes déjà inscrit en tant que",
       "welcomeBack": "Bon retour parmi nous",
-      "gameCompleted": "Vous avez dj jou et obtenu",
+      "gameCompleted": "Vous avez déjà joué et obtenu",
       "participantInfo": "Participant",
-      "prizeWon": "Un SMS vous sera envoy avec les informations pour rcuprer votre lot."
+      "prizeWon": "Un SMS vous sera envoyé avec les informations pour récupérer votre lot.",
+      "loading": "Chargement en cours...",
+      "checking_participant": "Vérification de votre participation...",
+      "welcome": "Bienvenue au jeu La Roue de la Fortune !",
+      "error": "Une erreur est survenue. Veuillez réessayer.",
+      "waitTitle": "Vous avez déjà participé récemment",
+      "waitMessage": "Vous devez attendre encore {days} jour(s) avant de pouvoir jouer à nouveau.",
+      "lastPlayed": "Votre dernière participation: {date}"
     }
   },
   "registration": {
-    "title": "Inscription  la Roue de la Fortune",
+    "title": "Inscription à la Roue de la Fortune",
     "description": "Remplissez le formulaire ci-dessous pour participer et tenter de gagner des lots exceptionnels !",
     "fields": {
       "firstName": {
-        "label": "Prnom",
-        "placeholder": "Votre prnom"
+        "label": "Prénom",
+        "placeholder": "Votre prénom"
       },
       "lastName": {
         "label": "Nom",
         "placeholder": "Votre nom"
       },
       "phone": {
-        "label": "Tlphone",
-        "placeholder": "Votre numro de tlphone"
+        "label": "Téléphone",
+        "placeholder": "Votre numéro de téléphone"
       },
       "email": {
         "label": "Email",
         "placeholder": "Votre adresse email (optionnel)"
       },
       "terms": {
-        "label": "J'accepte les conditions gnrales et la politique de confidentialit"
+        "label": "J'accepte les conditions générales et la politique de confidentialité"
       }
     },
     "buttons": {
@@ -48,32 +56,36 @@
     },
     "messages": {
       "required": "Veuillez remplir tous les champs obligatoires et accepter les conditions.",
-      "success": "Inscription rousse !",
-      "error": "Une erreur est survenue lors de l'enregistrement. Veuillez ressayer.",
-      "demoSuccess": "Inscription rousse en mode dmstration !"
+      "success": "Inscription réussie !",
+      "error": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.",
+      "demoSuccess": "Inscription réussie en mode démonstration !",
+      "networkError": "Erreur de connexion réseau. Vérifiez votre connexion internet et réessayez.",
+      "databaseError": "Erreur d'accès à la base de données. Veuillez réessayer ultérieurement.",
+      "validationError": "Certaines informations saisies sont incorrectes. Veuillez vérifier et réessayer.",
+      "unknownError": "Une erreur inconnue est survenue. Veuillez contacter l'administrateur."
     }
   },
   "fortuneWheel": {
     "title": "Faites tourner la roue et tentez votre chance !",
-    "instructions": "Appuyez sur le bouton ci-dessous pour faire tourner la roue et dcouvrir votre lot.",
+    "instructions": "Appuyez sur le bouton ci-dessous pour faire tourner la roue et découvrir votre lot.",
     "buttons": {
       "spin": "Tourner la roue",
       "spinning": "La roue tourne..."
     },
     "messages": {
-      "alreadyPlayed": "Vous avez dj particip. Chaque participant ne peut jouer qu'une seule fois.",
-      "error": "Une erreur est survenue lors du tirage. Veuillez ressayer.",
-      "congratulations": "Flicitations !",
-      "youWon": "Vous avez gagn",
+      "alreadyPlayed": "Vous avez déjà participé. Chaque participant ne peut jouer qu'une seule fois.",
+      "error": "Une erreur est survenue lors du tirage. Veuillez réessayer.",
+      "congratulations": "Félicitations !",
+      "youWon": "Vous avez gagné",
       "spinningWheel": "La roue tourne...",
       "processing": "Traitement en cours...",
-      "smsNotification": "Un SMS vous sera envoy avec les instructions pour rcuprer votre lot."
+      "smsNotification": "Un SMS vous sera envoyé avec les instructions pour récupérer votre lot."
     },
     "prizes": {
       "tv": "TV 55 pouces",
       "smartphone": "Smartphone",
       "airpods": "AirPods",
-      "watch": "Montre connecte",
+      "watch": "Montre connectée",
       "voucher50": "Bon d'achat 50",
       "voucher20": "Bon d'achat 20",
       "tryAgain": "Retentez votre chance"
@@ -82,8 +94,13 @@
   "errors": {
     "general": "Une erreur inattendue s'est produite.",
     "connection": "Erreur de connexion au serveur.",
-    "validation": "Veuillez vrifier les informations saisies.",
-    "supabase": "Erreur de connexion  la base de donnes.",
-    "participantNotFound": "Participant non trouvé dans la base de données. Veuillez vous inscrire à nouveau."
+    "validation": "Veuillez vérifier les informations saisies.",
+    "supabase": "Erreur de connexion à la base de données.",
+    "participantNotFound": "Participant non trouvé dans la base de données. Veuillez vous inscrire à nouveau.",
+    "databaseAccess": "Impossible d'accéder à la base de données. Vérifiez votre connexion internet.",
+    "registrationFailed": "L'enregistrement a échoué. Veuillez vérifier vos informations et réessayer.",
+    "serverError": "Erreur du serveur. Veuillez réessayer ultérieurement.",
+    "duplicateEntry": "Ce numéro de téléphone est déjà enregistré.",
+    "invalidData": "Les données fournies sont invalides. Veuillez vérifier et réessayer."
   }
 }
