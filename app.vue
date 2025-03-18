@@ -3,10 +3,10 @@
     <header class="header">
       <div class="logo">
         <img src="/assets/images/dinor-logo.svg" alt="DINOR Logo" class="logo-image" />
-        <h1>Roue de la Fortune DINOR</h1>
+        <h1>{{ t('app.title') }}</h1>
       </div>
       <div class="header-info">
-        <p class="tagline">Tentez votre chance et gagnez des lots exceptionnels !</p>
+        <p class="tagline">{{ t('app.subtitle') }}</p>
       </div>
     </header>
     
@@ -14,7 +14,7 @@
       <div v-if="participantId && participantName" class="participant-info">
         <div class="participant-badge">
           <span class="participant-name">{{ participantName }}</span>
-          <span class="participant-status">Participant(e) enregistré(e)</span>
+          <span class="participant-status">{{ t('app.messages.participantInfo') }}</span>
         </div>
       </div>
       
@@ -31,20 +31,20 @@
       
       <div v-else class="game-results">
         <div class="result-card" :class="gameResult.result === 'GAGNÉ' ? 'win' : 'lose'">
-          <h2>Merci de votre participation !</h2>
-          <p class="result-text">Vous avez {{ gameResult.result }}</p>
+          <h2>{{ t('fortuneWheel.messages.congratulations') }}</h2>
+          <p class="result-text">{{ t('app.messages.gameCompleted') }} {{ gameResult.result }}!</p>
           
           <div v-if="gameResult.result === 'GAGNÉ'" class="win-details">
-            <p>Un SMS vous sera envoyé avec les informations pour récupérer votre lot.</p>
+            <p>{{ t('app.messages.prizeWon') }}</p>
           </div>
           
           <div class="game-over-actions">
             <button 
               class="btn btn-primary" 
               @click="resetGame"
-              title="Réinitialiser pour un nouveau participant"
+              :title="t('app.buttons.newParticipant')"
             >
-              Nouveau participant
+              {{ t('app.buttons.newParticipant') }}
             </button>
           </div>
         </div>
@@ -52,14 +52,17 @@
     </main>
     
     <footer class="footer">
-      <p>&copy; 2025 Big Five Abidjan. Tous droits réservés.</p>
-      <p class="small">Les lots sont à récupérer directement au magasin sur présentation du SMS.</p>
+      <p>{{ t('app.footer.copyright') }}</p>
+      <p class="small">{{ t('app.footer.disclaimer') }}</p>
     </footer>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useTranslation } from '~/composables/useTranslation';
+
+const { t } = useTranslation();
 
 const showForm = ref(true);
 const participantId = ref(null);
@@ -78,7 +81,6 @@ function resetGame() {
 
 // Lorsqu'un participant s'inscrit, passer à l'étape de la roue
 function onParticipantRegistered(data) {
-  console.log('Participant registered:', data);
   participantId.value = data.id;
   participantName.value = `${data.first_name} ${data.last_name}`;
   showForm.value = false;
@@ -86,9 +88,15 @@ function onParticipantRegistered(data) {
 
 // Lorsque le jeu est terminé, afficher le résultat et permettre de redémarrer
 function onGameCompleted(data) {
-  console.log('Game completed:', data);
   gameComplete.value = true;
   gameResult.value = data;
+  
+  // Si une erreur est survenue (comme participant non trouvé), réinitialiser le jeu
+  if (data.result === 'ERROR') {
+    setTimeout(() => {
+      resetGame();
+    }, 3000); // Réinitialiser après 3 secondes pour laisser le temps de lire le message
+  }
 }
 
 // Vérifier si l'utilisateur a déjà un ID de participant dans le localStorage

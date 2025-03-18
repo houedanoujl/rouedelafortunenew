@@ -34,6 +34,9 @@ interface MockDatabase {
 // Initialize the Supabase client
 export const useSupabase = () => {
   const config = useRuntimeConfig();
+  console.log('Runtime config:', config);
+  console.log('Process env:', process.env);
+  // ...
   const supabaseUrl = config.public.supabaseUrl as string;
   const supabaseKey = config.public.supabaseKey as string;
   
@@ -44,8 +47,12 @@ export const useSupabase = () => {
     supabaseUrl !== 'https://example.supabase.co' && 
     supabaseKey !== 'your-supabase-anon-key';
   
-  console.log('Supabase credentials status:', 
-    hasValidCredentials ? 'Valid credentials found' : 'Using mock mode');
+  // Afficher les valeurs des variables d'environnement
+  console.log('Supabase config:', { 
+    url: supabaseUrl, 
+    key: supabaseKey,
+    valid: hasValidCredentials
+  });
   
   // Créer un client Supabase, qu'il soit réel ou mock
   let supabase;
@@ -53,13 +60,10 @@ export const useSupabase = () => {
   if (hasValidCredentials) {
     try {
       supabase = createClient(supabaseUrl, supabaseKey);
-      console.log('Real Supabase client created');
     } catch (error) {
-      console.error('Error creating Supabase client:', error);
       supabase = createMockClient();
     }
   } else {
-    console.warn('Missing or invalid Supabase credentials, using mock client');
     supabase = createMockClient();
   }
   
@@ -71,8 +75,6 @@ export const useSupabase = () => {
 
 // Créer un client Supabase simulé pour le développement
 function createMockClient() {
-  console.log('Creating mock Supabase client');
-  
   // Valeurs simulées pour les tables
   const mockData: MockDatabase = {
     participant: [],
@@ -100,7 +102,7 @@ function createMockClient() {
         eq: (column: string, value: any) => ({
           execute: async () => {
             await delay(500);
-            const data = mockData[table]?.filter(item => item[column] === value) || [];
+            const data = mockData[table]?.filter((item: Record<string, any>) => item[column] === value) || [];
             return { data, error: null };
           }
         }),
@@ -112,20 +114,19 @@ function createMockClient() {
           };
         }
       }),
-      insert: (item: any) => ({
+      insert: (item: any[]) => ({
         select: async () => {
           await delay(700);
-          const newItem = { ...item, id: Date.now() };
+          const newItem = { ...item[0], id: Date.now() };
           mockData[table] = [...(mockData[table] || []), newItem];
-          console.log(`Mock inserted into ${table}:`, newItem);
           return { data: [newItem], error: null };
         }
       }),
-      update: (item: any) => ({
+      update: (item: Record<string, any>) => ({
         eq: (column: string, value: any) => ({
           execute: async () => {
             await delay(700);
-            const index = mockData[table]?.findIndex(i => i[column] === value);
+            const index = mockData[table]?.findIndex((i: Record<string, any>) => i[column] === value);
             if (index !== -1 && mockData[table]) {
               mockData[table][index] = { ...mockData[table][index], ...item };
               return { data: mockData[table][index], error: null };

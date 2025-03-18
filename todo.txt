@@ -1,0 +1,3 @@
+- décaler la roue vers le bas 
+- télécharfge le QR code a scaner avec une autre appareil
+* verifier au niveau de sania, le lecteur de QR Code , qui vérifie si le code a déjà été uitilisé 

@@ -1,54 +1,54 @@
 <template>
   <div class="registration-form-container">
-    <h2 class="form-title">Inscription à la Roue de la Fortune</h2>
+    <h2 class="form-title">{{ t('registration.title') }}</h2>
     <p class="form-description">
-      Remplissez le formulaire ci-dessous pour participer et tenter de gagner des lots exceptionnels !
+      {{ t('registration.description') }}
     </p>
 
     <form @submit.prevent="registerParticipant" class="registration-form">
       <div class="form-group">
-        <label for="firstName">Prénom <span class="required">*</span></label>
+        <label for="firstName">{{ t('registration.fields.firstName.label') }} <span class="required">*</span></label>
         <input 
           type="text" 
           id="firstName" 
           v-model="firstName" 
-          placeholder="Votre prénom"
+          :placeholder="t('registration.fields.firstName.placeholder')"
           required
           :disabled="isLoading"
         >
       </div>
 
       <div class="form-group">
-        <label for="lastName">Nom <span class="required">*</span></label>
+        <label for="lastName">{{ t('registration.fields.lastName.label') }} <span class="required">*</span></label>
         <input 
           type="text" 
           id="lastName" 
           v-model="lastName" 
-          placeholder="Votre nom"
+          :placeholder="t('registration.fields.lastName.placeholder')"
           required
           :disabled="isLoading"
         >
       </div>
 
       <div class="form-group">
-        <label for="phone">Téléphone <span class="required">*</span></label>
+        <label for="phone">{{ t('registration.fields.phone.label') }} <span class="required">*</span></label>
         <input 
           type="tel" 
           id="phone" 
           v-model="phone" 
-          placeholder="Votre numéro de téléphone"
+          :placeholder="t('registration.fields.phone.placeholder')"
           required
           :disabled="isLoading"
         >
       </div>
 
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">{{ t('registration.fields.email.label') }}</label>
         <input 
           type="email" 
           id="email" 
           v-model="email" 
-          placeholder="Votre adresse email (optionnel)"
+          :placeholder="t('registration.fields.email.placeholder')"
           :disabled="isLoading"
         >
       </div>
@@ -61,7 +61,7 @@
           :disabled="isLoading"
         >
         <label for="agreeTerms">
-          J'accepte les conditions générales et la politique de confidentialité <span class="required">*</span>
+          {{ t('registration.fields.terms.label') }} <span class="required">*</span>
         </label>
       </div>
 
@@ -78,10 +78,10 @@
           <svg class="spinner" viewBox="0 0 50 50">
             <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
           </svg>
-          Chargement...
+          {{ t('registration.buttons.loading') }}
         </span>
         <span v-else>
-          S'inscrire et jouer
+          {{ t('registration.buttons.submit') }}
         </span>
       </button>
     </form>
@@ -91,8 +91,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useSupabase } from '~/composables/useSupabase';
+import { useTranslation } from '~/composables/useTranslation';
 
 const emit = defineEmits(['participant-registered']);
+const { t } = useTranslation();
 
 const firstName = ref('');
 const lastName = ref('');
@@ -112,9 +114,7 @@ try {
   const supabaseInstance = useSupabase();
   supabase = supabaseInstance.supabase;
   mockMode = !supabaseInstance.isReal;
-  console.log('Supabase client initialized, mock mode:', mockMode);
 } catch (err) {
-  console.error('Error initializing Supabase client:', err);
   mockMode = true;
 }
 
@@ -129,7 +129,7 @@ const isFormValid = computed(() => {
 // Enregistrement du participant
 async function registerParticipant() {
   if (!isFormValid.value) {
-    errorMessage.value = 'Veuillez remplir tous les champs obligatoires et accepter les conditions.';
+    errorMessage.value = t('registration.messages.required');
     return;
   }
   
@@ -148,8 +148,6 @@ async function registerParticipant() {
     
     // Si Supabase n'est pas disponible ou en mode mock, utiliser les données simulées
     if (mockMode || !supabase) {
-      console.log('Using mock registration for:', participantData);
-      
       // Simuler un délai de traitement
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -157,7 +155,7 @@ async function registerParticipant() {
       const mockId = Date.now();
       
       // Afficher le message de succès
-      successMessage.value = 'Inscription réussie !';
+      successMessage.value = t('registration.messages.demoSuccess');
       
       // Émettre l'événement avec les données du participant
       emit('participant-registered', {
@@ -172,54 +170,66 @@ async function registerParticipant() {
       return;
     }
     
-    // Enregistrer le participant dans Supabase
-    const { data, error } = await supabase
+    // Vérifier d'abord si le participant existe déjà avec ce numéro de téléphone
+    const { data: existingParticipant, error: searchError } = await supabase
       .from('participant')
-      .insert([participantData])
-      .select();
+      .select('*')
+      .eq('phone', participantData.phone)
+      .single();
     
-    if (error) {
-      throw error;
+    if (searchError && searchError.code !== 'PGRST116') { // PGRST116 = not found
+      throw new Error(t('errors.supabase'));
     }
     
-    // Vérifier que nous avons obtenu des données
-    if (!data || data.length === 0) {
-      throw new Error('Aucune donnée reçue de la base de données');
-    }
+    let participant;
     
-    console.log('Participant registered:', data[0]);
+    if (existingParticipant) {
+      // Mettre à jour les informations du participant existant
+      
+      const { data: updatedParticipant, error: updateError } = await supabase
+        .from('participant')
+        .update({
+          first_name: participantData.first_name,
+          last_name: participantData.last_name,
+          email: participantData.email
+        })
+        .eq('id', existingParticipant.id)
+        .select();
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
+      participant = updatedParticipant?.[0] || existingParticipant;
+    } else {
+      // Enregistrer le nouveau participant dans Supabase
+      const { data: newParticipant, error: insertError } = await supabase
+        .from('participant')
+        .insert([participantData])
+        .select();
+      
+      if (insertError) {
+        throw insertError;
+      }
+      
+      // Vérifier que nous avons obtenu des données
+      if (!newParticipant || newParticipant.length === 0) {
+        throw new Error('Aucune donnée reçue de la base de données');
+      }
+      
+      participant = newParticipant[0];
+    }
     
     // Message de succès
-    successMessage.value = 'Inscription réussie !';
+    successMessage.value = t('registration.messages.success');
     
     // Émettre l'événement avec les données du participant
-    emit('participant-registered', data[0]);
+    emit('participant-registered', participant);
     
     // Réinitialiser le formulaire
     resetForm();
   } catch (error) {
-    console.error('Error registering participant:', error);
-    errorMessage.value = 'Une erreur est survenue lors de l\'enregistrement. Veuillez réessayer.';
-    
-    // Simuler une inscription réussie en mode démo après quelques secondes
-    if (error && error.message) {
-      setTimeout(() => {
-        console.log('Falling back to mock registration due to error:', error.message);
-        const mockId = Date.now();
-        
-        emit('participant-registered', {
-          id: mockId,
-          first_name: firstName.value.trim(),
-          last_name: lastName.value.trim(),
-          phone: phone.value.trim(),
-          email: email.value.trim() || null
-        });
-        
-        successMessage.value = 'Inscription réussie en mode démonstration !';
-        errorMessage.value = '';
-        resetForm();
-      }, 2000);
-    }
+    errorMessage.value = t('registration.messages.error');
   } finally {
     isLoading.value = false;
   }

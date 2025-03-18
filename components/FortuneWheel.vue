@@ -103,8 +103,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { gsap } from 'gsap';
 import { useSupabase } from '~/composables/useSupabase';
-import gsap from 'gsap';
+import { useTranslation } from '~/composables/useTranslation';
+
+const { t } = useTranslation();
 
 const props = defineProps({
   participantId: {
@@ -127,7 +130,6 @@ try {
   supabase = supabaseInstance.supabase;
   mockMode = !supabaseInstance.isReal;
 } catch (err) {
-  console.error('Error initializing Supabase:', err);
   mockMode = true;
 }
 
@@ -153,9 +155,43 @@ const sectors = ref([
 
 // Vérifier si le participant a déjà joué
 onMounted(async () => {
-  console.log('GSAP Version:', gsap.version);
+  // Vérifier d'abord si le participant existe dans la base de données
+  const participantExists = await checkParticipantExists();
+  
+  if (!participantExists) {
+    emit('gameCompleted', { result: 'ERROR', message: t('errors.participantNotFound') });
+    return;
+  }
+  
+  // Ensuite vérifier si le participant a déjà joué
   await checkIfParticipantAlreadyPlayed();
 });
+
+// Vérifier si le participant existe dans la base de données
+async function checkParticipantExists() {
+  if (!props.participantId) return false;
+  
+  try {
+    if (mockMode || !supabase) {
+      // En mode mock, on considère que le participant existe toujours
+      return true;
+    }
+    
+    const { data, error } = await supabase
+      .from('participant')
+      .select('id')
+      .eq('id', props.participantId)
+      .single();
+      
+    if (error) {
+      return false;
+    }
+    
+    return !!data;
+  } catch (err) {
+    return false;
+  }
+}
 
 async function checkIfParticipantAlreadyPlayed() {
   if (!props.participantId) return;
@@ -174,14 +210,13 @@ async function checkIfParticipantAlreadyPlayed() {
       .eq('contest_id', props.contestId);
       
     if (error) {
-      console.error('Error checking participant entries:', error);
       return;
     }
     
     alreadyPlayed.value = data && data.length > 0;
-    console.log('Participant already played:', alreadyPlayed.value);
   } catch (err) {
-    console.error('Error checking if participant already played:', err);
+    // En cas d'erreur, on considère que le participant n'a pas joué
+    alreadyPlayed.value = false;
   }
 }
 
@@ -209,9 +244,6 @@ function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
 
 // Animation de la roue améliorée
 async function spinWheel() {
-  console.log('Spinning wheel...');
-  console.log('wheelSectorsRef:', wheelSectorsRef.value);
-  
   if (isSpinning.value || hasPlayed.value || alreadyPlayed.value) return;
   
   isSpinning.value = true;
@@ -226,19 +258,14 @@ async function spinWheel() {
   const extraDegrees = randomSectorIndex * 30;
   const totalRotation = fullRotations * 360 + extraDegrees;
   
-  console.log('Target rotation:', totalRotation);
-  
   try {
     // Sélectionner l'élément SVG directement en cas de problème avec la référence
     const wheelElement = wheelSectorsRef.value || document.querySelector('g[transform="translate(200, 200)"]');
     
     if (!wheelElement) {
-      console.error('Wheel element not found!');
       isSpinning.value = false;
       return;
     }
-    
-    console.log('Wheel element found:', wheelElement);
     
     // Définir la propriété transform directement
     gsap.set(wheelElement, { rotation: 0, transformOrigin: "50% 50%" });
@@ -260,37 +287,7 @@ async function spinWheel() {
       ease: "elastic.out(1, 0.3)",
       onComplete: () => handleSpinComplete(wonSpin)
     });
-    
-    // Ajout d'un effet sonore (simulation)
-    const clickCount = Math.floor(totalRotation / 15); // Un clic tous les 15 degrés
-    let currentClick = 0;
-    
-    const tickInterval = setInterval(() => {
-      if (currentClick >= clickCount) {
-        clearInterval(tickInterval);
-        return;
-      }
-      
-      // Simuler un son de clic (à remplacer par un vrai son si nécessaire)
-      console.log('tick');
-      
-      currentClick++;
-      
-      // Ralentir la fréquence des clics progressivement
-      if (currentClick > clickCount * 0.7) {
-        clearInterval(tickInterval);
-        const slowTickInterval = setInterval(() => {
-          if (currentClick >= clickCount) {
-            clearInterval(slowTickInterval);
-            return;
-          }
-          console.log('tick-slow');
-          currentClick++;
-        }, 200);
-      }
-    }, 50);
   } catch (error) {
-    console.error('Error during wheel animation:', error);
     isSpinning.value = false;
   }
 }
@@ -339,7 +336,6 @@ async function handleSpinComplete(won) {
 async function determinePrize() {
   // If Supabase is not available, return mock data
   if (mockMode || !supabase) {
-    console.warn('Supabase not available, using mock prize');
     return Math.floor(Math.random() * 5) + 1;
   }
   
@@ -354,7 +350,6 @@ async function determinePrize() {
     
     return data.length > 0 ? data[0].id : Math.floor(Math.random() * 5) + 1;
   } catch (error) {
-    console.error('Error determining prize:', error);
     return Math.floor(Math.random() * 5) + 1;
   }
 }
@@ -362,12 +357,6 @@ async function determinePrize() {
 async function saveEntryToDatabase(won, prizeId) {
   // If Supabase is not available, just log for demo
   if (mockMode || !supabase) {
-    console.warn('Supabase not available, mock entry saved:', {
-      participant_id: props.participantId,
-      contest_id: props.contestId,
-      result: won ? 'GAGNÉ' : 'PERDU',
-      prize_id: prizeId
-    });
     return;
   }
   
@@ -382,10 +371,7 @@ async function saveEntryToDatabase(won, prizeId) {
       });
       
     if (error) throw error;
-    
-    console.log('Entry saved:', data);
   } catch (error) {
-    console.error('Error saving entry:', error);
   }
 }
 </script>
