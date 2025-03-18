@@ -52,7 +52,7 @@
     </main>
     
     <footer class="footer">
-      <p>&copy; 2025 DINOR Abidjan. Tous droits réservés.</p>
+      <p>&copy; 2025 Big Five Abidjan. Tous droits réservés.</p>
       <p class="small">Les lots sont à récupérer directement au magasin sur présentation du SMS.</p>
     </footer>
   </div>
