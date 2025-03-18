@@ -1,152 +1,365 @@
 <template>
-  <div class="container">
+  <div class="app-container">
     <header class="header">
-      <h1>Roue de la Fortune DINOR</h1>
-      <p>Inscrivez-vous et tentez votre chance pour gagner des lots !</p>
+      <div class="logo">
+        <img src="/assets/images/dinor-logo.svg" alt="DINOR Logo" class="logo-image" />
+        <h1>Roue de la Fortune DINOR</h1>
+      </div>
+      <div class="header-info">
+        <p class="tagline">Tentez votre chance et gagnez des lots exceptionnels !</p>
+      </div>
     </header>
     
-    <main>
-      <div v-if="!participantId" class="registration-section">
-        <RegistrationForm @registered="handleRegistration" />
+    <main class="main-content">
+      <div v-if="participantId && participantName" class="participant-info">
+        <div class="participant-badge">
+          <span class="participant-name">{{ participantName }}</span>
+          <span class="participant-status">Participant(e) enregistré(e)</span>
+        </div>
       </div>
       
-      <div v-else class="wheel-section">
-        <FortuneWheel :participant-id="participantId" :contest-id="1" />
-        
-        <div class="restart-container">
-          <button class="btn restart-btn" @click="restart">
-            Recommencer
-          </button>
+      <div v-if="showForm" class="form-container">
+        <RegistrationForm @participant-registered="onParticipantRegistered" />
+      </div>
+      
+      <div v-else-if="!gameComplete" class="wheel-container">
+        <FortuneWheel 
+          :participantId="participantId" 
+          @game-completed="onGameCompleted" 
+        />
+      </div>
+      
+      <div v-else class="game-results">
+        <div class="result-card" :class="gameResult.result === 'GAGNÉ' ? 'win' : 'lose'">
+          <h2>Merci de votre participation !</h2>
+          <p class="result-text">Vous avez {{ gameResult.result }}</p>
+          
+          <div v-if="gameResult.result === 'GAGNÉ'" class="win-details">
+            <p>Un SMS vous sera envoyé avec les informations pour récupérer votre lot.</p>
+          </div>
+          
+          <div class="game-over-actions">
+            <button 
+              class="btn btn-primary" 
+              @click="resetGame"
+              title="Réinitialiser pour un nouveau participant"
+            >
+              Nouveau participant
+            </button>
+          </div>
         </div>
       </div>
     </main>
     
     <footer class="footer">
-      <p>&copy; 2025 DINOR - Tous droits réservés</p>
+      <p>&copy; 2025 DINOR Abidjan. Tous droits réservés.</p>
+      <p class="small">Les lots sont à récupérer directement au magasin sur présentation du SMS.</p>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
-// Gérer l'inscription du participant
+const showForm = ref(true);
 const participantId = ref(null);
+const participantName = ref('');
+const gameComplete = ref(false);
+const gameResult = ref(null);
 
-function handleRegistration(id) {
-  console.log('Participant registered with ID:', id);
-  participantId.value = id;
-}
-
-function restart() {
+// Montrer le formulaire d'inscription au début
+function resetGame() {
+  showForm.value = true;
   participantId.value = null;
+  participantName.value = '';
+  gameComplete.value = false;
+  gameResult.value = null;
 }
+
+// Lorsqu'un participant s'inscrit, passer à l'étape de la roue
+function onParticipantRegistered(data) {
+  console.log('Participant registered:', data);
+  participantId.value = data.id;
+  participantName.value = `${data.first_name} ${data.last_name}`;
+  showForm.value = false;
+}
+
+// Lorsque le jeu est terminé, afficher le résultat et permettre de redémarrer
+function onGameCompleted(data) {
+  console.log('Game completed:', data);
+  gameComplete.value = true;
+  gameResult.value = data;
+}
+
+// Vérifier si l'utilisateur a déjà un ID de participant dans le localStorage
+onMounted(() => {
+  const savedParticipantId = localStorage.getItem('participantId');
+  const savedParticipantName = localStorage.getItem('participantName');
+  
+  if (savedParticipantId && savedParticipantName) {
+    // Si on a déjà un participant enregistré, passer directement à la roue
+    participantId.value = parseInt(savedParticipantId);
+    participantName.value = savedParticipantName;
+    showForm.value = false;
+  }
+});
+
+// Sauvegarder l'ID du participant dans le localStorage lors de l'inscription
+watch(participantId, (newId) => {
+  if (newId) {
+    localStorage.setItem('participantId', newId.toString());
+    localStorage.setItem('participantName', participantName.value);
+  }
+});
 </script>
 
 <style>
-/* Global styles */
+/* Styles globaux */
 :root {
   --primary-color: #e63946;
   --secondary-color: #1d3557;
-  --accent-color: #f1faee;
-  --success-color: #2a9d8f;
-  --error-color: #e76f51;
-  --background-color: #f8f9fa;
-  --text-color: #212529;
+  --light-color: #f1faee;
+  --accent-color: #a8dadc;
+  --dark-color: #457b9d;
+  --win-color: #059669;
+  --lose-color: #DC2626;
 }
 
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 body {
-  font-family: 'Roboto', 'Segoe UI', sans-serif;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.6;
-  color: var(--text-color);
-  background-color: var(--background-color);
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e1e4e8;
-}
-
-.header h1 {
-  color: var(--primary-color);
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-}
-
-main {
-  min-height: 70vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.registration-section,
-.wheel-section {
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.footer {
-  margin-top: 40px;
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid #e1e4e8;
-  color: #6c757d;
-  font-size: 0.9rem;
+  color: var(--secondary-color);
+  background-color: var(--light-color);
+  min-height: 100vh;
 }
 
 .btn {
   display: inline-block;
   padding: 12px 24px;
-  background-color: var(--primary-color);
-  color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 30px;
+  font-weight: 700;
   font-size: 16px;
-  font-weight: 600;
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: center;
+  text-decoration: none;
 }
 
-.btn:hover {
-  opacity: 0.9;
+.btn-primary {
+  background-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #d62636;
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  transform: none;
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
-.restart-container {
+.btn-secondary {
+  background-color: var(--dark-color);
+}
+
+.btn-secondary:hover {
+  background-color: #3d6d8a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Structure */
+.app-container {
+  max-width: 1200px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 20px 0;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.logo-image {
+  height: 60px;
+  margin-right: 20px;
+}
+
+.logo h1 {
+  font-size: 28px;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.header-info {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.tagline {
+  font-size: 18px;
+  color: var(--dark-color);
+  font-style: italic;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.participant-info {
+  width: 100%;
+  margin-bottom: 30px;
   display: flex;
   justify-content: center;
+}
+
+.participant-badge {
+  background-color: white;
+  border-radius: 50px;
+  padding: 10px 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.participant-name {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--secondary-color);
+}
+
+.participant-status {
+  font-size: 14px;
+  color: var(--dark-color);
+}
+
+.form-container, .wheel-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.game-results {
+  width: 100%;
+  max-width: 600px;
+  margin: 30px auto;
+}
+
+.result-card {
+  background-color: white;
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.result-card.win {
+  border-left: 6px solid var(--win-color);
+}
+
+.result-card.lose {
+  border-left: 6px solid var(--lose-color);
+}
+
+.result-text {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 20px 0;
+}
+
+.win .result-text {
+  color: var(--win-color);
+}
+
+.lose .result-text {
+  color: var(--lose-color);
+}
+
+.game-over-actions {
   margin-top: 30px;
 }
 
-.restart-btn {
-  background-color: var(--secondary-color);
+.win-details {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f0fff4;
+  border-radius: 8px;
 }
 
+.footer {
+  margin-top: 40px;
+  padding: 20px 0;
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-size: 14px;
+  color: var(--dark-color);
+}
+
+.footer .small {
+  font-size: 12px;
+  margin-top: 5px;
+  opacity: 0.7;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .header h1 {
-    font-size: 2rem;
+  .logo-image {
+    height: 50px;
+    margin-right: 15px;
+  }
+  
+  .logo h1 {
+    font-size: 24px;
+  }
+  
+  .tagline {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    flex-direction: column;
+  }
+  
+  .logo-image {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  
+  .logo h1 {
+    font-size: 22px;
+  }
+  
+  .header-info {
+    padding: 0 10px;
   }
 }
 </style>
