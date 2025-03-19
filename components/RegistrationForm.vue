@@ -67,6 +67,25 @@
           </button>
         </label>
       </div>
+      
+      <div class="terms-links-container">
+        <button 
+          class="btn btn-link terms-footer-link" 
+          type="button" 
+          data-bs-toggle="modal" 
+          data-bs-target="#termsModal"
+        >
+          {{ t('footer.terms') }}
+        </button>
+        <button 
+          class="btn btn-link terms-footer-link" 
+          type="button" 
+          data-bs-toggle="modal" 
+          data-bs-target="#privacyModal"
+        >
+          {{ t('footer.privacy') }}
+        </button>
+      </div>
 
       <!-- Modal pour les conditions générales et politique de confidentialité -->
       <div v-if="showTermsModal" class="modal-overlay">
@@ -388,25 +407,27 @@ function resetForm() {
 
 <style scoped>
 .registration-form-container {
-  background: white;
+  background: #FCFEFFff; /* White */
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 20px rgba(135, 102, 75, 0.1);
   max-width: 600px;
   margin: 0 auto;
 }
 
 .form-title {
-  color: var(--primary-color);
+  color: #87664Bff; /* Raw Umber */
   font-size: 24px;
   margin-bottom: 10px;
   text-align: center;
+  font-family: 'EB Garamond', serif;
 }
 
 .form-description {
-  color: var(--secondary-color);
+  color: #87664Bff; /* Raw Umber */
   margin-bottom: 25px;
   text-align: center;
+  font-family: 'EB Garamond', serif;
 }
 
 .registration-form {
@@ -422,24 +443,26 @@ function resetForm() {
 
 .form-group label {
   margin-bottom: 8px;
-  color: var(--secondary-color);
+  color: #87664Bff; /* Raw Umber */
   font-weight: 500;
+  font-family: 'EB Garamond', serif;
 }
 
 .form-group input[type="text"],
 .form-group input[type="tel"],
 .form-group input[type="email"] {
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #87664Bff; /* Raw Umber */
   border-radius: 6px;
   font-size: 16px;
   transition: border-color 0.3s;
+  font-family: 'EB Garamond', serif;
 }
 
 .form-group input:focus {
-  border-color: var(--primary-color);
+  border-color: #BD2B23ff; /* Fire Brick */
   outline: none;
-  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+  box-shadow: 0 0 0 3px rgba(189, 43, 35, 0.1);
 }
 
 .checkbox-group {
@@ -457,7 +480,7 @@ function resetForm() {
 .terms-link {
   background: none;
   border: none;
-  color: #3498db;
+  color: #BD2B23ff; /* Fire Brick */
   text-decoration: underline;
   cursor: pointer;
   padding: 0 5px;
@@ -466,28 +489,28 @@ function resetForm() {
 }
 
 .required {
-  color: var(--primary-color);
+  color: #BD2B23ff; /* Fire Brick */
 }
 
 .error-message {
   padding: 12px;
-  background-color: #fee2e2;
-  border-left: 4px solid #ef4444;
-  color: #b91c1c;
+  background-color: rgba(189, 43, 35, 0.1);
+  border-left: 4px solid #BD2B23ff; /* Fire Brick */
+  color: #BD2B23ff; /* Fire Brick */
   border-radius: 4px;
 }
 
 .success-message {
   padding: 12px;
-  background-color: #dcfce7;
-  border-left: 4px solid #10b981;
-  color: #047857;
+  background-color: rgba(135, 102, 75, 0.1);
+  border-left: 4px solid #87664Bff; /* Raw Umber */
+  color: #87664Bff; /* Raw Umber */
   border-radius: 4px;
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, var(--primary-color), #c1121f);
-  color: white;
+  background: linear-gradient(135deg, #87664Bff, #755743); /* Raw Umber gradient */
+  color: #FCFEFFff; /* White */
   padding: 14px 20px;
   border: none;
   border-radius: 6px;
@@ -499,11 +522,13 @@ function resetForm() {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: 'EB Garamond', serif;
 }
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(230, 57, 70, 0.4);
+  background: linear-gradient(135deg, #755743, #87664Bff); /* Inverted Raw Umber gradient */
+  box-shadow: 0 5px 15px rgba(135, 102, 75, 0.4);
 }
 
 .submit-btn:disabled {
@@ -528,7 +553,7 @@ function resetForm() {
 }
 
 .spinner .path {
-  stroke: white;
+  stroke: #FCFEFFff; /* White */
   stroke-linecap: round;
   animation: dash 1.5s ease-in-out infinite;
 }
@@ -598,14 +623,14 @@ function resetForm() {
 }
 
 .modal-container {
-  background-color: white;
+  background-color: #FCFEFFff; /* White */
   border-radius: 8px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(135, 102, 75, 0.3);
 }
 
 .modal-header {
@@ -614,6 +639,10 @@ function resetForm() {
   align-items: center;
   padding: 15px 20px;
   border-bottom: 1px solid #eee;
+  background-color: #87664Bff; /* Raw Umber */
+  color: #FCFEFFff; /* White */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .close-btn {
@@ -621,7 +650,7 @@ function resetForm() {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: #FCFEFFff; /* White */
 }
 
 .modal-content {
@@ -646,8 +675,9 @@ function resetForm() {
 }
 
 .tab-btn.active {
-  border-bottom: 3px solid #3498db;
+  border-bottom: 3px solid #BD2B23ff; /* Fire Brick */
   font-weight: bold;
+  color: #87664Bff; /* Raw Umber */
 }
 
 .tab-content {
@@ -661,5 +691,25 @@ function resetForm() {
   border-top: 1px solid #eee;
   display: flex;
   justify-content: flex-end;
+}
+
+.terms-footer-link {
+  color: white;
+  text-decoration: none;
+  padding: 1em;
+  font-size: 0.9em;
+  margin: 0 5px;
+  display: inline-block;
+}
+
+.terms-footer-link:hover {
+  color: #BD2B23ff; /* Fire Brick */
+  text-decoration: underline;
+}
+
+.terms-links-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
 }
 </style>

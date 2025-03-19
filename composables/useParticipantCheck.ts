@@ -57,7 +57,7 @@ function eraseCookie(name: string) {
 }
 
 export function useParticipantCheck() {
-  const { supabase, isReal, config } = useSupabase();
+  const { supabase, isReal } = useSupabase();
   
   const isLoading = ref(false);
   const error = ref<string | null>(null);
@@ -87,7 +87,7 @@ export function useParticipantCheck() {
     
     try {
       console.log('Vérification du participant avec le téléphone:', phone);
-      console.log('Utilisation de la configuration Supabase:', config);
+      console.log('Utilisation de la configuration Supabase:', supabase);
       
       // Vérifier d'abord le cookie - si le joueur a joué récemment
       const lastPlayCookie = getCookie(`last_play_${phone}`);

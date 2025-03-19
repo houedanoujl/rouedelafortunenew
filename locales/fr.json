@@ -15,15 +15,16 @@
       "alreadyRegistered": "Vous êtes déjà inscrit en tant que",
       "welcomeBack": "Bon retour parmi nous",
       "gameCompleted": "Vous avez déjà joué et obtenu",
-      "participantInfo": "Participant",
+      "participantInfo": "Participant enregistré",
       "prizeWon": "Un SMS vous sera envoyé avec les informations pour récupérer votre lot.",
-      "loading": "Chargement en cours...",
+      "loading": "Chargement...",
       "checking_participant": "Vérification de votre participation...",
       "welcome": "Bienvenue au jeu La Roue de la Fortune !",
       "error": "Une erreur est survenue. Veuillez réessayer.",
-      "waitTitle": "Vous avez déjà participé récemment",
-      "waitMessage": "Vous devez attendre encore {days} jour(s) avant de pouvoir jouer à nouveau.",
-      "lastPlayed": "Votre dernière participation: {date}"
+      "waitTitle": "Merci pour votre participation !",
+      "waitMessage": "Vous avez récemment tenté votre chance. Pour des raisons d'équité, vous pourrez rejouer dans {days} jour(s).",
+      "lastPlayed": "Votre dernière participation : {date}",
+      "comeBackSoon": "Revenez nous voir le {nextDate} pour tenter à nouveau votre chance !"
     }
   },
   "registration": {
@@ -155,12 +156,14 @@
   "nav": {
     "home": "Accueil",
     "admin": {
-      "prizes": "Gestion des lots"
+      "prizes": "Gestion des lots",
+      "dashboard": "Tableau de bord"
     }
   },
   "footer": {
     "copyright": " La Roue de la Fortune. Tous droits réservés.",
     "terms": "Conditions générales",
-    "privacy": "Politique de confidentialité"
+    "privacy": "Politique de confidentialité",
+    "contact": "Contactez-nous"
   }
 }

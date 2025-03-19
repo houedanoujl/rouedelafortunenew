@@ -1,7 +1,7 @@
 <template>
   <div class="admin-prizes-container">
     <h1 class="page-title">
-      {{ $t('admin.prizes.title') }}
+      {{ t('admin.prizes.title') }}
     </h1>
     
     <div class="admin-filters">
@@ -10,28 +10,28 @@
           v-model="searchTerm" 
           type="text" 
           class="form-control" 
-          :placeholder="$t('admin.prizes.searchPlaceholder')"
+          :placeholder="t('admin.prizes.searchPlaceholder')"
         >
         <button class="btn btn-primary" @click="refreshData">
-          <i class="fas fa-sync"></i> {{ $t('admin.prizes.refresh') }}
+          <i class="fas fa-sync"></i> {{ t('admin.prizes.refresh') }}
         </button>
       </div>
     </div>
     
     <div v-if="loading" class="loading-container">
       <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ $t('common.loading') }}</span>
+        <span class="visually-hidden">{{ t('common.loading') }}</span>
       </div>
-      <p>{{ $t('common.loading') }}</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
     
     <div v-else-if="error" class="error-container">
       <div class="alert alert-danger">
-        <h4>{{ $t('common.error') }}</h4>
+        <h4>{{ t('common.error') }}</h4>
         <p>{{ error }}</p>
       </div>
       <button class="btn btn-primary" @click="refreshData">
-        {{ $t('admin.prizes.tryAgain') }}
+        {{ t('admin.prizes.tryAgain') }}
       </button>
     </div>
     
@@ -39,28 +39,28 @@
       <div class="overview-cards">
         <div class="card stat-card">
           <div class="card-body">
-            <h5 class="card-title">{{ $t('admin.prizes.totalPrizes') }}</h5>
+            <h5 class="card-title">{{ t('admin.prizes.totalPrizes') }}</h5>
             <p class="card-value">{{ totalPrizes }}</p>
           </div>
         </div>
         
         <div class="card stat-card">
           <div class="card-body">
-            <h5 class="card-title">{{ $t('admin.prizes.totalAwarded') }}</h5>
+            <h5 class="card-title">{{ t('admin.prizes.totalAwarded') }}</h5>
             <p class="card-value">{{ totalAwarded }}</p>
           </div>
         </div>
         
         <div class="card stat-card">
           <div class="card-body">
-            <h5 class="card-title">{{ $t('admin.prizes.remainingPrizes') }}</h5>
+            <h5 class="card-title">{{ t('admin.prizes.remainingPrizes') }}</h5>
             <p class="card-value">{{ totalRemaining }}</p>
           </div>
         </div>
         
         <div class="card stat-card">
           <div class="card-body">
-            <h5 class="card-title">{{ $t('admin.prizes.todayAwarded') }}</h5>
+            <h5 class="card-title">{{ t('admin.prizes.todayAwarded') }}</h5>
             <p class="card-value">{{ totalAwardedToday }}</p>
           </div>
         </div>
@@ -70,16 +70,16 @@
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>{{ $t('admin.prizes.id') }}</th>
-              <th>{{ $t('admin.prizes.name') }}</th>
-              <th>{{ $t('admin.prizes.description') }}</th>
-              <th>{{ $t('admin.prizes.totalQuantity') }}</th>
-              <th>{{ $t('admin.prizes.remaining') }}</th>
-              <th>{{ $t('admin.prizes.totalWon') }}</th>
-              <th>{{ $t('admin.prizes.wonToday') }}</th>
-              <th>{{ $t('admin.prizes.wonThisWeek') }}</th>
-              <th>{{ $t('admin.prizes.wonThisMonth') }}</th>
-              <th>{{ $t('admin.prizes.actions') }}</th>
+              <th>{{ t('admin.prizes.id') }}</th>
+              <th>{{ t('admin.prizes.name') }}</th>
+              <th>{{ t('admin.prizes.description') }}</th>
+              <th>{{ t('admin.prizes.totalQuantity') }}</th>
+              <th>{{ t('admin.prizes.remaining') }}</th>
+              <th>{{ t('admin.prizes.totalWon') }}</th>
+              <th>{{ t('admin.prizes.wonToday') }}</th>
+              <th>{{ t('admin.prizes.wonThisWeek') }}</th>
+              <th>{{ t('admin.prizes.wonThisMonth') }}</th>
+              <th>{{ t('admin.prizes.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -122,7 +122,7 @@
               </td>
             </tr>
             <tr v-if="filteredPrizes.length === 0">
-              <td colspan="10" class="text-center">{{ $t('admin.prizes.noPrizesFound') }}</td>
+              <td colspan="10" class="text-center">{{ t('admin.prizes.noPrizesFound') }}</td>
             </tr>
           </tbody>
         </table>
@@ -134,13 +134,13 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="editPrizeModalLabel">{{ $t('admin.prizes.editPrize') }}</h5>
+            <h5 class="modal-title" id="editPrizeModalLabel">{{ t('admin.prizes.editPrize') }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="updatePrize">
               <div class="mb-3">
-                <label for="prizeName" class="form-label">{{ $t('admin.prizes.name') }}</label>
+                <label for="prizeName" class="form-label">{{ t('admin.prizes.name') }}</label>
                 <input 
                   type="text" 
                   class="form-control" 
@@ -150,7 +150,7 @@
                 >
               </div>
               <div class="mb-3">
-                <label for="prizeDescription" class="form-label">{{ $t('admin.prizes.description') }}</label>
+                <label for="prizeDescription" class="form-label">{{ t('admin.prizes.description') }}</label>
                 <textarea 
                   class="form-control" 
                   id="prizeDescription" 
@@ -159,7 +159,7 @@
                 ></textarea>
               </div>
               <div class="mb-3">
-                <label for="prizeTotalQuantity" class="form-label">{{ $t('admin.prizes.totalQuantity') }}</label>
+                <label for="prizeTotalQuantity" class="form-label">{{ t('admin.prizes.totalQuantity') }}</label>
                 <input 
                   type="number" 
                   class="form-control" 
@@ -170,7 +170,7 @@
                 >
               </div>
               <div class="mb-3">
-                <label for="prizeRemainingQuantity" class="form-label">{{ $t('admin.prizes.remaining') }}</label>
+                <label for="prizeRemainingQuantity" class="form-label">{{ t('admin.prizes.remaining') }}</label>
                 <input 
                   type="number" 
                   class="form-control" 
@@ -182,8 +182,8 @@
                 >
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('common.cancel') }}</button>
-                <button type="submit" class="btn btn-primary">{{ $t('common.save') }}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('common.cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ t('common.save') }}</button>
               </div>
             </form>
           </div>
@@ -196,15 +196,15 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="winnersModalLabel">{{ $t('admin.prizes.winners') }}: {{ selectedPrize ? selectedPrize.prize_name : '' }}</h5>
+            <h5 class="modal-title" id="winnersModalLabel">{{ t('admin.prizes.winners') }}: {{ selectedPrize ? selectedPrize.prize_name : '' }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div v-if="loadingWinners" class="text-center my-3">
               <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">{{ $t('common.loading') }}</span>
+                <span class="visually-hidden">{{ t('common.loading') }}</span>
               </div>
-              <p>{{ $t('admin.prizes.loadingWinners') }}</p>
+              <p>{{ t('admin.prizes.loadingWinners') }}</p>
             </div>
             <div v-else-if="winnersError" class="alert alert-danger">
               {{ winnersError }}
@@ -214,11 +214,11 @@
                 <table class="table table-striped">
                   <thead>
                     <tr>
-                      <th>{{ $t('admin.winners.id') }}</th>
-                      <th>{{ $t('admin.winners.name') }}</th>
-                      <th>{{ $t('admin.winners.phone') }}</th>
-                      <th>{{ $t('admin.winners.email') }}</th>
-                      <th>{{ $t('admin.winners.wonDate') }}</th>
+                      <th>{{ t('admin.winners.id') }}</th>
+                      <th>{{ t('admin.winners.name') }}</th>
+                      <th>{{ t('admin.winners.phone') }}</th>
+                      <th>{{ t('admin.winners.email') }}</th>
+                      <th>{{ t('admin.winners.wonDate') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -230,7 +230,7 @@
                       <td>{{ formatDate(winner.won_date) }}</td>
                     </tr>
                     <tr v-if="winners.length === 0">
-                      <td colspan="5" class="text-center">{{ $t('admin.prizes.noWinnersFound') }}</td>
+                      <td colspan="5" class="text-center">{{ t('admin.prizes.noWinnersFound') }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -238,7 +238,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('common.close') }}</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('common.close') }}</button>
           </div>
         </div>
       </div>
@@ -248,25 +248,19 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Modal } from 'bootstrap';
 import { useSupabase } from '~/composables/useSupabase';
 import { useTranslation } from '~/composables/useTranslation';
 
-const { t } = useTranslation();
+// Référence à Bootstrap pour les modaux
+let bootstrap = null;
 
-// Référence Supabase
-let supabase;
-try {
-  const { supabase: supabaseInstance } = useSupabase();
-  supabase = supabaseInstance;
-} catch (error) {
-  console.error('Error initializing Supabase:', error);
-}
+const { t } = useTranslation();
+const { supabase } = useSupabase();
 
 // État
-const prizes = ref([]);
 const loading = ref(true);
 const error = ref(null);
+const prizes = ref([]);
 const searchTerm = ref('');
 const editedPrize = ref({});
 const selectedPrize = ref(null);
@@ -274,67 +268,116 @@ const winners = ref([]);
 const loadingWinners = ref(false);
 const winnersError = ref(null);
 
-// Modales
-let editModal;
-let winnersModal;
+// Modaux
+let editModal = null;
+let winnersModal = null;
 
-// Calculs
-const filteredPrizes = computed(() => {
-  if (!searchTerm.value) return prizes.value;
-  
-  const term = searchTerm.value.toLowerCase();
-  return prizes.value.filter(prize => 
-    prize.prize_name.toLowerCase().includes(term) || 
-    prize.prize_description.toLowerCase().includes(term)
-  );
-});
-
+// Statistiques calculées
 const totalPrizes = computed(() => {
-  return prizes.value.reduce((sum, prize) => sum + prize.total_quantity, 0);
+  return prizes.value.reduce((total, prize) => total + prize.total_quantity, 0);
 });
 
 const totalAwarded = computed(() => {
-  return prizes.value.reduce((sum, prize) => sum + prize.total_won, 0);
+  return prizes.value.reduce((total, prize) => total + prize.total_won, 0);
 });
 
 const totalRemaining = computed(() => {
-  return prizes.value.reduce((sum, prize) => sum + prize.remaining_quantity, 0);
+  return prizes.value.reduce((total, prize) => total + prize.remaining_quantity, 0);
 });
 
 const totalAwardedToday = computed(() => {
-  return prizes.value.reduce((sum, prize) => sum + prize.won_today, 0);
+  return prizes.value.reduce((total, prize) => total + prize.won_today, 0);
 });
 
-// Méthodes
+// Filtrage des prix
+const filteredPrizes = computed(() => {
+  if (!searchTerm.value) return prizes.value;
+  
+  const search = searchTerm.value.toLowerCase();
+  return prizes.value.filter(prize => 
+    prize.prize_name.toLowerCase().includes(search) || 
+    prize.prize_description.toLowerCase().includes(search)
+  );
+});
+
+// Récupérer tous les prix avec les statistiques
 async function fetchPrizes() {
   loading.value = true;
   error.value = null;
   
   try {
-    const { data, error: apiError } = await supabase
-      .from('prize_admin_view')
+    const { data, error: supabaseError } = await supabase
+      .from('prize_stats_view')
       .select('*');
     
-    if (apiError) throw apiError;
+    if (supabaseError) throw supabaseError;
     
     prizes.value = data || [];
   } catch (err) {
-    console.error('Error fetching prizes:', err);
-    error.value = err.message || t('admin.prizes.errorFetchingPrizes');
+    console.error('Erreur lors de la récupération des lots:', err);
+    error.value = t('admin.prizes.errorFetchingPrizes');
   } finally {
     loading.value = false;
   }
 }
 
-function openEditModal(prize) {
-  editedPrize.value = { ...prize };
-  editModal = new Modal(document.getElementById('editPrizeModal'));
-  editModal.show();
+// Fonction pour attendre que Bootstrap soit chargé
+function waitForBootstrap() {
+  return new Promise((resolve) => {
+    // Si nous ne sommes pas côté client, résoudre immédiatement
+    if (!process.client) {
+      resolve(null);
+      return;
+    }
+    
+    // Si bootstrap est déjà disponible, résoudre immédiatement
+    if (window.bootstrap) {
+      resolve(window.bootstrap);
+      return;
+    }
+    
+    // Sinon, vérifier périodiquement jusqu'à ce que bootstrap soit disponible
+    const checkInterval = setInterval(() => {
+      if (window.bootstrap) {
+        clearInterval(checkInterval);
+        resolve(window.bootstrap);
+      }
+    }, 100);
+    
+    // Définir un timeout pour éviter une boucle infinie
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.warn('Bootstrap non chargé après 5 secondes');
+      resolve(null);
+    }, 5000);
+  });
 }
 
+// Ouvrir la modal d'édition
+async function openEditModal(prize) {
+  editedPrize.value = { ...prize };
+  
+  // Attendre que bootstrap soit chargé
+  if (process.client && !bootstrap) {
+    bootstrap = await waitForBootstrap();
+  }
+  
+  // Initialiser la modal via l'API DOM
+  if (process.client && bootstrap) {
+    const modalElement = document.getElementById('editPrizeModal');
+    if (modalElement) {
+      editModal = new bootstrap.Modal(modalElement);
+      editModal.show();
+    }
+  }
+}
+
+// Mettre à jour un prix
 async function updatePrize() {
+  loading.value = true;
+  
   try {
-    const { error: apiError } = await supabase
+    const { error: supabaseError } = await supabase
       .from('prize')
       .update({
         name: editedPrize.value.prize_name,
@@ -344,110 +387,111 @@ async function updatePrize() {
       })
       .eq('id', editedPrize.value.prize_id);
     
-    if (apiError) throw apiError;
+    if (supabaseError) throw supabaseError;
     
+    // Fermer la modal
+    if (editModal) {
+      editModal.hide();
+    }
+    
+    // Rafraîchir les données
     await fetchPrizes();
-    editModal.hide();
   } catch (err) {
-    console.error('Error updating prize:', err);
-    alert(t('admin.prizes.errorUpdatingPrize'));
+    console.error('Erreur lors de la mise à jour du lot:', err);
+    error.value = t('admin.prizes.errorUpdatingPrize');
+  } finally {
+    loading.value = false;
   }
 }
 
-function openWinnersModal(prize) {
+// Ouvrir la modal des gagnants
+async function openWinnersModal(prize) {
   selectedPrize.value = prize;
-  fetchWinners(prize.prize_id);
-  winnersModal = new Modal(document.getElementById('winnersModal'));
-  winnersModal.show();
-}
-
-async function fetchWinners(prizeId) {
   loadingWinners.value = true;
   winnersError.value = null;
   winners.value = [];
   
+  // Attendre que bootstrap soit chargé
+  if (process.client && !bootstrap) {
+    bootstrap = await waitForBootstrap();
+  }
+  
+  // Initialiser la modal via l'API DOM
+  if (process.client && bootstrap) {
+    const modalElement = document.getElementById('winnersModal');
+    if (modalElement) {
+      winnersModal = new bootstrap.Modal(modalElement);
+      winnersModal.show();
+    }
+  }
+  
+  // Charger les gagnants
+  fetchWinners(prize.prize_id);
+}
+
+// Récupérer les gagnants d'un lot
+async function fetchWinners(prizeId) {
   try {
-    const { data, error: apiError } = await supabase
-      .from('entry')
-      .select(`
-        id as entry_id,
-        won_date,
-        participant:participant_id (
-          id,
-          name,
-          phone,
-          email
-        )
-      `)
-      .eq('prize_id', prizeId)
-      .eq('result', 'GAGNÉ')
-      .order('won_date', { ascending: false });
+    const { data, error: supabaseError } = await supabase
+      .from('winners_view')
+      .select('*')
+      .eq('prize_id', prizeId);
     
-    if (apiError) throw apiError;
+    if (supabaseError) throw supabaseError;
     
-    winners.value = data?.map(entry => ({
-      entry_id: entry.entry_id,
-      won_date: entry.won_date,
-      participant_name: entry.participant?.name || t('admin.winners.unknownParticipant'),
-      participant_phone: entry.participant?.phone || '-',
-      participant_email: entry.participant?.email || '-'
-    })) || [];
-    
+    winners.value = data || [];
   } catch (err) {
-    console.error('Error fetching winners:', err);
-    winnersError.value = err.message || t('admin.prizes.errorFetchingWinners');
+    console.error('Erreur lors de la récupération des gagnants:', err);
+    winnersError.value = t('admin.prizes.errorFetchingWinners');
   } finally {
     loadingWinners.value = false;
   }
 }
 
+// Formater une date
 function formatDate(dateString) {
-  if (!dateString) return '-';
+  if (!dateString) return '';
   
-  const options = { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric',
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  };
-  
-  return new Date(dateString).toLocaleDateString(undefined, options);
+  }).format(date);
 }
 
+// Rafraîchir les données
 function refreshData() {
   fetchPrizes();
 }
 
-// Initialisation
-onMounted(() => {
+// Initialisation au chargement
+onMounted(async () => {
+  // Attendre que Bootstrap soit chargé avant de continuer
+  if (process.client) {
+    bootstrap = await waitForBootstrap();
+    console.log('Bootstrap disponible:', !!bootstrap);
+  }
+  
+  // Charger les données initiales
   fetchPrizes();
 });
 </script>
 
-<style scoped>
+<style>
 .admin-prizes-container {
-  padding: 2rem;
+  padding: 2rem 0;
 }
 
 .page-title {
   margin-bottom: 2rem;
   color: #1d3557;
-  font-weight: 700;
 }
 
 .admin-filters {
   margin-bottom: 2rem;
-}
-
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  text-align: center;
 }
 
 .overview-cards {
@@ -458,11 +502,9 @@ onMounted(() => {
 }
 
 .stat-card {
-  background-color: #f1faee;
-  border: none;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  transition: transform 0.3s ease;
 }
 
 .stat-card:hover {
@@ -472,26 +514,30 @@ onMounted(() => {
 .card-value {
   font-size: 2rem;
   font-weight: 700;
+  margin: 1rem 0 0.5rem;
   color: #1d3557;
-  margin: 0;
 }
 
-.badge {
-  font-size: 0.9rem;
-  padding: 0.5rem 0.75rem;
+.loading-container, .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
 }
 
-.table {
-  background-color: white;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
 }
 
-.table thead th {
-  background-color: #1d3557;
-  color: white;
-  padding: 1rem;
-  font-weight: 600;
+.winners-table {
+  margin-top: 1.5rem;
+}
+
+.modal-dialog.modal-lg {
+  max-width: 800px;
 }
 </style>

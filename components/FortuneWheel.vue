@@ -10,8 +10,8 @@
     <template v-else>
       <div class="wheel-marker">
         <svg width="30" height="50" viewBox="0 0 30 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 0L30 20H0L15 0Z" fill="#e63946" />
-          <rect x="12" y="20" width="6" height="30" fill="#e63946" />
+          <path d="M15 50L30 30H0L15 50Z" fill="#87664Bff" />
+          <rect x="12" y="0" width="6" height="30" fill="#87664Bff" />
         </svg>
       </div>
       
@@ -23,16 +23,16 @@
                 <feDropShadow dx="0" dy="0" stdDeviation="15" flood-color="#000" flood-opacity="0.3"/>
               </filter>
               <linearGradient id="winGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#34D399" />
-                <stop offset="100%" stop-color="#059669" />
+                <stop offset="0%" stop-color="#FCFEFFff" />
+                <stop offset="100%" stop-color="#FBFDFEff" />
               </linearGradient>
               <linearGradient id="loseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#F87171" />
-                <stop offset="100%" stop-color="#DC2626" />
+                <stop offset="0%" stop-color="#D45D56" />
+                <stop offset="100%" stop-color="#BD2B23ff" />
               </linearGradient>
               <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                <stop offset="0%" stop-color="#fff" />
-                <stop offset="100%" stop-color="#f1faee" />
+                <stop offset="0%" stop-color="#FCFEFFff" />
+                <stop offset="100%" stop-color="#FBFDFEff" />
               </radialGradient>
             </defs>
             <g ref="wheelSectorsRef" transform="translate(200, 200)">
@@ -48,24 +48,24 @@
                 <text 
                   :transform="`rotate(${index * 30 + 15}) translate(0, -130) rotate(-${index * 30 + 15})`" 
                   text-anchor="middle" 
-                  fill="white" 
+                  fill="black" 
                   font-weight="bold"
                   font-size="14"
-                  text-shadow="1px 1px 2px rgba(0,0,0,0.5)"
+                  font-family="'EB Garamond', serif"
                 >
                   {{ sector.won ? 'GAGNÉ' : 'PERDU' }}
                 </text>
               </template>
               <!-- Cercle central -->
-              <circle cx="0" cy="0" r="40" fill="#1d3557" stroke="#fff" stroke-width="2" />
-              <text x="0" y="5" text-anchor="middle" fill="white" font-weight="bold" font-size="14">DINOR</text>
+              <circle cx="0" cy="0" r="40" fill="#87664Bff" stroke="#FBFDFEff" stroke-width="2" />
+              <text x="0" y="5" text-anchor="middle" fill="#FCFEFFff" font-weight="bold" font-size="14">DINOR</text>
               <!-- Décorations sur le bord externe -->
               <template v-for="i in 12" :key="`dot-${i}`">
                 <circle 
                   :cx="170 * Math.cos((i * 30 - 15) * Math.PI / 180)" 
                   :cy="170 * Math.sin((i * 30 - 15) * Math.PI / 180)" 
                   r="5" 
-                  fill="#FFD166"
+                  fill="#87664Bff"
                 />
               </template>
             </g>
@@ -132,7 +132,7 @@ const result = ref({ won: false, prizeId: null });
 const qrCodeUrl = ref('');
 const participant = ref(null);
 
-// Secteurs de la roue (6 gagnants, 6 perdants)
+// Secteurs de la roue (6 gagnants, 6 perdants alternés)
 const sectors = ref([
   { name: t('fortuneWheel.prizes.tv'), won: true },
   { name: t('fortuneWheel.prizes.tryAgain'), won: false },
@@ -156,6 +156,7 @@ try {
   const { supabase: supabaseInstance, isReal } = useSupabase();
   supabase = supabaseInstance;
   mockMode = !isReal;
+  console.log('FortuneWheel: Mode mock =', mockMode);
 } catch (err) {
   console.error('Error initializing Supabase in FortuneWheel:', err);
   mockMode = true;
@@ -365,15 +366,15 @@ async function determineWinningOutcome() {
   }
   
   try {
-    // Vérifier s'il y a des lots disponibles (remaining > 0)
+    // Vérifier s'il y a des lots disponibles avec remaining > 0
     const { data, error } = await supabase
       .from('prize')
-      .select('id')
+      .select('id, remaining')
       .gt('remaining', 0);
     
     if (error) throw error;
     
-    // S'il n'y a pas de lots disponibles, le participant ne peut pas gagner
+    // S'il n'y a pas de lots disponibles (remaining > 0), le participant ne peut pas gagner
     const canWin = data && data.length > 0;
     
     // Si le participant peut gagner, sélectionner un secteur gagnant, sinon un secteur perdant
@@ -414,24 +415,24 @@ async function determinePrize() {
   try {
     const { data, error } = await supabase
       .from('prize')
-      .select('id')
+      .select('id, remaining')
       .gt('remaining', 0)
       .order('id')
       .limit(10);
       
     if (error) throw error;
     
-    // S'il y a des lots disponibles, en sélectionner un aléatoirement
+    // S'il y a des lots disponibles avec remaining > 0, en sélectionner un aléatoirement
     if (data && data.length > 0) {
       const randomIndex = Math.floor(Math.random() * data.length);
       return data[randomIndex].id;
     }
     
-    // Si aucun lot n'est disponible, retourner un ID aléatoire (ne devrait pas arriver)
-    return Math.floor(Math.random() * 5) + 1;
+    // Si aucun lot n'est disponible, retourner null (ne devrait pas arriver normalement)
+    return null;
   } catch (error) {
     console.error('Error determining prize:', error);
-    return Math.floor(Math.random() * 5) + 1;
+    return null;
   }
 }
 
@@ -458,14 +459,58 @@ async function saveEntryToDatabase(won, prizeId) {
       entry_date: new Date().toISOString()
     };
     
-    const { data, error } = await supabase
-      .from('entry')
-      .insert(entryData)
-      .select();
+    // Créer une transaction pour insérer l'entrée et mettre à jour le prix si nécessaire
+    if (won && prizeId) {
+      // 1. Insérer l'entrée
+      const { data: entryData, error: entryError } = await supabase
+        .from('entry')
+        .insert(entryData)
+        .select();
+        
+      if (entryError) throw entryError;
       
-    if (error) throw error;
-    
-    return data && data.length > 0 ? data[0] : entryData;
+      // 2. Mettre à jour le prix (décrémenter remaining et ajouter la date)
+      const currentDate = new Date().toISOString();
+      
+      // Récupérer d'abord les données actuelles du prix
+      const { data: prizeData, error: prizeSelectError } = await supabase
+        .from('prize')
+        .select('remaining, won_date')
+        .eq('id', prizeId)
+        .single();
+        
+      if (prizeSelectError) throw prizeSelectError;
+      
+      // Mettre à jour le prix
+      // Conversion du tableau won_date JSON en array JavaScript
+      const currentWonDates = Array.isArray(prizeData.won_date) ? prizeData.won_date : [];
+      const updatedWonDates = [...currentWonDates, currentDate];
+      
+      const { error: prizeUpdateError } = await supabase
+        .from('prize')
+        .update({ 
+          remaining: Math.max(0, (prizeData.remaining || 0) - 1),
+          won_date: updatedWonDates
+        })
+        .eq('id', prizeId);
+        
+      if (prizeUpdateError) throw prizeUpdateError;
+      
+      return entryData && entryData.length > 0 ? entryData[0] : {
+        ...entryData,
+        created_at: currentDate
+      };
+    } else {
+      // Si ce n'est pas un gain, simplement insérer l'entrée
+      const { data, error } = await supabase
+        .from('entry')
+        .insert(entryData)
+        .select();
+        
+      if (error) throw error;
+      
+      return data && data.length > 0 ? data[0] : entryData;
+    }
   } catch (error) {
     console.error('Error saving entry to database:', error);
     return {
@@ -488,6 +533,7 @@ async function saveEntryToDatabase(won, prizeId) {
   align-items: center;
   margin: 40px 0;
   padding-bottom: 40px;
+  font-family: 'EB Garamond', serif;
 }
 
 .wheel-outer-ring {
@@ -532,19 +578,20 @@ async function saveEntryToDatabase(won, prizeId) {
 .spin-button {
   margin-top: 20px;
   min-width: 200px;
-  background: linear-gradient(145deg, #e63946, #c1121f);
-  box-shadow: 0 4px 10px rgba(230, 57, 70, 0.4);
+  background: linear-gradient(145deg, #87664Bff, #755743);
+  box-shadow: 0 4px 10px rgba(135, 102, 75, 0.4);
   transition: all 0.3s ease;
+  color: #FCFEFFff;
 }
 
 .spin-button:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(230, 57, 70, 0.5);
+  box-shadow: 0 6px 15px rgba(135, 102, 75, 0.5);
 }
 
 .spin-button:active:not(:disabled) {
   transform: translateY(1px);
-  box-shadow: 0 2px 5px rgba(230, 57, 70, 0.4);
+  box-shadow: 0 2px 5px rgba(135, 102, 75, 0.4);
 }
 
 .spin-button:disabled {
@@ -566,23 +613,23 @@ async function saveEntryToDatabase(won, prizeId) {
 }
 
 .win-message {
-  color: #059669;
+  color: #87664Bff;
   font-size: 24px;
   font-weight: 700;
 }
 
 .lose-message {
-  color: #DC2626;
+  color: #BD2B23ff;
   font-size: 24px;
   font-weight: 700;
 }
 
 .result-container.win {
-  border-left: 5px solid #059669;
+  border-left: 5px solid #87664Bff;
 }
 
 .result-container.lose {
-  border-left: 5px solid #DC2626;
+  border-left: 5px solid #BD2B23ff;
 }
 
 .prize-info {
