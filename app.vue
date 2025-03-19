@@ -1,93 +1,95 @@
 <template>
-  <div class="app-container">
-    <header class="header">
-      <div class="logo">
-        <img src="/assets/images/dinor-logo.svg" alt="DINOR Logo" class="logo-image" />
-        <h1>{{ t('app.title') }}</h1>
-      </div>
-      <div class="header-info">
-        <p class="tagline">{{ t('app.subtitle') }}</p>
-      </div>
-    </header>
-    
-    <main class="main-content">
-      <!-- Afficher un indicateur de chargement pendant la vérification initiale -->
-      <div v-if="isCheckingParticipant" class="flex flex-col items-center justify-center h-64">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mb-4"></div>
-        <p class="text-lg text-gray-700">{{ t('app.messages.loading') }}</p>
-      </div>
+  <NuxtLayout name="default">
+    <div class="app-container">
+      <header class="header">
+        <div class="logo">
+          <img src="/assets/images/dinor-logo.svg" alt="DINOR Logo" class="logo-image" />
+          <h1>{{ t('app.title') }}</h1>
+        </div>
+        <div class="header-info">
+          <p class="tagline">{{ t('app.subtitle') }}</p>
+        </div>
+      </header>
       
-      <div v-else-if="!initialCheckComplete || checkingParticipant" class="loading-container">
-        <div class="spinner-container">
-          <svg class="spinner" viewBox="0 0 50 50">
-            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-          </svg>
+      <main class="main-content">
+        <!-- Afficher un indicateur de chargement pendant la vérification initiale -->
+        <div v-if="isCheckingParticipant" class="flex flex-col items-center justify-center h-64">
+          <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mb-4"></div>
+          <p class="text-lg text-gray-700">{{ t('app.messages.loading') }}</p>
         </div>
-        <p>{{ t('app.messages.loading') }}</p>
-      </div>
-      
-      <div v-else>
-        <div v-if="participantId && participantName" class="participant-info">
-          <div class="participant-badge">
-            <span class="participant-name">{{ participantName }}</span>
-            <span class="participant-status">{{ t('app.messages.participantInfo') }}</span>
+        
+        <div v-else-if="!initialCheckComplete || checkingParticipant" class="loading-container">
+          <div class="spinner-container">
+            <svg class="spinner" viewBox="0 0 50 50">
+              <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
           </div>
+          <p>{{ t('app.messages.loading') }}</p>
         </div>
         
-        <!-- Message d'attente si le participant a joué récemment -->
-        <div v-if="participantState.playedRecently" class="waiting-message">
-          <div class="alert alert-warning">
-            <h3>{{ t('app.messages.waitTitle') }}</h3>
-            <p>{{ t('app.messages.waitMessage', { days: participantState.daysUntilNextPlay }) }}</p>
-            <p v-if="participantState.lastPlayDate">
-              {{ t('app.messages.lastPlayed', { date: formatDate(participantState.lastPlayDate) }) }}
-            </p>
-            <button class="btn btn-secondary mt-4" @click="resetGame">
-              {{ t('app.buttons.tryAnotherParticipant') }}
-            </button>
-          </div>
-        </div>
-        
-        <div v-else-if="showForm" class="form-container">
-          <RegistrationForm @participant-registered="onParticipantRegistered" />
-        </div>
-        
-        <div v-else-if="!gameComplete" class="wheel-container">
-          <FortuneWheel 
-            :participantId="participantId" 
-            @game-completed="onGameCompleted" 
-          />
-        </div>
-        
-        <div v-else class="game-results">
-          <div class="result-card" :class="gameResult.result === 'GAGNÉ' ? 'win' : 'lose'">
-            <h2>{{ t('fortuneWheel.messages.congratulations') }}</h2>
-            <p class="result-text">{{ t('app.messages.gameCompleted') }} {{ gameResult.result }}!</p>
-            
-            <div v-if="gameResult.result === 'GAGNÉ'" class="win-details">
-              <p>{{ t('app.messages.prizeWon') }}</p>
-              <p v-if="gameResult.prize" class="prize-name">{{ gameResult.prize.name }}</p>
+        <div v-else>
+          <div v-if="participantId && participantName" class="participant-info">
+            <div class="participant-badge">
+              <span class="participant-name">{{ participantName }}</span>
+              <span class="participant-status">{{ t('app.messages.participantInfo') }}</span>
             </div>
-            
-            <div class="game-over-actions">
-              <button 
-                class="btn btn-primary" 
-                @click="resetGame"
-                :title="t('app.buttons.newParticipant')"
-              >
+          </div>
+          
+          <!-- Message d'attente si le participant a joué récemment -->
+          <div v-if="participantState.playedRecently" class="waiting-message">
+            <div class="alert alert-warning">
+              <h3>{{ t('app.messages.waitTitle') }}</h3>
+              <p>{{ t('app.messages.waitMessage', { days: participantState.daysUntilNextPlay }) }}</p>
+              <p v-if="participantState.lastPlayDate">
+                {{ t('app.messages.lastPlayed', { date: formatDate(participantState.lastPlayDate) }) }}
+              </p>
+              <button class="btn btn-secondary mt-4" @click="resetGame">
                 {{ t('app.buttons.newParticipant') }}
               </button>
             </div>
           </div>
+          
+          <div v-else-if="showForm" class="form-container">
+            <RegistrationForm @participant-registered="onParticipantRegistered" />
+          </div>
+          
+          <div v-else-if="!gameComplete" class="wheel-container">
+            <FortuneWheel 
+              :participantId="participantId" 
+              @game-completed="onGameCompleted" 
+            />
+          </div>
+          
+          <div v-else class="game-results">
+            <div class="result-card" :class="gameResult.result === 'GAGNÉ' ? 'win' : 'lose'">
+              <h2>{{ t('fortuneWheel.messages.congratulations') }}</h2>
+              <p class="result-text">{{ t('app.messages.gameCompleted') }} {{ gameResult.result }}!</p>
+              
+              <div v-if="gameResult.result === 'GAGNÉ'" class="win-details">
+                <p>{{ t('app.messages.prizeWon') }}</p>
+                <p v-if="gameResult.prize" class="prize-name">{{ gameResult.prize.name }}</p>
+              </div>
+              
+              <div class="game-over-actions">
+                <button 
+                  class="btn btn-primary" 
+                  @click="resetGame"
+                  :title="t('app.buttons.newParticipant')"
+                >
+                  {{ t('app.buttons.newParticipant') }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
-    
-    <footer class="footer">
-      <p>{{ t('app.footer.copyright') }}</p>
-      <p class="small">{{ t('app.footer.disclaimer') }}</p>
-    </footer>
-  </div>
+      </main>
+      
+      <footer class="footer">
+        <p>{{ t('app.footer.copyright') }}</p>
+        <p class="small">{{ t('app.footer.disclaimer') }}</p>
+      </footer>
+    </div>
+  </NuxtLayout>
 </template>
 
 <script setup>
@@ -199,14 +201,12 @@ async function checkStoredParticipant() {
         }
       } else {
         console.log('Participant non trouvé dans la base de données, réinitialisation');
-        // Si le participant n'existe pas dans la base de données, réinitialiser
+        // Si le participant n'existe pas, réinitialiser
         resetGame();
       }
     }
   } catch (error) {
     console.error('Erreur lors de la vérification du participant stocké:', error);
-    // En cas d'erreur, afficher le formulaire d'inscription
-    resetGame();
   } finally {
     checkingStoredParticipant.value = false;
     initialCheckComplete.value = true;
@@ -218,9 +218,7 @@ async function checkStoredParticipant() {
 function formatDate(date) {
   if (!date) return '';
   
-  // Options pour le format de date
   const options = { 
-    weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric',
@@ -228,8 +226,11 @@ function formatDate(date) {
     minute: '2-digit'
   };
   
-  // Utiliser l'API Intl pour formater la date en français
-  return new Intl.DateTimeFormat('fr-FR', options).format(date);
+  if (typeof date === 'string') {
+    return new Date(date).toLocaleDateString(undefined, options);
+  }
+  
+  return date.toLocaleDateString(undefined, options);
 }
 
 // Exécuter la vérification au chargement de la page
@@ -239,77 +240,11 @@ onMounted(() => {
 </script>
 
 <style>
-/* Styles globaux */
-:root {
-  --primary-color: #e63946;
-  --secondary-color: #1d3557;
-  --light-color: #f1faee;
-  --accent-color: #a8dadc;
-  --dark-color: #457b9d;
-  --win-color: #059669;
-  --lose-color: #DC2626;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  color: var(--secondary-color);
-  background-color: var(--light-color);
-  min-height: 100vh;
-}
-
-.btn {
-  display: inline-block;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 30px;
-  font-weight: 700;
-  font-size: 16px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-}
-
-.btn-primary:hover {
-  background-color: #d62636;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-primary:active {
-  transform: translateY(1px);
-}
-
-.btn-secondary {
-  background-color: var(--dark-color);
-}
-
-.btn-secondary:hover {
-  background-color: #3d6d8a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Structure */
 .app-container {
-  max-width: 1200px;
   min-height: 100vh;
-  margin: 0 auto;
-  padding: 20px;
   display: flex;
   flex-direction: column;
+  padding: 0;
 }
 
 .header {
@@ -351,141 +286,10 @@ body {
 
 .main-content {
   flex: 1;
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.participant-info {
-  width: 100%;
-  margin-bottom: 30px;
-  display: flex;
-  justify-content: center;
-}
-
-.participant-badge {
-  background-color: white;
-  border-radius: 50px;
-  padding: 10px 20px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.participant-name {
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--secondary-color);
-}
-
-.participant-status {
-  font-size: 14px;
-  color: var(--dark-color);
-}
-
-.form-container, .wheel-container {
-  width: 100%;
-  max-width: 800px;
+  padding: 2rem;
+  max-width: 1200px;
   margin: 0 auto;
-}
-
-.game-results {
   width: 100%;
-  max-width: 600px;
-  margin: 30px auto;
-}
-
-.result-card {
-  background-color: white;
-  border-radius: 10px;
-  padding: 30px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.result-card.win {
-  border-left: 6px solid var(--win-color);
-}
-
-.result-card.lose {
-  border-left: 6px solid var(--lose-color);
-}
-
-.result-text {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 20px 0;
-}
-
-.win .result-text {
-  color: var(--win-color);
-}
-
-.lose .result-text {
-  color: var(--lose-color);
-}
-
-.game-over-actions {
-  margin-top: 30px;
-}
-
-.win-details {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #f0fff4;
-  border-radius: 8px;
-}
-
-.footer {
-  margin-top: 40px;
-  padding: 20px 0;
-  border-top: 2px solid rgba(0, 0, 0, 0.1);
-  text-align: center;
-  font-size: 14px;
-  color: var(--dark-color);
-}
-
-.footer .small {
-  font-size: 12px;
-  margin-top: 5px;
-  opacity: 0.7;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .logo-image {
-    height: 50px;
-    margin-right: 15px;
-  }
-  
-  .logo h1 {
-    font-size: 24px;
-  }
-  
-  .tagline {
-    font-size: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .logo {
-    flex-direction: column;
-  }
-  
-  .logo-image {
-    margin-right: 0;
-    margin-bottom: 15px;
-  }
-  
-  .logo h1 {
-    font-size: 22px;
-  }
-  
-  .header-info {
-    padding: 0 10px;
-  }
 }
 
 .loading-container {
@@ -493,22 +297,24 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  text-align: center;
+  min-height: 60vh;
 }
 
 .spinner-container {
+  width: 50px;
+  height: 50px;
   margin-bottom: 20px;
 }
 
 .spinner {
   animation: rotate 2s linear infinite;
+  z-index: 2;
   width: 50px;
   height: 50px;
 }
 
-.spinner .path {
-  stroke: var(--primary-color);
+.path {
+  stroke: #1d3557;
   stroke-linecap: round;
   animation: dash 1.5s ease-in-out infinite;
 }
@@ -534,28 +340,111 @@ body {
   }
 }
 
-.prize-name {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-top: 10px;
-  color: var(--win-color);
+.participant-info {
+  margin-bottom: 2rem;
+}
+
+.participant-badge {
+  display: inline-flex;
+  background-color: #f1faee;
+  border-radius: 50px;
+  padding: 0.5rem 1rem;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.participant-name {
+  font-weight: 700;
+  margin-right: 0.5rem;
+  color: #1d3557;
+}
+
+.participant-status {
+  color: #457b9d;
+  font-size: 0.9rem;
 }
 
 .waiting-message {
-  width: 100%;
-  max-width: 600px;
-  margin: 30px auto;
-  text-align: center;
+  max-width: 800px;
+  margin: 2rem auto;
 }
 
 .alert {
   background-color: #f0fff4;
   border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.alert-warning {
-  border-left: 6px solid #ffc107;
+.wheel-container {
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.game-results {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.result-card {
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.result-card.win {
+  background-color: #f0fff4;
+  border: 2px solid #34d399;
+}
+
+.result-card.lose {
+  background-color: #fff0f0;
+  border: 2px solid #f87171;
+}
+
+.result-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.prize-name {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1d3557;
+  margin: 1rem 0;
+}
+
+.win-details {
+  margin: 2rem 0;
+}
+
+.game-over-actions {
+  margin-top: 2rem;
+}
+
+.footer {
+  margin-top: 40px;
+  padding: 20px 0;
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-size: 14px;
+  color: var(--dark-color);
+}
+
+.footer .small {
+  font-size: 12px;
+  margin-top: 5px;
+  opacity: 0.7;
 }
 </style>

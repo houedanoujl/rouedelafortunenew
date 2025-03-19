@@ -62,7 +62,51 @@
         >
         <label for="agreeTerms">
           {{ t('registration.fields.terms.label') }} <span class="required">*</span>
+          <button type="button" class="terms-link" @click="showTermsModal = true">
+            {{ t('registration.fields.terms.viewLink') }}
+          </button>
         </label>
+      </div>
+
+      <!-- Modal pour les conditions générales et politique de confidentialité -->
+      <div v-if="showTermsModal" class="modal-overlay">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>{{ t('registration.termsModal.title') }}</h3>
+            <button type="button" class="close-btn" @click="showTermsModal = false">&times;</button>
+          </div>
+          <div class="modal-content">
+            <div class="modal-tabs">
+              <button 
+                :class="['tab-btn', { active: activeTab === 'terms' }]" 
+                @click="activeTab = 'terms'"
+              >
+                {{ t('registration.termsModal.tabTerms') }}
+              </button>
+              <button 
+                :class="['tab-btn', { active: activeTab === 'privacy' }]" 
+                @click="activeTab = 'privacy'"
+              >
+                {{ t('registration.termsModal.tabPrivacy') }}
+              </button>
+            </div>
+            <div class="tab-content">
+              <div v-if="activeTab === 'terms'" class="terms-content">
+                <h4>{{ t('registration.termsModal.termsTitle') }}</h4>
+                <div v-html="t('registration.termsModal.termsContent')"></div>
+              </div>
+              <div v-if="activeTab === 'privacy'" class="privacy-content">
+                <h4>{{ t('registration.termsModal.privacyTitle') }}</h4>
+                <div v-html="t('registration.termsModal.privacyContent')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn" @click="showTermsModal = false">
+              {{ t('registration.termsModal.closeButton') }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div v-if="errorMessage" class="error-message">
@@ -102,6 +146,8 @@ const lastName = ref('');
 const phone = ref('');
 const email = ref('');
 const agreeTerms = ref(false);
+const showTermsModal = ref(false);
+const activeTab = ref('terms');
 
 const isLoading = ref(false);
 const errorMessage = ref('');
@@ -397,15 +443,26 @@ function resetForm() {
 }
 
 .checkbox-group {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
+  display: flex;
+  align-items: flex-start;
 }
 
-.checkbox-group input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+.checkbox-group label {
+  margin-left: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.terms-link {
+  background: none;
+  border: none;
+  color: #3498db;
+  text-decoration: underline;
   cursor: pointer;
+  padding: 0 5px;
+  font-size: 0.9em;
+  margin-left: 5px;
 }
 
 .required {
@@ -524,5 +581,85 @@ function resetForm() {
   .checkbox-group input[type="checkbox"] {
     margin-top: 3px;
   }
+}
+
+/* Styles pour la modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  border-bottom: 3px solid #3498db;
+  font-weight: bold;
+}
+
+.tab-content {
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

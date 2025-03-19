@@ -102,11 +102,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { gsap } from 'gsap';
+import { ref, onMounted, computed, watch } from 'vue';
+import gsap from 'gsap';
 import { useSupabase } from '~/composables/useSupabase';
+import { useParticipantCheck } from '~/composables/useParticipantCheck';
 import { useTranslation } from '~/composables/useTranslation';
 
+const emit = defineEmits(['gameCompleted']);
 const { t } = useTranslation();
 
 const props = defineProps({
@@ -120,102 +122,103 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['gameCompleted']);
+const wheelRef = ref(null);
+const wheelSectorsRef = ref(null);
+const isSpinning = ref(false);
+const hasPlayed = ref(false);
+const alreadyPlayed = ref(false);
+const showResult = ref(false);
+const result = ref({ won: false, prizeId: null });
+const qrCodeUrl = ref('');
+const participant = ref(null);
 
+// Secteurs de la roue (6 gagnants, 6 perdants)
+const sectors = ref([
+  { name: t('fortuneWheel.prizes.tv'), won: true },
+  { name: t('fortuneWheel.prizes.tryAgain'), won: false },
+  { name: t('fortuneWheel.prizes.smartphone'), won: true },
+  { name: t('fortuneWheel.prizes.tryAgain'), won: false },
+  { name: t('fortuneWheel.prizes.voucher50'), won: true },
+  { name: t('fortuneWheel.prizes.tryAgain'), won: false },
+  { name: t('fortuneWheel.prizes.airpods'), won: true },
+  { name: t('fortuneWheel.prizes.tryAgain'), won: false },
+  { name: t('fortuneWheel.prizes.watch'), won: true },
+  { name: t('fortuneWheel.prizes.tryAgain'), won: false },
+  { name: t('fortuneWheel.prizes.voucher20'), won: true },
+  { name: t('fortuneWheel.prizes.tryAgain'), won: false }
+]);
+
+// Vérifier si Supabase est disponible
 let supabase;
 let mockMode = false;
 
 try {
-  const supabaseInstance = useSupabase();
-  supabase = supabaseInstance.supabase;
-  mockMode = !supabaseInstance.isReal;
+  const { supabase: supabaseInstance, isReal } = useSupabase();
+  supabase = supabaseInstance;
+  mockMode = !isReal;
 } catch (err) {
+  console.error('Error initializing Supabase in FortuneWheel:', err);
   mockMode = true;
 }
 
-// References
-const wheelRef = ref(null);
-const wheelSectorsRef = ref(null);
+// Fonctions pour gérer les cookies
+function setCookie(name, value, days) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "; expires=" + date.toUTCString();
+  document.cookie = name + "=" + value + expires + "; path=/; SameSite=Strict";
+}
 
-// State
-const isSpinning = ref(false);
-const showResult = ref(false);
-const result = ref({ won: false, prizeId: null });
-const qrCodeUrl = ref('');
-const hasPlayed = ref(false);
-const alreadyPlayed = ref(false);
-
-// Sectors (12 segments with win/lose status)
-const sectors = ref([
-  { won: true }, { won: false }, { won: false }, 
-  { won: false }, { won: true }, { won: false }, 
-  { won: false }, { won: true }, { won: false }, 
-  { won: false }, { won: true }, { won: false }
-]);
-
-// Vérifier si le participant a déjà joué
-onMounted(async () => {
-  // Vérifier d'abord si le participant existe dans la base de données
-  const participantExists = await checkParticipantExists();
-  
-  if (!participantExists) {
-    emit('gameCompleted', { result: 'ERROR', message: t('errors.participantNotFound') });
-    return;
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
   }
-  
-  // Ensuite vérifier si le participant a déjà joué
-  await checkIfParticipantAlreadyPlayed();
+  return null;
+}
+
+const { checkIfParticipantHasPlayed, participantState, saveParticipationInCookie } = useParticipantCheck();
+
+onMounted(async () => {
+  checkParticipantExists();
 });
 
 // Vérifier si le participant existe dans la base de données
 async function checkParticipantExists() {
-  if (!props.participantId) return false;
-  
+  if (!props.participantId) {
+    return;
+  }
+
   try {
-    if (mockMode || !supabase) {
-      // En mode mock, on considère que le participant existe toujours
-      return true;
-    }
-    
-    const { data, error } = await supabase
-      .from('participant')
-      .select('id')
-      .eq('id', props.participantId)
-      .single();
-      
-    if (error) {
-      return false;
-    }
-    
-    return !!data;
-  } catch (err) {
-    return false;
+    // Vérifier si le participant a déjà joué
+    await checkIfParticipantAlreadyPlayed();
+  } catch (error) {
+    console.error('Error checking participant:', error);
   }
 }
 
+// Vérifier si le participant a déjà joué
 async function checkIfParticipantAlreadyPlayed() {
-  if (!props.participantId) return;
-  
   try {
-    if (mockMode || !supabase) {
-      // Simuler que le participant n'a pas joué (pour le premier tour)
-      alreadyPlayed.value = false;
-      return;
-    }
+    const hasPlayed = await checkIfParticipantHasPlayed(props.participantId);
     
-    const { data, error } = await supabase
-      .from('entry')
-      .select('id')
-      .eq('participant_id', props.participantId)
-      .eq('contest_id', props.contestId);
+    if (hasPlayed && participantState.playedRecently) {
+      alreadyPlayed.value = true;
       
-    if (error) {
-      return;
+      if (participantState.gameResult) {
+        result.value = {
+          won: participantState.gameResult.result === 'GAGNÉ',
+          prizeId: participantState.gameResult.prize_id
+        };
+      }
+    } else {
+      alreadyPlayed.value = false;
     }
-    
-    alreadyPlayed.value = data && data.length > 0;
-  } catch (err) {
-    // En cas d'erreur, on considère que le participant n'a pas joué
+  } catch (error) {
+    console.error('Error checking if participant already played:', error);
     alreadyPlayed.value = false;
   }
 }
@@ -224,18 +227,12 @@ async function checkIfParticipantAlreadyPlayed() {
 function describeArc(x, y, radius, startAngle, endAngle) {
   const start = polarToCartesian(x, y, radius, endAngle);
   const end = polarToCartesian(x, y, radius, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-  
-  return [
-    "M", start.x, start.y,
-    "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
-    "L", x, y,
-    "Z"
-  ].join(" ");
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y} L ${x} ${y} Z`;
 }
 
 function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180;
+  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
   return {
     x: centerX + (radius * Math.cos(angleInRadians)),
     y: centerY + (radius * Math.sin(angleInRadians))
@@ -249,13 +246,12 @@ async function spinWheel() {
   isSpinning.value = true;
   showResult.value = false;
   
-  // Déterminer le secteur gagnant (aléatoire ou prédéterminé)
-  const randomSectorIndex = Math.floor(Math.random() * 12);
-  const wonSpin = sectors.value[randomSectorIndex].won;
+  // Déterminer si c'est gagné ou perdu (prédéterminé par la configuration des lots disponibles)
+  const { won, sectorIndex } = await determineWinningOutcome();
   
   // Calcul de la rotation (au moins 8 rotations complètes + le secteur aléatoire)
   const fullRotations = 8 + Math.random() * 4; // Entre 8 et 12 rotations complètes
-  const extraDegrees = randomSectorIndex * 30;
+  const extraDegrees = sectorIndex * 30;
   const totalRotation = fullRotations * 360 + extraDegrees;
   
   try {
@@ -285,7 +281,7 @@ async function spinWheel() {
       rotation: totalRotation,
       duration: 1.5,
       ease: "elastic.out(1, 0.3)",
-      onComplete: () => handleSpinComplete(wonSpin)
+      onComplete: () => handleSpinComplete(won)
     });
   } catch (error) {
     isSpinning.value = false;
@@ -297,11 +293,14 @@ async function handleSpinComplete(won) {
   hasPlayed.value = true; // Marquer que le participant a joué
   
   // Animation pour l'affichage du résultat
-  setTimeout(() => {
+  setTimeout(async () => {
+    // Déterminer le prix si gagné
+    const prizeId = won ? await determinePrize() : null;
+    
     // Set the result object
     result.value = {
       won,
-      prizeId: won ? determinePrize() : null
+      prizeId
     };
     
     // If won, generate QR code
@@ -309,8 +308,29 @@ async function handleSpinComplete(won) {
       qrCodeUrl.value = `/assets/images/qr-code-placeholder.svg`; // Using SVG placeholder
     }
     
+    // Récupérer les informations du participant pour le cookie
+    let participantInfo = null;
+    if (!mockMode && supabase) {
+      try {
+        const { data } = await supabase
+          .from('participant')
+          .select('*')
+          .eq('id', props.participantId)
+          .single();
+        
+        participantInfo = data;
+      } catch (error) {
+        console.error('Error fetching participant info for cookie:', error);
+      }
+    }
+    
     // Save result to database
-    saveEntryToDatabase(won, result.value.prizeId);
+    const gameResult = await saveEntryToDatabase(won, result.value.prizeId);
+    
+    // Enregistrer le résultat dans un cookie si le participant existe
+    if (participantInfo) {
+      saveParticipationInCookie(participantInfo.phone, participantInfo, gameResult);
+    }
     
     // Show result with animation
     showResult.value = true;
@@ -333,6 +353,57 @@ async function handleSpinComplete(won) {
   }, 500);
 }
 
+// Déterminer si le participant va gagner ou perdre en fonction des lots disponibles
+async function determineWinningOutcome() {
+  // Si mode mock ou pas de Supabase, retourner un résultat aléatoire
+  if (mockMode || !supabase) {
+    const sectorIndex = Math.floor(Math.random() * 12);
+    return { 
+      won: sectors.value[sectorIndex].won,
+      sectorIndex
+    };
+  }
+  
+  try {
+    // Vérifier s'il y a des lots disponibles (remaining > 0)
+    const { data, error } = await supabase
+      .from('prize')
+      .select('id')
+      .gt('remaining', 0);
+    
+    if (error) throw error;
+    
+    // S'il n'y a pas de lots disponibles, le participant ne peut pas gagner
+    const canWin = data && data.length > 0;
+    
+    // Si le participant peut gagner, sélectionner un secteur gagnant, sinon un secteur perdant
+    let sectorIndex;
+    if (canWin) {
+      // Sélectionner un secteur gagnant (indices pairs: 0, 2, 4, 6, 8, 10)
+      const winningSectors = [0, 2, 4, 6, 8, 10];
+      sectorIndex = winningSectors[Math.floor(Math.random() * winningSectors.length)];
+    } else {
+      // Sélectionner un secteur perdant (indices impairs: 1, 3, 5, 7, 9, 11)
+      const losingSectors = [1, 3, 5, 7, 9, 11];
+      sectorIndex = losingSectors[Math.floor(Math.random() * losingSectors.length)];
+    }
+    
+    return {
+      won: canWin && sectors.value[sectorIndex].won,
+      sectorIndex
+    };
+    
+  } catch (error) {
+    console.error('Error determining winning outcome:', error);
+    // En cas d'erreur, retourner un résultat aléatoire
+    const sectorIndex = Math.floor(Math.random() * 12);
+    return { 
+      won: sectors.value[sectorIndex].won,
+      sectorIndex
+    };
+  }
+}
+
 async function determinePrize() {
   // If Supabase is not available, return mock data
   if (mockMode || !supabase) {
@@ -344,12 +415,22 @@ async function determinePrize() {
     const { data, error } = await supabase
       .from('prize')
       .select('id')
-      .limit(1);
+      .gt('remaining', 0)
+      .order('id')
+      .limit(10);
       
     if (error) throw error;
     
-    return data.length > 0 ? data[0].id : Math.floor(Math.random() * 5) + 1;
+    // S'il y a des lots disponibles, en sélectionner un aléatoirement
+    if (data && data.length > 0) {
+      const randomIndex = Math.floor(Math.random() * data.length);
+      return data[randomIndex].id;
+    }
+    
+    // Si aucun lot n'est disponible, retourner un ID aléatoire (ne devrait pas arriver)
+    return Math.floor(Math.random() * 5) + 1;
   } catch (error) {
+    console.error('Error determining prize:', error);
     return Math.floor(Math.random() * 5) + 1;
   }
 }
@@ -357,21 +438,44 @@ async function determinePrize() {
 async function saveEntryToDatabase(won, prizeId) {
   // If Supabase is not available, just log for demo
   if (mockMode || !supabase) {
-    return;
+    console.log('Mock mode: saving entry to database', { won, prizeId });
+    return {
+      id: Date.now(),
+      participant_id: props.participantId,
+      contest_id: props.contestId,
+      result: won ? 'GAGNÉ' : 'PERDU',
+      prize_id: prizeId,
+      created_at: new Date().toISOString()
+    };
   }
   
   try {
+    const entryData = {
+      participant_id: props.participantId,
+      contest_id: props.contestId,
+      result: won ? 'GAGNÉ' : 'PERDU',
+      prize_id: prizeId,
+      entry_date: new Date().toISOString()
+    };
+    
     const { data, error } = await supabase
       .from('entry')
-      .insert({
-        participant_id: props.participantId,
-        contest_id: props.contestId,
-        result: won ? 'GAGNÉ' : 'PERDU',
-        prize_id: prizeId
-      });
+      .insert(entryData)
+      .select();
       
     if (error) throw error;
+    
+    return data && data.length > 0 ? data[0] : entryData;
   } catch (error) {
+    console.error('Error saving entry to database:', error);
+    return {
+      id: Date.now(),
+      participant_id: props.participantId,
+      contest_id: props.contestId,
+      result: won ? 'GAGNÉ' : 'PERDU',
+      prize_id: prizeId,
+      created_at: new Date().toISOString()
+    };
   }
 }
 </script>
