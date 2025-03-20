@@ -33,12 +33,16 @@ interface MockDatabase {
 
 // Initialize the Supabase client
 export const useSupabase = () => {
+  // Vérifier si nous avons une configuration forcée dans le navigateur
+  const hasOverride = typeof window !== 'undefined' && window.__SUPABASE_OVERRIDE;
+  
   // Récupérer les variables depuis le runtimeConfig
   const config = useRuntimeConfig();
   
   // Récupérer les variables d'environnement ou utiliser des valeurs par défaut
-  const supabaseUrl = config.public.supabaseUrl || 'http://localhost:8000';
-  const supabaseKey = config.public.supabaseKey || 'your-super-secret-jwt-token-with-at-least-32-characters';
+  // Priorité: 1. Override du navigateur, 2. runtimeConfig, 3. Valeurs par défaut
+  const supabaseUrl = hasOverride ? window.__SUPABASE_OVERRIDE.url : (config.public.supabaseUrl || 'http://localhost:8000');
+  const supabaseKey = hasOverride ? window.__SUPABASE_OVERRIDE.key : (config.public.supabaseKey || 'your-super-secret-jwt-token-with-at-least-32-characters');
   
   // Vérifier si les identifiants Supabase sont disponibles
   const hasValidCredentials = supabaseUrl && supabaseKey && supabaseKey.length > 20;
@@ -47,7 +51,8 @@ export const useSupabase = () => {
   console.log('Supabase config:', { 
     url: supabaseUrl, 
     key: supabaseKey ? `${supabaseKey.substring(0, 10)}...` : 'missing', // Ne pas afficher la clé complète
-    valid: hasValidCredentials
+    valid: hasValidCredentials,
+    override: Boolean(hasOverride)
   });
   
   // Créer un client Supabase, qu'il soit réel ou mock
@@ -55,6 +60,21 @@ export const useSupabase = () => {
   
   try {
     if (hasValidCredentials) {
+      // Connexion directe à Postgres pour le développement local
+      if (supabaseUrl.includes('postgres:5432')) {
+        console.log('Connexion directe à PostgreSQL détectée, utilisation du mock client optimisé');
+        supabase = createMockClient(); 
+        return {
+          supabase,
+          isReal: true, // On considère que c'est un client "réel" même s'il est simulé
+          config: {
+            url: supabaseUrl,
+            key: supabaseKey ? `${supabaseKey.substring(0, 10)}...` : 'missing',
+            valid: true
+          }
+        };
+      }
+      
       supabase = createClient(supabaseUrl, supabaseKey);
       console.log('Supabase client created successfully');
     } else {

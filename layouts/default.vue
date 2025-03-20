@@ -10,27 +10,48 @@
           <div class="col-md-6">
             <p class="mb-0">{{ t('footer.copyright', { year: new Date().getFullYear() }) }}</p>
           </div>
-          <div class="col-md-6 text-md-end">
-            <button 
-              class="btn btn-link" 
-              type="button" 
-              data-bs-toggle="modal" 
-              data-bs-target="#termsModal"
-            >
-              {{ t('footer.terms') }}
-            </button>
-            <button 
-              class="btn btn-link" 
-              type="button" 
-              data-bs-toggle="modal" 
-              data-bs-target="#privacyModal"
-            >
-              {{ t('footer.privacy') }}
-            </button>
-          </div>
+          
         </div>
       </div>
     </footer>
+    
+    <!-- Modal Conditions Générales -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="termsModalLabel">{{ t('footer.terms') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <h4>{{ t('registration.termsModal.termsTitle') }}</h4>
+            <div v-html="t('registration.termsModal.termsContent')"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('registration.termsModal.closeButton') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal Politique de Confidentialité -->
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="privacyModalLabel">{{ t('footer.privacy') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <h4>{{ t('registration.termsModal.privacyTitle') }}</h4>
+            <div v-html="t('registration.termsModal.privacyContent')"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('registration.termsModal.closeButton') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

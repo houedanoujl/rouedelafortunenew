@@ -6,6 +6,26 @@
 
 <script setup>
 import { useTranslation } from '~/composables/useTranslation';
+import { onMounted } from 'vue';
+
+// Fonction pour forcer la détection de la configuration Supabase
+onMounted(() => {
+  const localOverride = () => {
+    // Force le mockClient dans le navigateur
+    if (typeof window !== 'undefined') {
+      // Ajoutez ceci pour éviter que le navigateur n'utilise la mauvaise URL
+      window.__SUPABASE_OVERRIDE = {
+        url: 'http://localhost:8000',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsaG9zdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjE2OTYwMDAwLCJleHAiOjQ3NzA1NjAwMDB9.lbGII8LrENJZpYpsSKdW817FpeWx-8KmgXYy1xtA61Q'
+      };
+      
+      console.log('Supabase Override Applied');
+    }
+  };
+  
+  // Appliquer l'override au chargement de la page
+  localOverride();
+});
 
 const { t } = useTranslation();
 </script>
