@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { useRuntimeConfig } from '#app';
 
 // Types pour les données mockées
 interface MockParticipant {
@@ -32,14 +33,15 @@ interface MockDatabase {
 
 // Initialize the Supabase client
 export const useSupabase = () => {
+  // Récupérer les variables depuis le runtimeConfig
+  const config = useRuntimeConfig();
+  
   // Récupérer les variables d'environnement ou utiliser des valeurs par défaut
-  const supabaseUrl = process.env.SUPABASE_URL || 'https://qwlzxerivnbuxejqxjyu.supabase.co';
-  const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3bHp4ZXJpdm5idXhlanF4anl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzczODUxMTIsImV4cCI6MjA1Mjk2MTExMn0.0zbZQwhTjx0YfE-j18vHDM1rPmmOT9PLznVjNzE2Fhk';
+  const supabaseUrl = config.public.supabaseUrl || 'http://localhost:8000';
+  const supabaseKey = config.public.supabaseKey || 'your-super-secret-jwt-token-with-at-least-32-characters';
   
   // Vérifier si les identifiants Supabase sont disponibles
-  const hasValidCredentials = supabaseUrl && supabaseKey && 
-                             supabaseUrl.startsWith('https://') && 
-                             supabaseKey.length > 20;
+  const hasValidCredentials = supabaseUrl && supabaseKey && supabaseKey.length > 20;
   
   // Afficher les valeurs dans la console
   console.log('Supabase config:', { 
