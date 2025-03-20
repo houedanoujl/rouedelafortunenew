@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copier les fichiers de configuration
 COPY package*.json ./
-COPY nuxt.config.js ./
+COPY nuxt.config.ts ./
 
 # Installer les dépendances
 RUN npm install
