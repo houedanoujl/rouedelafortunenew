@@ -58,6 +58,24 @@
           <div v-if="gameResult.result === 'GAGNÉ'" class="win-details">
             <p>{{ t('app.messages.prizeWon') }}</p>
             <p v-if="gameResult.prize" class="prize-name">{{ gameResult.prize.name }}</p>
+            
+            <!-- Bouton pour afficher les détails du lot dans une modale -->
+            <button 
+              class="btn btn-info mt-2 mb-4"
+              @click="showPrizeDetails = true"
+            >
+              <i class="icon-info-circle"></i> {{ t('app.buttons.viewPrizeDetails') }}
+            </button>
+            
+            <div class="qr-info">
+              <p>{{ t('app.gameResult.scanQrCode') }}</p>
+              <QRCodeGenerator
+                :participant-id="participantId"
+                :prize-id="gameResult?.prize?.id"
+                size="200"
+                :tracking-id="qrTrackingId"
+              />
+            </div>
           </div>
           
           <div class="game-over-actions">
@@ -68,7 +86,49 @@
             >
               {{ t('app.buttons.newParticipant') }}
             </button>
+            
+            <button
+              v-if="gameResult?.result === 'GAGNÉ'"
+              class="btn btn-download"
+              @click="downloadQRCodeAsPdf"
+              :title="t('qrCode.downloadPdf')"
+            >
+              <i class="icon-download"></i> {{ t('qrCode.downloadPdf') }}
+            </button>
           </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Fenêtre modale pour afficher les détails du lot -->
+    <div v-if="showPrizeDetails" class="modal-overlay" @click="showPrizeDetails = false">
+      <div class="modal-container" @click.stop>
+        <div class="modal-header">
+          <h2>{{ t('modal.prizeDetails') }}</h2>
+          <button class="modal-close" @click="showPrizeDetails = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="gameResult?.prize" class="prize-details">
+            <h3>{{ gameResult.prize.name }}</h3>
+            
+            <div v-if="gameResult.prize.description" class="prize-description">
+              <h4>{{ t('modal.description') }} :</h4>
+              <p>{{ gameResult.prize.description }}</p>
+            </div>
+            
+            <div class="prize-value" v-if="gameResult.prize.value">
+              <h4>{{ t('modal.value') }} :</h4>
+              <p>{{ gameResult.prize.value }} FCFA</p>
+            </div>
+            
+            <div class="redemption-info">
+              <h4>{{ t('modal.howToRedeem') }} :</h4>
+              <p>{{ t('modal.redeemInstructions') }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" @click="showPrizeDetails = false">{{ t('modal.close') }}</button>
         </div>
       </div>
     </div>
@@ -76,12 +136,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useTranslation } from '~/composables/useTranslation';
 import { useParticipantCheck } from '~/composables/useParticipantCheck';
+import { useSupabase } from '~/composables/useSupabase';
+// Suppression de l'import du composable usePdfGenerator qui cause des problèmes
+// import { usePdfGenerator } from '~/composables/usePdfGenerator';
+import QRCodeGenerator from '~/components/QRCodeGenerator.vue';
 
 const { t } = useTranslation();
 const { checkParticipantByPhone, checkIfParticipantHasPlayed, participantState, isLoading: checkingParticipant } = useParticipantCheck();
+const { supabase } = useSupabase();
+// Suppression de l'utilisation de usePdfGenerator
+// const { generatePdfFromElement } = usePdfGenerator();
 
 const showForm = ref(true);
 const participantId = ref(null);
@@ -91,6 +158,184 @@ const gameResult = ref(null);
 const initialCheckComplete = ref(false);
 const checkingStoredParticipant = ref(false);
 const isCheckingParticipant = ref(true);
+const qrCodeData = ref(null);
+const qrTrackingId = ref('');
+const showPrizeDetails = ref(false);
+
+// Fonction pour télécharger le QR code en format PDF
+async function downloadQRCodeAsPdf() {
+  // Si les données du participant et du prix ne sont pas disponibles, les récupérer
+  if (!qrCodeData.value) {
+    try {
+      const { data: participant } = await supabase
+        .from('participant')
+        .select('*')
+        .eq('id', participantId.value)
+        .single();
+      
+      const { data: prize } = await supabase
+        .from('prize')
+        .select('*')
+        .eq('id', gameResult.value.prize?.id)
+        .single();
+      
+      qrCodeData.value = {
+        participant,
+        prize
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données pour le PDF:', error);
+    }
+  }
+
+  // Attendre que le DOM soit mis à jour et que le QR code soit rendu
+  await nextTick();
+  
+  // Petit délai pour s'assurer que le QR code est bien rendu
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Créer une mise en page d'impression stylée
+  const printContent = document.createElement('div');
+  printContent.style.cssText = 'width:100%;height:100%;position:fixed;top:0;left:0;background:white;padding:20px;z-index:9999;font-family:Arial,sans-serif;';
+  
+  // Créer un conteneur pour le contenu
+  const container = document.createElement('div');
+  container.style.cssText = 'max-width:800px;margin:0 auto;padding:20px;border:1px solid #ddd;border-radius:10px;text-align:center;background-color:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.1);';
+  
+  // Obtenir le QR code
+  let qrContainer = document.querySelector('.qrcode-container');
+  
+  // Si le QR code n'est pas trouvé, attendre un peu plus longtemps et réessayer
+  if (!qrContainer) {
+    console.log('QR Code non trouvé, nouvelle tentative après délai...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    qrContainer = document.querySelector('.qrcode-container');
+  }
+  
+  if (!qrContainer) {
+    console.error('QR Code non trouvé après plusieurs tentatives');
+    alert('Impossible de générer le PDF. Veuillez réessayer.');
+    return;
+  }
+  
+  // Cloner le contenu du QR code
+  const qrClone = qrContainer.cloneNode(true);
+  qrClone.style.margin = '20px auto';
+  qrClone.style.maxWidth = '200px';
+  
+  // Ajouter le titre
+  const title = document.createElement('h1');
+  title.textContent = t('qrCode.title');
+  title.style.cssText = 'text-align:center;margin:20px 0 10px;color:#333;font-size:24px;';
+  
+  // Ajouter le sous-titre
+  const subtitle = document.createElement('h2');
+  subtitle.textContent = t('qrCode.pdfSubtitle');
+  subtitle.style.cssText = 'text-align:center;margin:0 0 20px;color:#666;font-size:18px;font-weight:normal;';
+  
+  // Ajouter les informations du participant
+  if (qrCodeData.value?.participant) {
+    const participant = qrCodeData.value.participant;
+    const participantBox = document.createElement('div');
+    participantBox.style.cssText = 'background-color:#f9f9f9;border-radius:8px;padding:15px;margin:15px 0;text-align:left;';
+    
+    const participantTitle = document.createElement('h3');
+    participantTitle.textContent = 'Informations du participant';
+    participantTitle.style.cssText = 'margin-top:0;color:#4caf50;border-bottom:1px solid #eee;padding-bottom:5px;';
+    
+    const participantName = document.createElement('p');
+    participantName.innerHTML = '<strong>Nom:</strong> ' + participant.first_name + ' ' + participant.last_name;
+    
+    const participantPhone = document.createElement('p');
+    participantPhone.innerHTML = '<strong>Téléphone:</strong> ' + participant.phone;
+    
+    participantBox.appendChild(participantTitle);
+    participantBox.appendChild(participantName);
+    participantBox.appendChild(participantPhone);
+    
+    container.appendChild(participantBox);
+  }
+  
+  // Ajouter les informations du prix
+  if (qrCodeData.value?.prize) {
+    const prize = qrCodeData.value.prize;
+    const prizeBox = document.createElement('div');
+    prizeBox.style.cssText = 'background-color:#f9f9f9;border-radius:8px;padding:15px;margin:15px 0;text-align:left;';
+    
+    const prizeTitle = document.createElement('h3');
+    prizeTitle.textContent = 'Détails du lot';
+    prizeTitle.style.cssText = 'margin-top:0;color:#4caf50;border-bottom:1px solid #eee;padding-bottom:5px;';
+    
+    const prizeName = document.createElement('p');
+    prizeName.innerHTML = '<strong>Lot:</strong> ' + prize.name;
+    
+    prizeBox.appendChild(prizeTitle);
+    prizeBox.appendChild(prizeName);
+    
+    if (prize.description) {
+      const prizeDesc = document.createElement('p');
+      prizeDesc.innerHTML = '<strong>Description:</strong> ' + prize.description;
+      prizeBox.appendChild(prizeDesc);
+    }
+    
+    container.appendChild(prizeBox);
+  }
+  
+  // Ajouter le pied de page
+  const footer = document.createElement('div');
+  footer.style.cssText = 'margin-top:30px;font-size:12px;color:#999;font-style:italic;text-align:center;';
+  
+  const footerText1 = document.createElement('p');
+  footerText1.textContent = 'Présentez ce QR code pour récupérer votre lot. Valable une fois uniquement.';
+  
+  const footerText2 = document.createElement('p');
+  footerText2.textContent = 'Généré le ' + new Date().toLocaleDateString();
+  
+  footer.appendChild(footerText1);
+  footer.appendChild(footerText2);
+  
+  // Assembler le contenu
+  container.appendChild(title);
+  container.appendChild(subtitle);
+  container.appendChild(qrClone);
+  container.appendChild(footer);
+  
+  // Ajouter un bouton "Annuler" (ne sera pas affiché lors de l'impression)
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Annuler';
+  cancelButton.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;background:#e53935;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;z-index:10000;';
+  cancelButton.setAttribute('class', 'no-print');
+  cancelButton.onclick = function() {
+    document.body.removeChild(printContent);
+  };
+  
+  // Ajouter un bouton "Imprimer" (ne sera pas affiché lors de l'impression)
+  const printButton = document.createElement('button');
+  printButton.textContent = 'Imprimer / Enregistrer PDF';
+  printButton.style.cssText = 'padding:10px 20px;background:#4285f4;color:white;border:none;border-radius:4px;cursor:pointer;font-size:16px;margin:20px auto;display:block;';
+  printButton.setAttribute('class', 'no-print');
+  printButton.onclick = function() {
+    window.print();
+  };
+  
+  // Ajouter un style pour masquer les éléments non imprimables
+  const printStyle = document.createElement('style');
+  printStyle.textContent = '@media print { .no-print { display: none !important; } }';
+  
+  // Ajouter tous les éléments à la page
+  printContent.appendChild(container);
+  printContent.appendChild(cancelButton);
+  printContent.appendChild(printButton);
+  printContent.appendChild(printStyle);
+  document.body.appendChild(printContent);
+  
+  // Auto-imprimer après un délai court (si on le souhaite)
+  /*
+  setTimeout(() => {
+    window.print();
+  }, 500);
+  */
+}
 
 // Montrer le formulaire d'inscription au début
 function resetGame() {
@@ -112,6 +357,9 @@ async function onParticipantRegistered(data) {
   participantName.value = `${data.first_name} ${data.last_name}`;
   showForm.value = false;
   
+  // Générer un ID de suivi pour le QR code
+  qrTrackingId.value = `qr-${data.id}-${Date.now()}`;
+  
   // Sauvegarder les informations du participant
   localStorage.setItem('participantId', data.id.toString());
   localStorage.setItem('participantName', `${data.first_name} ${data.last_name}`);
@@ -122,6 +370,8 @@ async function onParticipantRegistered(data) {
     const hasPlayed = await checkIfParticipantHasPlayed(data.id);
     if (hasPlayed) {
       // Si le participant a déjà joué, afficher le résultat
+      console.log('Le participant a déjà joué:', participantState.gameResult);
+      showForm.value = false;
       gameComplete.value = true;
       gameResult.value = participantState.gameResult;
     }
@@ -131,9 +381,36 @@ async function onParticipantRegistered(data) {
 }
 
 // Lorsque le jeu est terminé, afficher le résultat et permettre de redémarrer
-function onGameCompleted(data) {
+async function onGameCompleted(data) {
   gameComplete.value = true;
   gameResult.value = data;
+  
+  if (data.result === 'GAGNÉ') {
+    // Attendre que les données soient mises à jour avant d'essayer d'accéder au QR code
+    await nextTick();
+    
+    // Récupérer les données du participant et du prix pour le PDF
+    try {
+      const { data: participant } = await supabase
+        .from('participant')
+        .select('*')
+        .eq('id', participantId.value)
+        .single();
+      
+      const { data: prize } = await supabase
+        .from('prize')
+        .select('*')
+        .eq('id', data.prize?.id)
+        .single();
+      
+      qrCodeData.value = {
+        participant,
+        prize
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données:', error);
+    }
+  }
   
   // Si une erreur est survenue (comme participant non trouvé), réinitialiser le jeu
   if (data.result === 'ERROR') {
@@ -383,6 +660,122 @@ onMounted(() => {
 }
 
 .game-over-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   margin-top: 2rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .game-over-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.btn-download {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-download:hover {
+  background-color: #3367d6;
+}
+
+.icon-download {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z'/%3E%3C/svg%3E");
+  background-size: cover;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-container {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 500px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-close {
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.prize-details {
+  margin-bottom: 20px;
+}
+
+.prize-description {
+  margin-bottom: 20px;
+}
+
+.prize-value {
+  margin-bottom: 20px;
+}
+
+.redemption-info {
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-footer button {
+  padding: 10px 20px;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-footer button:hover {
+  background-color: #3367d6;
 }
 </style>

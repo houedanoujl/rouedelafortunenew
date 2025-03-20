@@ -9,7 +9,8 @@
     "buttons": {
       "newParticipant": "Nouveau participant",
       "backToHome": "Retour à l'accueil",
-      "tryAnotherParticipant": "Essayer avec un autre numéro"
+      "tryAnotherParticipant": "Essayer avec un autre numéro",
+      "viewPrizeDetails": "Voir les détails du lot"
     },
     "messages": {
       "alreadyRegistered": "Vous êtes déjà inscrit en tant que",
@@ -25,7 +26,16 @@
       "waitMessage": "Vous avez récemment tenté votre chance. Pour des raisons d'équité, vous pourrez rejouer dans {days} jour(s).",
       "lastPlayed": "Votre dernière participation : {date}",
       "comeBackSoon": "Revenez nous voir le {nextDate} pour tenter à nouveau votre chance !"
-    }
+    },
+    "gameResult": {
+      "win": "GAGNÉ !",
+      "lose": "PERDU",
+      "congratulations": "Félicitations !",
+      "youWon": "Vous avez gagné",
+      "tryAgainLater": "Pas de chance cette fois-ci. Réessayez une prochaine fois !",
+      "scanQrCode": "Scannez ce QR code pour récupérer votre lot"
+    },
+    "checkingParticipant": "Vérification de votre participation..."
   },
   "registration": {
     "title": "Inscription à la Roue de la Fortune",
@@ -102,6 +112,35 @@
       "voucher20": "Bon d'achat 20",
       "tryAgain": "Retentez votre chance"
     }
+  },
+  "qrCode": {
+    "title": "Votre QR Code",
+    "downloadBtn": "Télécharger",
+    "downloadPdf": "Télécharger en PDF",
+    "pdfSubtitle": "Félicitations pour votre lot !",
+    "scanTitle": "Scanner un QR Code",
+    "enterUrl": "Entrez l'identifiant ou collez le contenu du QR code",
+    "scanBtn": "Vérifier",
+    "scanSuccess": "QR Code validé avec succès !",
+    "scanError": "Erreur lors de la validation",
+    "scanAgain": "Scanner un autre QR Code",
+    "invalidUrl": "QR Code ou identifiant invalide",
+    "participantInfo": "Informations du participant",
+    "prizeInfo": "Informations sur le lot",
+    "prizeName": "Nom du lot",
+    "prizeDescription": "Description",
+    "scanCount": "Nombre de scans",
+    "lastScanned": "Dernier scan",
+    "viewPrize": "Voir le lot",
+    "scanInstructions": "Présentez ce QR code pour récupérer votre lot."
+  },
+  "modal": {
+    "prizeDetails": "Détails du lot",
+    "description": "Description",
+    "value": "Valeur",
+    "howToRedeem": "Comment récupérer votre lot",
+    "redeemInstructions": "Présentez votre QR code à l'un de nos points de retrait avec une pièce d'identité valide pour récupérer votre lot. Le lot doit être réclamé dans les 30 jours suivant la date du gain.",
+    "close": "Fermer"
   },
   "errors": {
     "general": "Une erreur inattendue s'est produite.",

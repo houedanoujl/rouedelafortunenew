@@ -89,9 +89,18 @@
         </h2>
         <div v-if="result.won" class="prize-info">
           <p>Un SMS vous sera envoyé avec les détails pour récupérer votre lot.</p>
-          <div v-if="qrCodeUrl" class="qr-code">
-            <img :src="qrCodeUrl" alt="QR Code pour récupérer votre lot" />
-          </div>
+          <QRCodeGenerator 
+            v-if="participantData && prizeData"
+            :data="{ 
+              participant: participantData, 
+              prize: prizeData, 
+              result: 'GAGNÉ' 
+            }"
+            :title="t('qrCode.title')"
+            :download-button-text="t('qrCode.downloadBtn')"
+            :tracking-id="qrTrackingId"
+            :size="220"
+          />
         </div>
         <div v-else>
           <p>Vous pourrez retenter votre chance lors du prochain jeu.</p>
@@ -107,6 +116,7 @@ import gsap from 'gsap';
 import { useSupabase } from '~/composables/useSupabase';
 import { useParticipantCheck } from '~/composables/useParticipantCheck';
 import { useTranslation } from '~/composables/useTranslation';
+import QRCodeGenerator from '~/components/QRCodeGenerator.vue';
 
 const emit = defineEmits(['gameCompleted']);
 const { t } = useTranslation();
@@ -131,6 +141,9 @@ const showResult = ref(false);
 const result = ref({ won: false, prizeId: null });
 const qrCodeUrl = ref('');
 const participant = ref(null);
+const participantData = ref(null);
+const prizeData = ref(null);
+const qrTrackingId = ref('');
 
 // Secteurs de la roue (6 gagnants, 6 perdants alternés)
 const sectors = ref([
@@ -306,7 +319,9 @@ async function handleSpinComplete(won) {
     
     // If won, generate QR code
     if (won) {
-      qrCodeUrl.value = `/assets/images/qr-code-placeholder.svg`; // Using SVG placeholder
+      qrTrackingId.value = `qr-${Date.now()}`;
+      participantData.value = await getParticipantData();
+      prizeData.value = await getPrizeData(prizeId);
     }
     
     // Récupérer les informations du participant pour le cookie
@@ -462,7 +477,7 @@ async function saveEntryToDatabase(won, prizeId) {
     // Créer une transaction pour insérer l'entrée et mettre à jour le prix si nécessaire
     if (won && prizeId) {
       // 1. Insérer l'entrée
-      const { data: entryData, error: entryError } = await supabase
+      const { data: insertedEntry, error: entryError } = await supabase
         .from('entry')
         .insert(entryData)
         .select();
@@ -496,7 +511,7 @@ async function saveEntryToDatabase(won, prizeId) {
         
       if (prizeUpdateError) throw prizeUpdateError;
       
-      return entryData && entryData.length > 0 ? entryData[0] : {
+      return insertedEntry && insertedEntry.length > 0 ? insertedEntry[0] : {
         ...entryData,
         created_at: currentDate
       };
@@ -521,6 +536,36 @@ async function saveEntryToDatabase(won, prizeId) {
       prize_id: prizeId,
       created_at: new Date().toISOString()
     };
+  }
+}
+
+async function getParticipantData() {
+  try {
+    const { data } = await supabase
+      .from('participant')
+      .select('*')
+      .eq('id', props.participantId)
+      .single();
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching participant data:', error);
+    return null;
+  }
+}
+
+async function getPrizeData(prizeId) {
+  try {
+    const { data } = await supabase
+      .from('prize')
+      .select('*')
+      .eq('id', prizeId)
+      .single();
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching prize data:', error);
+    return null;
   }
 }
 </script>

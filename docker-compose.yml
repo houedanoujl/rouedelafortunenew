@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL pour Supabase
+  postgres:
+    image: supabase/postgres:15.1.0.54
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Ne pas monter le dossier de migrations directement, utilisez le script d'initialisation à la place
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Application d'initialisation (exécute les migrations au premier lancement uniquement)
+  db-init:
+    build:
+      context: ./db-init
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./supabase-local/migrations:/migrations
+      - db-init-data:/init-data
+
+  # Studio Supabase
+  studio:
+    image: supabase/studio:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      SUPABASE_URL: http://api:8000
+      STUDIO_PG_META_URL: http://postgres-meta:8080
+      POSTGRES_PASSWORD: postgres
+    depends_on:
+      - api
+      - postgres-meta
+
+  # Auth API pour Supabase
+  api:
+    image: supabase/gotrue:latest
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      DB_PASSWORD: postgres
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_HOST: postgres
+      GOTRUE_DB_PORT: 5432
+      GOTRUE_DB_USER: postgres
+      GOTRUE_DB_PASSWORD: postgres
+      GOTRUE_DB_DATABASE: postgres
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters
+      GOTRUE_JWT_EXP: 3600
+
+  # Meta API pour Supabase
+  postgres-meta:
+    image: supabase/postgres-meta:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      PG_META_DB_HOST: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: postgres
+      PG_META_DB_NAME: postgres
+      PG_META_DB_PORT: 5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Application frontend (Rouedelafortune)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "8888:3000"  # 3000 est le port par défaut de Nuxt.js
+    depends_on:
+      - api
+      - postgres
+    volumes:
+      - ./:/app
+      - /app/node_modules/
+    environment:
+      SUPABASE_URL: http://api:8000
+      SUPABASE_KEY: your-super-secret-jwt-token-with-at-least-32-characters
+      NODE_ENV: development
+
+volumes:
+  postgres-data:
+  db-init-data:  # Volume pour stocker l'état de l'initialisation
