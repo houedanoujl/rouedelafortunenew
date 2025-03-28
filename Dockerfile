@@ -16,13 +16,14 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     nodejs \
     npm \
-    default-mysql-client
+    default-mysql-client \
+    libicu-dev
 
 # Nettoyer le cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Installer les extensions PHP
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
 
 # Obtenir Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -39,7 +40,7 @@ WORKDIR /var/www/html
 COPY composer.json composer.json
 
 # Installer les dépendances
-RUN composer install --no-scripts --no-autoloader
+RUN composer install --no-scripts --no-autoloader --ignore-platform-reqs
 
 # Copier les fichiers d'application existants
 COPY . /var/www/html
