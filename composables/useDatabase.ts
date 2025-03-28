@@ -5,17 +5,17 @@ import { useRuntimeConfig } from '#app';
 // Composable pour fournir un accès unifié à la base de données
 export const useDatabase = () => {
   const config = useRuntimeConfig();
-  const useMySQL = config.public.useMySQL;
+  const useMySQL2 = config.public.useMySQL;
   
   // Déterminer quel composable utiliser
-  if (useMySQL) {
-    const { db, isConnected, isReal } = useMySQL();
+  if (useMySQL2) {
+    const { db, isConnected, isReal, type } = useMySQL();
     console.log('Utilisation du connecteur MySQL');
     return {
       database: db,
       isConnected,
       isReal,
-      type: 'mysql'
+      type
     };
   } else {
     const { supabase, isReal } = useSupabase();

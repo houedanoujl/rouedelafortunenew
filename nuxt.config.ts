@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   // Runtime config for environment variables
   runtimeConfig: {
     public: {
+      apiBase: process.env.NUXT_API_BASE || 'http://localhost:8888',
       supabaseUrl: process.env.SUPABASE_URL || '',
       supabaseKey: process.env.SUPABASE_KEY || '',
       databaseUrl: process.env.DATABASE_URL || 'mysql://user:password@mysql:3306/rouedelafortune',
@@ -19,6 +20,8 @@ export default defineNuxtConfig({
   
   // Enable CSS assets
   css: [
+    '@mdi/font/css/materialdesignicons.css',
+    'vuetify/styles',
     'bootstrap/dist/css/bootstrap.min.css',
     '@/assets/css/main.css'
   ],
@@ -41,6 +44,20 @@ export default defineNuxtConfig({
         }
       ]
     }
+  },
+  
+  build: {
+    transpile: ['vuetify'],
+  },
+  
+  modules: [
+    '@nuxtjs/i18n'
+  ],
+  
+  i18n: {
+    locales: ['fr'],
+    defaultLocale: 'fr',
+    vueI18n: './i18n.config.ts'
   },
   
   // Pour résoudre le problème de routage

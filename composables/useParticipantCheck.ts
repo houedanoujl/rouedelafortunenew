@@ -1,5 +1,4 @@
 import { ref, reactive } from 'vue';
-import { useSupabase } from './useSupabase';
 
 // Types pour les données
 interface Participant {
@@ -57,8 +56,6 @@ function eraseCookie(name: string) {
 }
 
 export function useParticipantCheck() {
-  const { supabase, isReal } = useSupabase();
-  
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   
@@ -87,7 +84,6 @@ export function useParticipantCheck() {
     
     try {
       console.log('Vérification du participant avec le téléphone:', phone);
-      console.log('Utilisation de la configuration Supabase:', supabase);
       
       // Vérifier d'abord le cookie - si le joueur a joué récemment
       const lastPlayCookie = getCookie(`last_play_${phone}`);
@@ -123,134 +119,102 @@ export function useParticipantCheck() {
         }
       }
       
-      // Si en mode mock, simuler un délai
-      if (!isReal) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        participantState.isRegistered = false;
-        participantState.participant = null;
-        participantState.hasPlayed = false;
-        participantState.playedRecently = false;
-        participantState.lastPlayDate = null;
-        participantState.daysUntilNextPlay = 0;
-        participantState.gameResult = null;
-        return null;
-      }
-      
-      // Rechercher le participant par téléphone
-      let result;
+      // Utiliser l'API pour rechercher le participant par téléphone
       try {
-        const query = supabase
-          .from('participant')
-          .select('*')
-          .eq('phone', phone);
-          
-        // Vérifier si la méthode execute existe (client mock)
-        if ('execute' in query) {
-          result = await query.execute();
-        } else {
-          result = await query;
-        }
-      } catch (err) {
-        console.error('Erreur lors de la requête Supabase:', err);
-        throw err;
-      }
-      
-      if (result.error) {
-        console.error('Erreur lors de la recherche du participant:', result.error);
-        throw result.error;
-      }
-      
-      // Vérifier si un participant a été trouvé
-      const participants = result.data as Participant[] | null;
-      if (!participants || participants.length === 0) {
-        // Participant non trouvé
-        participantState.isRegistered = false;
-        participantState.participant = null;
-        participantState.hasPlayed = false;
-        participantState.playedRecently = false;
-        participantState.lastPlayDate = null;
-        participantState.daysUntilNextPlay = 0;
-        participantState.gameResult = null;
-        return null;
-      }
-      
-      const participant = participants[0];
-      
-      // Participant trouvé, vérifier s'il a déjà joué
-      participantState.isRegistered = true;
-      participantState.participant = participant;
-      
-      let entriesResult;
-      try {
-        const query = supabase
-          .from('entry')
-          .select('*, prize:prize_id(*)')
-          .eq('participant_id', participant.id);
-        
-        // Ajouter l'ordre si disponible
-        const orderedQuery = 'order' in query 
-          ? query.order('created_at', { ascending: false })
-          : query;
-          
-        // Vérifier si la méthode execute existe (client mock)
-        if ('execute' in orderedQuery) {
-          entriesResult = await orderedQuery.execute();
-        } else {
-          entriesResult = await orderedQuery;
-        }
-      } catch (err) {
-        console.error('Erreur lors de la requête Supabase:', err);
-        throw err;
-      }
-      
-      if (entriesResult.error) {
-        console.error('Erreur lors de la recherche des participations:', entriesResult.error);
-        throw entriesResult.error;
-      }
-      
-      const entries = entriesResult.data as Entry[] | null;
-      if (entries && entries.length > 0) {
-        // Le participant a déjà joué
-        participantState.hasPlayed = true;
-        participantState.gameResult = entries[0]; // Prendre la première participation
-        
-        // Vérifier si le participant a joué récemment (dans les 7 derniers jours)
-        const latestEntry = entries[0];
-        const entryDate = latestEntry.created_at 
-          ? new Date(latestEntry.created_at) 
-          : new Date(); // Utiliser la date actuelle si pas de date d'entrée
-        
-        participantState.lastPlayDate = entryDate;
-        
-        // Vérifier si le participant peut rejouer (après 7 jours)
-        const canPlayAgain = checkIfCanPlayAgain(entryDate, 7);
-        participantState.playedRecently = !canPlayAgain.canPlay;
-        participantState.daysUntilNextPlay = canPlayAgain.daysRemaining;
-        
-        // Stocker les informations dans un cookie s'il a joué récemment
-        if (participantState.playedRecently) {
-          const cookieData = {
-            date: entryDate.toISOString(),
-            participant: participant,
-            result: participantState.gameResult
-          };
-          setCookie(`last_play_${phone}`, JSON.stringify(cookieData), 7);
-        }
-        
-        console.log('État de participation:', {
-          derniereDate: entryDate,
-          peutRejouer: !participantState.playedRecently,
-          joursRestants: participantState.daysUntilNextPlay
+        // Appel à l'API locale
+        const response = await fetch(`/api/participants?phone=${encodeURIComponent(phone)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
-      } else {
-        participantState.hasPlayed = false;
-        participantState.playedRecently = false;
-        participantState.lastPlayDate = null;
-        participantState.daysUntilNextPlay = 0;
-        participantState.gameResult = null;
+        
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Vérifier si un participant a été trouvé
+        if (!result.data || result.data.length === 0) {
+          // Participant non trouvé
+          participantState.isRegistered = false;
+          participantState.participant = null;
+          participantState.hasPlayed = false;
+          participantState.playedRecently = false;
+          participantState.lastPlayDate = null;
+          participantState.daysUntilNextPlay = 0;
+          participantState.gameResult = null;
+          return null;
+        }
+        
+        const participant = result.data[0];
+        
+        // Participant trouvé, vérifier s'il a déjà joué
+        participantState.isRegistered = true;
+        participantState.participant = participant;
+        
+        // Appel à l'API pour récupérer les participations du participant
+        const entriesResponse = await fetch(`/api/entries?participant_id=${participant.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!entriesResponse.ok) {
+          throw new Error(`Erreur HTTP: ${entriesResponse.status}`);
+        }
+        
+        const entriesResult = await entriesResponse.json();
+        const entries = entriesResult.data as Entry[] | null;
+        
+        if (entries && entries.length > 0) {
+          // Le participant a déjà joué
+          participantState.hasPlayed = true;
+          participantState.gameResult = entries[0]; // Prendre la première participation
+          
+          // Vérifier si le participant a joué récemment (dans les 7 derniers jours)
+          const latestEntry = entries[0];
+          const entryDate = latestEntry.created_at 
+            ? new Date(latestEntry.created_at) 
+            : new Date(); // Utiliser la date actuelle si pas de date d'entrée
+          
+          participantState.lastPlayDate = entryDate;
+          
+          // Vérifier si le participant peut rejouer (après 7 jours)
+          const canPlayAgain = checkIfCanPlayAgain(entryDate, 7);
+          participantState.playedRecently = !canPlayAgain.canPlay;
+          participantState.daysUntilNextPlay = canPlayAgain.daysRemaining;
+          
+          // Stocker les informations dans un cookie s'il a joué récemment
+          if (participantState.playedRecently) {
+            const cookieData = {
+              date: entryDate.toISOString(),
+              participant: participant,
+              result: participantState.gameResult
+            };
+            setCookie(`last_play_${phone}`, JSON.stringify(cookieData), 7);
+          }
+          
+          console.log('État de participation:', {
+            derniereDate: entryDate,
+            peutRejouer: !participantState.playedRecently,
+            joursRestants: participantState.daysUntilNextPlay
+          });
+        } else {
+          participantState.hasPlayed = false;
+          participantState.playedRecently = false;
+          participantState.lastPlayDate = null;
+          participantState.daysUntilNextPlay = 0;
+          participantState.gameResult = null;
+        }
+        
+        return participant;
+      } catch (err) {
+        console.error('Erreur lors de la requête API:', err);
+        throw err;
       }
-      
-      return participant;
     } catch (error: any) {
       console.error('Erreur lors de la vérification du participant:', error);
       participantState.isRegistered = false;
@@ -282,140 +246,109 @@ export function useParticipantCheck() {
     try {
       console.log('Vérification si le participant a déjà joué:', participantId);
       
-      // Si en mode mock, simuler un délai
-      if (!isReal) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        participantState.hasPlayed = false;
-        participantState.playedRecently = false;
-        participantState.lastPlayDate = null;
-        participantState.daysUntilNextPlay = 0;
-        participantState.gameResult = null;
-        return false;
-      }
-      
       // Récupérer le participant d'abord pour obtenir le numéro de téléphone
-      let participantResult;
       try {
-        const query = supabase
-          .from('participant')
-          .select('*')
-          .eq('id', participantId);
-          
-        if ('execute' in query) {
-          participantResult = await query.execute();
-        } else {
-          participantResult = await query;
+        const participantResponse = await fetch(`/api/participants/${participantId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!participantResponse.ok) {
+          throw new Error(`Erreur HTTP: ${participantResponse.status}`);
         }
-      } catch (err) {
-        console.error('Erreur lors de la requête Supabase:', err);
-        throw err;
-      }
-      
-      if (participantResult.error) {
-        console.error('Erreur lors de la recherche du participant:', participantResult.error);
-        throw participantResult.error;
-      }
-      
-      const participants = participantResult.data as Participant[] | null;
-      if (!participants || participants.length === 0) {
-        return false;
-      }
-      
-      const participant = participants[0];
-      const phone = participant.phone;
-      
-      // Vérifier d'abord dans le cookie
-      const lastPlayCookie = getCookie(`last_play_${phone}`);
-      if (lastPlayCookie) {
-        const cookieData = JSON.parse(lastPlayCookie);
-        const lastPlayDate = new Date(cookieData.date);
         
-        // Vérifier si le délai de 7 jours est écoulé
-        const canPlayAgain = checkIfCanPlayAgain(lastPlayDate, 7);
+        const participantResult = await participantResponse.json();
         
-        if (!canPlayAgain.canPlay) {
-          participantState.playedRecently = true;
-          participantState.lastPlayDate = lastPlayDate;
-          participantState.daysUntilNextPlay = canPlayAgain.daysRemaining;
-          participantState.hasPlayed = true;
+        if (!participantResult.data) {
+          return false;
+        }
+        
+        const participant = participantResult.data;
+        const phone = participant.phone;
+        
+        // Vérifier d'abord dans le cookie
+        const lastPlayCookie = getCookie(`last_play_${phone}`);
+        if (lastPlayCookie) {
+          const cookieData = JSON.parse(lastPlayCookie);
+          const lastPlayDate = new Date(cookieData.date);
           
-          if (cookieData.result) {
-            participantState.gameResult = cookieData.result;
+          // Vérifier si le délai de 7 jours est écoulé
+          const canPlayAgain = checkIfCanPlayAgain(lastPlayDate, 7);
+          
+          if (!canPlayAgain.canPlay) {
+            participantState.playedRecently = true;
+            participantState.lastPlayDate = lastPlayDate;
+            participantState.daysUntilNextPlay = canPlayAgain.daysRemaining;
+            participantState.hasPlayed = true;
+            
+            if (cookieData.result) {
+              participantState.gameResult = cookieData.result;
+            }
+            
+            return true;
+          } else {
+            // Si le délai est passé, on peut supprimer le cookie
+            eraseCookie(`last_play_${phone}`);
+          }
+        }
+        
+        // Vérifier dans la base de données via l'API
+        const entriesResponse = await fetch(`/api/entries?participant_id=${participantId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!entriesResponse.ok) {
+          throw new Error(`Erreur HTTP: ${entriesResponse.status}`);
+        }
+        
+        const entriesResult = await entriesResponse.json();
+        const entries = entriesResult.data as Entry[] | null;
+        
+        if (entries && entries.length > 0) {
+          // Le participant a déjà joué
+          participantState.hasPlayed = true;
+          participantState.gameResult = entries[0]; // Prendre la première participation
+          
+          // Vérifier si le participant a joué récemment (dans les 7 derniers jours)
+          const latestEntry = entries[0];
+          const entryDate = latestEntry.created_at 
+            ? new Date(latestEntry.created_at) 
+            : new Date(); // Utiliser la date actuelle si pas de date d'entrée
+          
+          participantState.lastPlayDate = entryDate;
+          
+          // Vérifier si le participant peut rejouer (après 7 jours)
+          const canPlayAgain = checkIfCanPlayAgain(entryDate, 7);
+          participantState.playedRecently = !canPlayAgain.canPlay;
+          participantState.daysUntilNextPlay = canPlayAgain.daysRemaining;
+          
+          // Stocker les informations dans un cookie s'il a joué récemment
+          if (participantState.playedRecently) {
+            const cookieData = {
+              date: entryDate.toISOString(),
+              participant: participant,
+              result: participantState.gameResult
+            };
+            setCookie(`last_play_${phone}`, JSON.stringify(cookieData), 7);
           }
           
           return true;
         } else {
-          // Si le délai est passé, on peut supprimer le cookie
-          eraseCookie(`last_play_${phone}`);
-        }
-      }
-      
-      // Vérifier dans la base de données
-      let entriesResult;
-      try {
-        const query = supabase
-          .from('entry')
-          .select('*, prize:prize_id(*)')
-          .eq('participant_id', participantId);
-        
-        // Ajouter l'ordre si disponible
-        const orderedQuery = 'order' in query 
-          ? query.order('created_at', { ascending: false })
-          : query;
-          
-        // Vérifier si la méthode execute existe (client mock)
-        if ('execute' in orderedQuery) {
-          entriesResult = await orderedQuery.execute();
-        } else {
-          entriesResult = await orderedQuery;
+          participantState.hasPlayed = false;
+          participantState.playedRecently = false;
+          participantState.lastPlayDate = null;
+          participantState.daysUntilNextPlay = 0;
+          participantState.gameResult = null;
+          return false;
         }
       } catch (err) {
-        console.error('Erreur lors de la requête Supabase:', err);
+        console.error('Erreur lors de la requête API:', err);
         throw err;
-      }
-      
-      if (entriesResult.error) {
-        console.error('Erreur lors de la recherche des participations:', entriesResult.error);
-        throw entriesResult.error;
-      }
-      
-      const entries = entriesResult.data as Entry[] | null;
-      if (entries && entries.length > 0) {
-        // Le participant a déjà joué
-        participantState.hasPlayed = true;
-        participantState.gameResult = entries[0]; // Prendre la première participation
-        
-        // Vérifier si le participant a joué récemment (dans les 7 derniers jours)
-        const latestEntry = entries[0];
-        const entryDate = latestEntry.created_at 
-          ? new Date(latestEntry.created_at) 
-          : new Date(); // Utiliser la date actuelle si pas de date d'entrée
-        
-        participantState.lastPlayDate = entryDate;
-        
-        // Vérifier si le participant peut rejouer (après 7 jours)
-        const canPlayAgain = checkIfCanPlayAgain(entryDate, 7);
-        participantState.playedRecently = !canPlayAgain.canPlay;
-        participantState.daysUntilNextPlay = canPlayAgain.daysRemaining;
-        
-        // Stocker les informations dans un cookie s'il a joué récemment
-        if (participantState.playedRecently) {
-          const cookieData = {
-            date: entryDate.toISOString(),
-            participant: participant,
-            result: participantState.gameResult
-          };
-          setCookie(`last_play_${phone}`, JSON.stringify(cookieData), 7);
-        }
-        
-        return true;
-      } else {
-        participantState.hasPlayed = false;
-        participantState.playedRecently = false;
-        participantState.lastPlayDate = null;
-        participantState.daysUntilNextPlay = 0;
-        participantState.gameResult = null;
-        return false;
       }
     } catch (error: any) {
       console.error('Erreur lors de la vérification des participations:', error);

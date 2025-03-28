@@ -10,22 +10,33 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
+    "@mdi/font": "^7.4.47",
+    "@nuxtjs/i18n": "^8.1.0",
+    "@supabase/supabase-js": "^2.38.4",
+    "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
-    "gsap": "^3.12.7",
+    "chart.js": "^4.4.1",
+    "gsap": "^3.12.5",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
+    "js-cookie": "^3.0.5",
+    "jspdf": "^2.5.1",
     "mysql2": "^3.6.5",
-    "nuxt": "^3.16.0",
-    "qrcode": "^1.5.4",
-    "vue": "^3.5.13",
+    "nuxt": "^3.9.0",
+    "qrcode": "^1.5.3",
+    "unhead": "^1.8.10",
+    "vue": "^3.4.15",
+    "vue-chartjs": "^5.3.0",
     "vue-i18n": "^9.9.0",
     "vue-qrcode": "^2.2.2",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.2.5",
+    "vuetify": "^3.5.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/js-cookie": "^3.0.6",
     "@types/mysql": "^2.15.25",
-    "@types/node": "^20.10.5",
+    "@types/node": "^20.17.28",
+    "sass": "^1.71.1",
     "typescript": "^5.3.3"
   }
 }

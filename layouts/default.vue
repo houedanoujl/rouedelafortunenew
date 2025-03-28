@@ -1,5 +1,26 @@
 <template>
   <div>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="/">Roue de la Fortune DINOR</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Accueil</a>
+            </li>
+          </ul>
+          <div class="d-flex">
+            <a href="/admin" class="btn btn-outline-primary">Administration</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
     <main class="main-content">
       <slot />
     </main>
@@ -10,7 +31,14 @@
           <div class="col-md-6">
             <p class="mb-0">{{ t('footer.copyright', { year: new Date().getFullYear() }) }}</p>
           </div>
-          
+          <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#termsModal">
+              Conditions Générales
+            </button>
+            <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#privacyModal">
+              Politique de Confidentialité
+            </button>
+          </div>
         </div>
       </div>
     </footer>
@@ -67,6 +95,16 @@ const { t } = useTranslation();
   padding: 2rem 0;
 }
 
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: #FCFEFFff !important; /* White */
+}
+
+.navbar-brand {
+  color: #87664Bff; /* Raw Umber */
+  font-weight: bold;
+}
+
 .footer {
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
   background-color: #FCFEFFff !important; /* White */
@@ -87,5 +125,16 @@ const { t } = useTranslation();
 
 .bg-light {
   background-color: #FCFEFFff !important; /* White */
+}
+
+.btn-outline-primary {
+  color: #FF9800; /* Orange DINOR */
+  border-color: #FF9800;
+}
+
+.btn-outline-primary:hover {
+  background-color: #FF9800;
+  border-color: #FF9800;
+  color: white;
 }
 </style>

@@ -1,35 +1,65 @@
-version: '3.8'
-
 services:
   # Base de données MySQL
   mysql:
-    image: mysql:8.0
+    image: mysql:8
+    container_name: rouedelafortune-mysql
     restart: always
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: rouedelafortune
       MYSQL_USER: user
       MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./db:/docker-entrypoint-initdb.d  # Les scripts SQL seront exécutés automatiquement au premier démarrage
+      # Les scripts ne s'exécutent qu'à la première initialisation du volume
+      - ./db/init-mysql.sql:/docker-entrypoint-initdb.d/01-init-mysql.sql
+      - ./db/init-mysql-admin.sql:/docker-entrypoint-initdb.d/02-init-mysql-admin.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
+  # Service de migration de base de données
+  # Ce service vérifie si les tables existent et exécute les migrations au besoin
+  db-migrations:
+    image: mysql:8
+    container_name: rouedelafortune-migrations
+    restart: "no"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rouedelafortune
+    volumes:
+      - ./db:/db
+      - ./scripts:/scripts
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      /bin/bash -c "
+      echo 'Vérification et création des tables de la base de données...' &&
+      mysql -h mysql -u root -proot -e 'USE rouedelafortune; SHOW TABLES;' | grep -q 'participant' ||
+      (echo 'Tables non trouvées, exécution des scripts de migration...' &&
+       mysql -h mysql -u root -proot rouedelafortune < /db/init-mysql.sql &&
+       mysql -h mysql -u root -proot rouedelafortune < /db/init-mysql-admin.sql &&
+       echo 'Migration terminée avec succès!') ||
+      echo 'Les tables existent déjà, aucune migration nécessaire.'"
+
   # Interface phpMyAdmin pour gérer la base de données
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin
+    container_name: rouedelafortune-phpmyadmin
     restart: always
-    ports:
-      - "8080:80"
     environment:
       PMA_HOST: mysql
-      MYSQL_ROOT_PASSWORD: root
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
     depends_on:
       - mysql
 
@@ -38,21 +68,24 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.app
+    container_name: rouedelafortune-app
+    restart: always
+    environment:
+      DATABASE_URL: mysql://user:password@mysql:3306/rouedelafortune
+      USE_MYSQL: 'true'
+      MOCK_MODE: 'false'
+      MYSQL_HOST: mysql
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: rouedelafortune
     ports:
-      - "8888:3000"  # 3000 est le port par défaut de Nuxt.js
+      - "8888:3000"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-migrations:
+        condition: service_completed_successfully
     volumes:
       - ./:/app
       - /app/node_modules/
-    environment:
-      # Configuration pour l'accès direct à MySQL
-      DATABASE_URL: mysql://user:password@mysql:3306/rouedelafortune
-      # Désactiver le mode mock
-      MOCK_MODE: "false"
-      USE_MYSQL: "true"
-      NODE_ENV: development
 
 volumes:
   mysql-data:

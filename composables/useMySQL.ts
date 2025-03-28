@@ -1,9 +1,17 @@
 import { ref } from 'vue';
 import { useRuntimeConfig } from '#app';
-import mysql from 'mysql2/promise';
 
-// Pool de connexions MySQL
+// Détecter si on est côté serveur
+const isServer = process.server;
+
+// Pool de connexions MySQL - seulement importé côté serveur
+let mysql: any = null;
 let pool: any = null;
+
+// Importer mysql2 uniquement côté serveur
+if (isServer) {
+  mysql = require('mysql2/promise');
+}
 
 // Types pour les données
 export interface Participant {
@@ -40,6 +48,12 @@ export interface Entry {
 
 // Initialisation du pool de connexions MySQL
 const initPool = async () => {
+  // Côté client, renvoyer simplement null
+  if (!isServer) {
+    console.warn('Tentative d\'accès à MySQL depuis le navigateur. Opération ignorée.');
+    return null;
+  }
+  
   if (pool) return pool;
   
   try {
@@ -84,6 +98,12 @@ export const useMySQL = () => {
   const isConnected = ref(false);
   
   const connect = async () => {
+    // Ne pas essayer de se connecter côté client
+    if (!isServer) {
+      console.warn('Tentative de connexion MySQL depuis le navigateur. Opération ignorée.');
+      return false;
+    }
+    
     try {
       const poolInstance = await initPool();
       if (poolInstance) {
@@ -101,6 +121,12 @@ export const useMySQL = () => {
   
   // Méthode pour exécuter une requête
   const query = async (sql: string, params: any[] = []) => {
+    // Ne pas essayer d'exécuter une requête côté client
+    if (!isServer) {
+      console.warn('Tentative d\'exécution de requête MySQL depuis le navigateur. Opération ignorée.');
+      return { data: null, error: new Error('MySQL non disponible côté client') };
+    }
+    
     try {
       const poolInstance = await initPool();
       if (!poolInstance) {
@@ -143,6 +169,12 @@ export const useMySQL = () => {
       insert: (items: any[]) => {
         return {
           select: async () => {
+            // Ne pas essayer d'insérer côté client
+            if (!isServer) {
+              console.warn('Tentative d\'insertion MySQL depuis le navigateur. Opération ignorée.');
+              return { data: null, error: new Error('MySQL non disponible côté client') };
+            }
+            
             if (!items || items.length === 0) {
               return { data: null, error: new Error('Aucun élément à insérer') };
             }
@@ -192,6 +224,11 @@ export const useMySQL = () => {
           eq: (column: string, value: any) => {
             return {
               select: async () => {
+                if (!isServer) {
+                  console.warn('Tentative de mise à jour MySQL depuis le navigateur. Opération ignorée.');
+                  return { data: null, error: new Error('MySQL non disponible côté client') };
+                }
+                
                 try {
                   // Préparer les colonnes et valeurs pour la mise à jour
                   const entries = Object.entries(updates);
@@ -199,24 +236,38 @@ export const useMySQL = () => {
                   const values = [...entries.map(([, val]) => val), value];
                   
                   // Exécuter la mise à jour
-                  const { error } = await query(
-                    `UPDATE ${table} SET ${setClause} WHERE ${column} = ?`, 
+                  const { data, error } = await query(
+                    `UPDATE ${table} SET ${setClause} WHERE ${column} = ?`,
                     values
                   );
                   
                   if (error) throw error;
                   
-                  // Récupérer l'élément mis à jour
-                  const { data, error: selectError } = await query(
-                    `SELECT * FROM ${table} WHERE ${column} = ?`, 
-                    [value]
-                  );
-                  
-                  if (selectError) throw selectError;
-                  
-                  return { data, error: null };
+                  // Récupérer les éléments mis à jour
+                  return await query(`SELECT * FROM ${table} WHERE ${column} = ?`, [value]);
                 } catch (error) {
-                  console.error(`Erreur lors de la mise à jour dans ${table}:`, error);
+                  console.error(`Erreur lors de la mise à jour de ${table}:`, error);
+                  return { data: null, error };
+                }
+              }
+            };
+          }
+        };
+      },
+      delete: () => {
+        return {
+          eq: (column: string, value: any) => {
+            return {
+              execute: async () => {
+                if (!isServer) {
+                  console.warn('Tentative de suppression MySQL depuis le navigateur. Opération ignorée.');
+                  return { data: null, error: new Error('MySQL non disponible côté client') };
+                }
+                
+                try {
+                  return await query(`DELETE FROM ${table} WHERE ${column} = ?`, [value]);
+                } catch (error) {
+                  console.error(`Erreur lors de la suppression dans ${table}:`, error);
                   return { data: null, error };
                 }
               }
@@ -228,8 +279,10 @@ export const useMySQL = () => {
   };
   
   return {
-    db: { connect, query, from },
+    db: { query, from },
     isConnected,
-    isReal: true  // Toujours vrai car c'est une vraie connexion à MySQL
+    connect,
+    isReal: true,
+    type: 'mysql'
   };
 };

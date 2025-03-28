@@ -1,6 +1,6 @@
 # Roue de la Fortune DINOR
 
-Application de jeu concours "Roue de la Fortune" pour les produits DINOR. Cette application est développée avec Nuxt 3 et utilise Supabase comme backend.
+Application de jeu concours "Roue de la Fortune" pour les produits DINOR. Cette application est développée avec Nuxt 3 et utilise MySQL comme base de données.
 
 ## Fonctionnalités
 
@@ -9,12 +9,13 @@ Application de jeu concours "Roue de la Fortune" pour les produits DINOR. Cette 
 - Affichage du résultat après la rotation de la roue
 - Génération de QR code pour les gagnants
 - Notification par SMS pour les gagnants
+- API sécurisées côté serveur pour toutes les opérations de base de données
+- Interface d'administration pour la gestion des prix
 
 ## Configuration requise
 
-- Node.js (v16+)
 - Docker et Docker Compose (recommandé)
-- Base de données Supabase
+- Node.js (v16+) pour le développement local sans Docker
 
 ## Installation
 
@@ -28,7 +29,7 @@ cd rouedelafortune
 
 2. Lancer l'application avec Docker Compose
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 3. Accéder à l'application
@@ -52,62 +53,89 @@ npm install
 3. Configurer les variables d'environnement
 Créez un fichier `.env` à la racine du projet avec les informations suivantes :
 ```
-SUPABASE_URL=votre_url_supabase
-SUPABASE_KEY=votre_clé_api_supabase
+DATABASE_URL=mysql://user:password@localhost:3306/rouedelafortune
+USE_MYSQL=true
+MOCK_MODE=false
+MYSQL_HOST=localhost
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+MYSQL_DATABASE=rouedelafortune
 ```
 
-4. Lancer le serveur de développement
+4. Initialiser la base de données
+```bash
+# Exécuter les scripts SQL d'initialisation
+mysql -u user -ppassword -h localhost rouedelafortune < ./db/init-mysql.sql
+mysql -u user -ppassword -h localhost rouedelafortune < ./db/init-mysql-admin.sql
+```
+
+5. Lancer le serveur de développement
 ```bash
 npm run dev
 ```
 
-5. Construire pour la production
+6. Construire pour la production
 ```bash
 npm run build
 ```
 
-## Résolution des problèmes
+## Gestion de la base de données
 
-### Erreur "Failed to fetch" lors de l'inscription
+### Avec phpMyAdmin
 
-Si vous rencontrez une erreur "Failed to fetch" lors de l'inscription, cela peut être lié à un problème de connexion entre le frontend et le backend Supabase. Pour résoudre ce problème :
+L'application est configurée avec phpMyAdmin pour faciliter la gestion de la base de données MySQL :
 
-1. Vérifiez que tous les services Docker sont en cours d'exécution :
-```bash
-docker-compose ps
-```
+- **URL d'accès** : http://localhost:8080
+- **Serveur** : mysql
+- **Utilisateur** : root
+- **Mot de passe** : root
 
-2. Si le problème persiste, modifiez le fichier `docker-compose.yml` et remplacez :
-```yaml
-SUPABASE_URL: http://postgres:5432
-```
-par :
-```yaml
-SUPABASE_URL: http://localhost:5432
-```
+### Informations de connexion MySQL
 
-3. Redémarrez les conteneurs Docker :
-```bash
-docker-compose down
-docker-compose up -d
-```
+- **Hôte** : mysql (dans Docker) ou localhost (sans Docker)
+- **Port** : 3306
+- **Base de données** : rouedelafortune
+- **Utilisateur** : user
+- **Mot de passe** : password
+
+### Accès à l'interface d'administration
+
+- **URL d'accès** : http://localhost:8888/admin
+- **Utilisateur** : houedanou
+- **Mot de passe** : nouveaumdp123
+
+## Architecture
+
+L'application utilise une architecture client-serveur sécurisée :
+
+- **Frontend** : Vue.js/Nuxt.js pour l'interface utilisateur
+- **Backend** : API Nuxt pour toutes les opérations de base de données
+- **Base de données** : MySQL pour le stockage persistant
+
+Toutes les opérations de base de données sont effectuées via des API côté serveur, jamais directement depuis le navigateur.
+
+## Structure du projet
+
+Le projet est organisé selon l'architecture Nuxt 3 :
+
+- `/components` : Composants Vue réutilisables
+- `/composables` : Composables pour la logique partagée et l'accès à la base de données
+- `/pages` : Pages de l'application
+- `/server/api` : Endpoints API pour les opérations de base de données
+- `/db` : Scripts SQL pour l'initialisation de la base de données
 
 ## Structure Docker
 
 Le projet est configuré avec Docker pour faciliter le développement et le déploiement :
 
-- **postgres** : Base de données PostgreSQL pour Supabase (port 5432)
-- **db-init** : Service d'initialisation de la base de données
-- **app** : Application Nuxt.js (exposée sur le port 8888)
+- **mysql** : Base de données MySQL (port 3306)
+- **phpmyadmin** : Interface d'administration MySQL (port 8080)
+- **app** : Application Nuxt.js (port 8888)
+- **db-migrations** : Service de migration de base de données (s'exécute automatiquement au démarrage)
 
-## Base de données
+## Migrations de base de données
 
-Le projet utilise Supabase comme backend avec les tables suivantes :
-- contest : gestion des périodes de concours
-- participant : informations sur les participants
-- entry : entrées de jeu (résultats gagné/perdu)
-- prize : lots disponibles
-- prize_distribution : répartition des lots par semaine
+Le système de migrations de base de données vérifie automatiquement si les tables existent déjà avant d'exécuter les scripts SQL. Cela garantit que la base de données est toujours dans un état cohérent, même après des redémarrages ou des mises à jour
 
 ## Licence
 

@@ -153,9 +153,8 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useDatabase } from '~/composables/useDatabase';
-import { useRuntimeConfig } from '#app';
 import { useI18n } from 'vue-i18n';
+import { useRuntimeConfig } from '#app';
 
 const { t } = useI18n();
 const emit = defineEmits(['participant-registered']);
@@ -171,14 +170,12 @@ const agreeTerms = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
+const showTermsModal = ref(false);
+const activeTab = ref('terms');
 
 // Configuration
 const config = useRuntimeConfig();
 const mockMode = config.public.mockMode;
-
-// Connexion à la base de données
-const { database, isConnected, isReal, type } = useDatabase();
-console.log(`Connexion base de données - Type: ${type}, Réelle: ${isReal}, Connectée: ${isConnected}`);
 
 // Vérifier si le formulaire est valide
 const isFormValid = computed(() => {
@@ -199,221 +196,126 @@ async function checkParticipantByPhone(phoneNumber) {
       return null; // Simuler aucun participant existant
     }
     
-    // Requête à la base de données
-    let result;
-    if (type === 'mysql') {
-      // Pour MySQL
-      const { data, error } = await database.from('participant').select('*').eq('phone', phoneNumber).execute();
-      if (error) throw error;
-      result = data && data.length > 0 ? data[0] : null;
-    } else {
-      // Pour Supabase
-      const { data, error } = await database.from('participant').select('*').eq('phone', phoneNumber).single();
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
-      result = data;
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+    
+    // Utiliser l'API côté serveur pour vérifier le participant
+    const response = await fetch('/api/participants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        first_name: firstName.value,
+        last_name: lastName.value,
+        phone: formattedPhone,
+        email: email.value
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
     }
     
-    console.log(`Résultat de la recherche:`, result);
-    return result;
+    const data = await response.json();
+    
+    if (data.success && data.isExisting) {
+      console.log('Participant existant trouvé:', data.participant);
+      return data.participant;
+    }
+    
+    if (data.success && !data.isExisting) {
+      console.log('Nouveau participant créé:', data.participant);
+      return data.participant;
+    }
+    
+    return null;
   } catch (error) {
-    console.error('Erreur lors de la recherche du participant:', error);
+    console.error('Erreur lors de la vérification du participant:', error);
     throw error;
   }
 }
 
-// Enregistrement du participant
+// Fonction pour enregistrer un participant
 async function registerParticipant() {
   if (!isFormValid.value) {
     errorMessage.value = t('registration.messages.required');
     return;
   }
   
+  isLoading.value = true;
   errorMessage.value = '';
   successMessage.value = '';
-  isLoading.value = true;
   
   try {
-    // Données du participant avec validation et nettoyage
-    const participantData = {
-      first_name: firstName.value.trim(),
-      last_name: lastName.value.trim(),
-      phone: formatPhoneNumber(phone.value.trim()), // Formatage du numéro de téléphone
-      email: email.value.trim() || null,
-      created_at: new Date().toISOString(), // Ajouter la date de création
-      updated_at: new Date().toISOString()  // Ajouter la date de mise à jour
-    };
+    // Formater le numéro de téléphone
+    const formattedPhone = formatPhoneNumber(phone.value);
     
-    console.log('Participant data to register:', participantData);
-    
-    // Si en mode mock, utiliser des données simulées
+    // En mode mock, simuler un succès
     if (mockMode) {
-      console.log('Using mock mode for registration');
-      // Simuler un délai de traitement
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Créer un ID simulé basé sur l'horodatage
-      const mockId = Date.now();
-      
-      // Afficher le message de succès
       successMessage.value = t('registration.messages.demoSuccess');
+      const mockParticipant = {
+        id: Math.floor(Math.random() * 1000),
+        first_name: firstName.value,
+        last_name: lastName.value,
+        phone: formattedPhone,
+        email: email.value,
+        created_at: new Date().toISOString()
+      };
       
-      // Émettre l'événement avec les données du participant
-      emit('participant-registered', {
-        id: mockId,
-        ...participantData
-      });
-      
-      // Stocker le numéro de téléphone dans le stockage local
-      localStorage.setItem('participant_phone', participantData.phone);
-      
-      // Réinitialiser le formulaire
+      emit('participant-registered', mockParticipant);
       resetForm();
-      
-      isLoading.value = false;
       return;
     }
     
-    // Vérifier d'abord si le participant existe déjà avec ce numéro de téléphone
-    console.log('Checking for existing participant with phone:', participantData.phone);
+    // Utiliser l'API côté serveur pour créer ou récupérer le participant
+    const response = await fetch('/api/participants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        first_name: firstName.value,
+        last_name: lastName.value,
+        phone: formattedPhone,
+        email: email.value
+      })
+    });
     
-    // Utiliser notre composable pour vérifier si le participant existe
-    try {
-      const existingParticipant = await checkParticipantByPhone(participantData.phone);
-      
-      if (existingParticipant) {
-        console.log('Found existing participant:', existingParticipant);
-      } else {
-        console.log('No existing participant found, creating new one');
-      }
-      
-      let participant;
-      
-      if (existingParticipant) {
-        // Mettre à jour les informations du participant existant
-        console.log('Updating existing participant with ID:', existingParticipant.id);
-        const updateData = {
-          first_name: participantData.first_name,
-          last_name: participantData.last_name,
-          email: participantData.email,
-          updated_at: participantData.updated_at
-        };
-        
-        let updateResult;
-        if (type === 'mysql') {
-          // Pour MySQL
-          updateResult = await database.from('participant')
-            .update(updateData)
-            .eq('id', existingParticipant.id)
-            .select();
-        } else {
-          // Pour Supabase
-          updateResult = await database.from('participant')
-            .update(updateData)
-            .eq('id', existingParticipant.id)
-            .select();
-        }
-        
-        const { data: updatedParticipant, error: updateError } = updateResult;
-        
-        if (updateError) {
-          console.error('Update error:', updateError);
-          throw updateError;
-        }
-        
-        participant = updatedParticipant?.[0] || existingParticipant;
-      } else {
-        // Enregistrer le nouveau participant dans la base de données
-        console.log('Inserting new participant');
-        
-        let insertResult;
-        if (type === 'mysql') {
-          // Pour MySQL
-          insertResult = await database.from('participant')
-            .insert([participantData])
-            .select();
-        } else {
-          // Pour Supabase
-          insertResult = await database.from('participant')
-            .insert([participantData])
-            .select();
-        }
-        
-        const { data: newParticipant, error: insertError } = insertResult;
-        
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          throw insertError;
-        }
-        
-        // Vérifier que nous avons obtenu des données
-        if (!newParticipant || newParticipant.length === 0) {
-          console.error('No data received from database after insert');
-          throw new Error('Aucune donnée reçue de la base de données');
-        }
-        
-        participant = newParticipant[0];
-      }
-      
-      // Stocker le numéro de téléphone dans le stockage local
-      localStorage.setItem('participant_phone', participantData.phone);
-      
-      // Message de succès
-      successMessage.value = t('registration.messages.success');
-      console.log('Registration successful, participant:', participant);
-      
-      // Émettre l'événement avec les données du participant
-      emit('participant-registered', participant);
-      
-      // Réinitialiser le formulaire
-      resetForm();
-    } catch (participantCheckError) {
-      console.error('Error checking participant:', participantCheckError);
-      throw participantCheckError;
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
     }
-  } catch (error) {
-    console.error('Registration error:', error);
     
-    // Déterminer le type d'erreur pour afficher un message approprié
-    if (error.code) {
-      // Erreurs avec des codes
-      switch (error.code) {
-        case 'PGRST301':
-        case 'PGRST302':
-          errorMessage.value = t('errors.databaseAccess');
-          break;
-        case '23505': // Code PostgreSQL pour violation de contrainte unique
-          errorMessage.value = t('errors.duplicateEntry');
-          break;
-        case '23514': // Code PostgreSQL pour violation de contrainte de validation
-          errorMessage.value = t('errors.invalidData');
-          break;
-        case '42P01': // Table inexistante
-          errorMessage.value = t('errors.supabase') + ': Table non trouvée';
-          break;
-        case '42501': // Erreur de permission
-          errorMessage.value = t('errors.supabase') + ': Permissions insuffisantes';
-          break;
-        default:
-          if (error.message && error.message.includes('network')) {
-            errorMessage.value = t('registration.messages.networkError');
-          } else {
-            errorMessage.value = t('registration.messages.error') + (error.message ? ': ' + error.message : '');
-          }
-      }
-    } else if (error.message) {
-      // Erreurs avec un message mais sans code
-      if (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('connexion')) {
-        errorMessage.value = t('registration.messages.networkError');
-      } else if (error.message.toLowerCase().includes('validation') || error.message.toLowerCase().includes('invalid')) {
-        errorMessage.value = t('registration.messages.validationError');
-      } else if (error.message.toLowerCase().includes('database') || error.message.toLowerCase().includes('base de données')) {
-        errorMessage.value = t('registration.messages.databaseError');
-      } else {
-        errorMessage.value = t('registration.messages.error') + ': ' + error.message;
-      }
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || t('registration.messages.error'));
+    }
+    
+    // Déterminer le message à afficher
+    if (data.isExisting) {
+      successMessage.value = `${t('app.messages.alreadyRegistered')} ${data.participant.first_name} ${data.participant.last_name}`;
     } else {
-      // Erreur inconnue
-      errorMessage.value = t('registration.messages.unknownError');
+      successMessage.value = t('registration.messages.success');
+    }
+    
+    // Émettre l'événement avec les données du participant
+    emit('participant-registered', data.participant);
+    resetForm();
+    
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement:', error);
+    
+    // Déterminer le type d'erreur
+    if (error.message.includes('network') || error.message.includes('fetch')) {
+      errorMessage.value = t('registration.messages.networkError');
+    } else if (error.message.includes('MySQL') || error.message.includes('database')) {
+      errorMessage.value = t('registration.messages.databaseError');
+    } else if (error.message.includes('validation') || error.message.includes('required')) {
+      errorMessage.value = t('registration.messages.validationError');
+    } else {
+      errorMessage.value = `${t('registration.messages.unknownError')} (${error.message})`;
     }
   } finally {
     isLoading.value = false;
@@ -423,15 +325,14 @@ async function registerParticipant() {
 // Fonction pour formater le numéro de téléphone
 function formatPhoneNumber(phone) {
   // Supprimer tous les caractères non numériques
-  let cleaned = phone.replace(/\D/g, '');
+  let formatted = phone.replace(/\D/g, '');
   
-  // S'assurer que le numéro commence par le code pays (par défaut +225 pour la Côte d'Ivoire)
-  if (!cleaned.startsWith('225') && cleaned.length <= 10) {
-    cleaned = '225' + cleaned;
+  // Ajouter l'indicatif pays si nécessaire (par exemple +33 pour France)
+  if (formatted.length === 10 && formatted.startsWith('0')) {
+    formatted = '33' + formatted.substring(1);
   }
   
-  // Retourner le numéro formaté
-  return cleaned;
+  return formatted;
 }
 
 // Réinitialiser le formulaire
