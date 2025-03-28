@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   # Base de données MySQL
   mysql:
@@ -17,6 +15,11 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - rouedelafortune
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "user", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # Application Laravel (Rouedelafortune)
   app:
@@ -34,12 +37,17 @@ services:
       DB_PASSWORD: password
       APP_ENV: development
       APP_DEBUG: 'true'
+      COMPOSER_ALLOW_SUPERUSER: 1
     volumes:
       - ./:/var/www/html
+      - composer_cache:/root/.composer/cache
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - rouedelafortune
+    # Exécuter le script d'initialisation qui configure l'application
+    entrypoint: ["/usr/local/bin/init-laravel.sh"]
 
   # Serveur web Nginx
   nginx:
@@ -78,3 +86,4 @@ networks:
 
 volumes:
   mysql-data:
+  composer_cache:

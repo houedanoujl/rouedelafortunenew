@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     nodejs \
-    npm
+    npm \
+    default-mysql-client
 
 # Nettoyer le cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -34,16 +35,39 @@ RUN mkdir -p /home/$user/.composer && \
 # Définir le répertoire de travail
 WORKDIR /var/www/html
 
+# Copier composer.json et composer.lock d'abord pour tirer parti du cache de Docker
+COPY composer.json composer.json
+
+# Installer les dépendances
+RUN composer install --no-scripts --no-autoloader
+
 # Copier les fichiers d'application existants
 COPY . /var/www/html
+
+# Générer l'autoloader optimisé
+RUN composer dump-autoload --optimize
 
 # Changer la propriété du répertoire de l'application
 RUN chown -R $user:$user /var/www/html
 
-# Définir l'utilisateur
-USER $user
+# Créer les répertoires nécessaires et définir les permissions
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
+RUN chown -R $user:www-data storage bootstrap/cache
 
 # Exposer le port 9000 pour PHP-FPM
 EXPOSE 9000
 
+# Copier le script d'initialisation
+COPY init-laravel.sh /usr/local/bin/
+COPY docker-entrypoint.sh /usr/local/bin/
+USER root
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/init-laravel.sh
+USER $user
+
+# Définir le point d'entrée
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Commande par défaut
 CMD ["php-fpm"]
