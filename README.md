@@ -1,22 +1,23 @@
 # Roue de la Fortune DINOR
 
-Application de jeu concours "Roue de la Fortune" pour les produits DINOR. Cette application est développée avec Nuxt 3 et utilise PostgreSQL comme base de données.
+Application de jeu concours "Roue de la Fortune" pour les produits DINOR. Cette application est développée avec Laravel, Filament pour l'administration et Livewire pour les composants interactifs. Elle utilise MySQL comme base de données.
 
 ## Fonctionnalités
 
 - Formulaire d'inscription pour les participants (nom, prénom, téléphone)
-- Roue de la fortune interactive avec 12 secteurs (gagné/perdu)
+- Roue de la fortune interactive avec plusieurs secteurs (gagné/perdu)
 - Affichage du résultat après la rotation de la roue
 - Génération de QR code pour les gagnants
-- Notification par SMS pour les gagnants
-- API sécurisées côté serveur pour toutes les opérations de base de données
-- Interface d'administration pour la gestion des prix
-- Architecture client-serveur optimisée avec PostgreSQL
+- Interface d'administration complète avec Filament
+- Composants interactifs avec Livewire
+- Architecture MVC sécurisée avec Laravel
+- Base de données MySQL
 
 ## Configuration requise
 
 - Docker et Docker Compose (recommandé)
-- Node.js (v16+) pour le développement local sans Docker
+- PHP 8.2+ pour le développement local sans Docker
+- Composer pour la gestion des dépendances PHP
 
 ## Installation
 
@@ -38,6 +39,15 @@ docker compose up -d
 http://localhost:8888
 ```
 
+4. Accéder à l'interface d'administration
+```
+http://localhost:8888/admin
+```
+
+Identifiants par défaut :
+- Nom d'utilisateur : houedanou
+- Mot de passe : nouveaumdp123
+
 ### Méthode traditionnelle (sans Docker)
 
 1. Cloner le dépôt
@@ -48,106 +58,80 @@ cd rouedelafortune
 
 2. Installer les dépendances
 ```bash
-npm install
+composer install
 ```
 
-3. Configurer les variables d'environnement
-Créez un fichier `.env` à la racine du projet avec les informations suivantes :
-```
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/rouedelafortune
-USE_POSTGRES=true
-MOCK_MODE=false
-POSTGRES_HOST=localhost
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DATABASE=rouedelafortune
-```
-
-4. Initialiser la base de données
+3. Copier le fichier d'environnement
 ```bash
-# Exécuter les scripts SQL d'initialisation
-psql -U postgres -h localhost -d rouedelafortune -f ./db/init-postgres.sql
-psql -U postgres -h localhost -d rouedelafortune -f ./db/init-postgres-admin.sql
+cp .env.example .env
 ```
 
-5. Lancer le serveur de développement
+4. Générer la clé d'application
 ```bash
-npm run dev
+php artisan key:generate
 ```
 
-6. Construire pour la production
+5. Configurer la base de données dans le fichier .env
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=rouedelafortune
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+6. Exécuter les migrations et les seeders
 ```bash
-npm run build
+php artisan migrate --seed
 ```
 
-## Gestion de la base de données
+7. Lancer le serveur de développement
+```bash
+php artisan serve
+```
 
-### Avec pgAdmin
-
-L'application est configurée avec pgAdmin pour faciliter la gestion de la base de données PostgreSQL :
-
-- **URL d'accès** : http://localhost:8080
-- **Email** : admin@example.com
-- **Mot de passe** : admin
-
-Pour configurer la connexion à la base de données dans pgAdmin :
-1. Cliquez sur "Add New Server"
-2. Nom : rouedelafortune
-3. Onglet Connection :
-   - Host : postgres
-   - Port : 5432
-   - Database : rouedelafortune
-   - Username : postgres
-   - Password : postgres
-
-### Informations de connexion PostgreSQL
-
-- **Hôte** : postgres (dans Docker) ou localhost (sans Docker)
-- **Port** : 5432
-- **Base de données** : rouedelafortune
-- **Utilisateur** : postgres
-- **Mot de passe** : postgres
-
-### Accès à l'interface d'administration
-
-- **URL d'accès** : http://localhost:8888/admin
-- **Utilisateur** : houedanou
-- **Mot de passe** : admin123
-
-## Architecture
-
-L'application utilise une architecture client-serveur sécurisée :
-
-- **Frontend** : Vue.js/Nuxt.js pour l'interface utilisateur
-- **Backend** : API Nuxt pour toutes les opérations de base de données
-- **Base de données** : PostgreSQL pour le stockage persistant
-
-Toutes les opérations de base de données sont effectuées via des API côté serveur, jamais directement depuis le navigateur. Cette architecture garantit la sécurité et la performance de l'application.
+8. Accéder à l'application
+```
+http://localhost:8000
+```
 
 ## Structure du projet
 
-Le projet est organisé selon l'architecture Nuxt 3 :
+- `/app` : Modèles, contrôleurs, ressources Filament et composants Livewire
+- `/database` : Migrations et seeders
+- `/resources` : Vues, assets et traductions
+- `/routes` : Définition des routes de l'application
+- `/public` : Fichiers accessibles publiquement (CSS, JS, images)
+- `/nginx` : Configuration du serveur web Nginx
 
-- `/components` : Composants Vue réutilisables
-- `/composables` : Composables pour la logique partagée et l'accès à la base de données
-- `/pages` : Pages de l'application
-- `/server/api` : Endpoints API pour les opérations de base de données
-- `/server/utils` : Utilitaires côté serveur, dont la configuration PostgreSQL
-- `/db` : Scripts SQL pour l'initialisation de la base de données
+## Développement
 
-## Structure Docker
+### Commandes utiles
 
-Le projet est configuré avec Docker pour faciliter le développement et le déploiement :
+- Créer un nouveau modèle avec migration et contrôleur :
+```bash
+php artisan make:model NomDuModele -mcr
+```
 
-- **postgres** : Base de données PostgreSQL (port 5432)
-- **pgadmin** : Interface d'administration PostgreSQL (port 8080)
-- **app** : Application Nuxt.js (port 8888)
-- **db-migrations** : Service de migration de base de données (s'exécute automatiquement au démarrage)
+- Créer un nouveau composant Livewire :
+```bash
+php artisan make:livewire NomDuComposant
+```
 
-## Migrations de base de données
+- Créer une nouvelle ressource Filament :
+```bash
+php artisan make:filament-resource NomDuModele
+```
 
-Le système de migrations de base de données vérifie automatiquement si les tables existent déjà avant d'exécuter les scripts SQL. Cela garantit que la base de données est toujours dans un état cohérent, même après des redémarrages ou des mises à jour.
+## Authentification
+
+L'authentification est gérée par Filament pour l'interface d'administration.
+
+Identifiants par défaut :
+- Nom d'utilisateur : houedanou
+- Mot de passe : nouveaumdp123
 
 ## Licence
 
-Tous droits réservés DINOR
+Ce projet est sous licence propriétaire. Tous droits réservés.

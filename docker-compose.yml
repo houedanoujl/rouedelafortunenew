@@ -1,86 +1,80 @@
+version: '3'
+
 services:
-  # Base de données PostgreSQL
-  postgres:
-    image: postgres:14
-    container_name: rouedelafortune-postgres
+  # Base de données MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: rouedelafortune-mysql
     restart: always
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: rouedelafortune
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rouedelafortune
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - mysql-data:/var/lib/mysql
+    networks:
+      - rouedelafortune
 
-  # Service de migration de base de données
-  # Ce service vérifie si les tables existent et exécute les migrations au besoin
-  db-migrations:
-    image: postgres:14
-    container_name: rouedelafortune-migrations
-    restart: "no"
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: rouedelafortune
-    volumes:
-      - ./db:/db
-      - ./scripts:/scripts
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: >
-      /bin/bash -c "
-      echo 'Vérification et création des tables de la base de données...' &&
-      PGPASSWORD=postgres psql -h postgres -U postgres -d rouedelafortune -c 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ''public'' AND table_name = ''participant'';' | grep -q '0' &&
-      (echo 'Tables non trouvées, exécution des scripts de migration...' &&
-       PGPASSWORD=postgres psql -h postgres -U postgres -d rouedelafortune -f /db/init-postgres.sql &&
-       PGPASSWORD=postgres psql -h postgres -U postgres -d rouedelafortune -f /db/init-postgres-admin.sql &&
-       echo 'Migration terminée avec succès!') ||
-      echo 'Les tables existent déjà, aucune migration nécessaire.'"
-
-  # Interface pgAdmin pour gérer la base de données
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: rouedelafortune-pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "8080:80"
-    depends_on:
-      - postgres
-
-  # Application frontend (Rouedelafortune)
+  # Application Laravel (Rouedelafortune)
   app:
     build:
       context: .
-      dockerfile: Dockerfile.app
+      dockerfile: Dockerfile
     container_name: rouedelafortune-app
     restart: always
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/rouedelafortune
-      USE_POSTGRES: 'true'
-      MOCK_MODE: 'false'
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DATABASE: rouedelafortune
-    ports:
-      - "8888:3000"
-    depends_on:
-      db-migrations:
-        condition: service_completed_successfully
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: rouedelafortune
+      DB_USERNAME: user
+      DB_PASSWORD: password
+      APP_ENV: development
+      APP_DEBUG: 'true'
     volumes:
-      - ./:/app
-      - /app/node_modules/
+      - ./:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - rouedelafortune
+
+  # Serveur web Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: rouedelafortune-nginx
+    restart: always
+    ports:
+      - "8888:80"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - rouedelafortune
+
+  # Interface phpMyAdmin pour gérer la base de données
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: rouedelafortune-phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - rouedelafortune
+
+networks:
+  rouedelafortune:
+    driver: bridge
 
 volumes:
-  postgres-data:
+  mysql-data:

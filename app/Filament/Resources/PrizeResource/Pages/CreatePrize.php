@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Filament\Resources\PrizeResource\Pages;
+
+use App\Filament\Resources\PrizeResource;
+use Filament\Resources\Pages\CreateRecord;
+
+class CreatePrize extends CreateRecord
+{
+    protected static string $resource = PrizeResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+}

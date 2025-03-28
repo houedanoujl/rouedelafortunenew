@@ -1,1 +1,0 @@
-INSERT INTO "public"."entry" ("id", "participant_id", "contest_id", "entry_date", "result", "prize_id", "created_at", "updated_at") VALUES ('5', '5', '1', '2025-03-19 19:23:42.857+00', 'GAGNÉ', '9', '2025-03-19 19:23:42.596319+00', '2025-03-19 19:23:42.596319+00');

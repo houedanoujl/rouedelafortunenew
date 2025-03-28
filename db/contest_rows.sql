@@ -1,1 +1,0 @@
-INSERT INTO "public"."contest" ("id", "name", "description", "start_date", "end_date", "created_at", "updated_at") VALUES ('1', 'jeudinor', null, '2025-03-19 15:40:13+00', '2025-03-21 15:40:19+00', '2025-03-19 15:40:25+00', '2025-03-19 15:40:28+00');

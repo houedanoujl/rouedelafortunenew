@@ -1,1 +1,0 @@
-INSERT INTO "public"."qr_codes" ("id", "tracking_id", "participant_id", "prize_id", "created_at", "scan_count", "last_scanned", "scan_history") VALUES ('1', '1', '5', '9', '2025-03-20 08:26:40.127541+00', '0', null, '[]');
