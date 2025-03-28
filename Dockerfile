@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.3-fpm
 
 # Arguments définis dans docker-compose.yml
 ARG user=laravel
@@ -36,25 +36,8 @@ RUN mkdir -p /home/$user/.composer && \
 # Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Copier composer.json et composer.lock d'abord pour tirer parti du cache de Docker
-COPY composer.json composer.json
-
-# Installer les dépendances
-RUN composer install --no-scripts --no-autoloader --ignore-platform-reqs
-
-# Copier les fichiers d'application existants
-COPY . /var/www/html
-
-# Générer l'autoloader optimisé
-RUN composer dump-autoload --optimize
-
-# Changer la propriété du répertoire de l'application
-RUN chown -R $user:$user /var/www/html
-
-# Créer les répertoires nécessaires et définir les permissions
-RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
-RUN chmod -R 775 storage bootstrap/cache
-RUN chown -R $user:www-data storage bootstrap/cache
+# Configurer Git pour qu'il accepte le répertoire comme sûr
+RUN git config --global --add safe.directory /var/www/html
 
 # Exposer le port 9000 pour PHP-FPM
 EXPOSE 9000
@@ -65,7 +48,6 @@ COPY docker-entrypoint.sh /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/init-laravel.sh
-USER $user
 
 # Définir le point d'entrée
 ENTRYPOINT ["docker-entrypoint.sh"]

@@ -10,10 +10,29 @@ wait_for_mysql() {
   echo "MySQL est prêt !"
 }
 
-# Vérifier si le projet Laravel est déjà installé
-if [ ! -f "vendor/autoload.php" ]; then
+# Vérifier si nous sommes dans un répertoire vide ou presque
+if [ ! -f "artisan" ]; then
+  echo "Création d'un nouveau projet Laravel..."
+  # Créer un répertoire temporaire
+  mkdir -p /tmp/laravel-temp
+  cd /tmp/laravel-temp
+  
+  # Créer un nouveau projet Laravel
+  composer create-project --prefer-dist laravel/laravel . --ignore-platform-reqs
+  
+  # Copier tous les fichiers vers le répertoire de travail
+  cp -r * /var/www/html/
+  cp -r .* /var/www/html/ 2>/dev/null || true
+  
+  # Retourner au répertoire de travail
+  cd /var/www/html
+  
+  # Installation des packages supplémentaires
+  echo "Installation de Filament et autres packages..."
+  composer require filament/filament:^3.0 livewire/livewire:^3.0 simplesoftwareio/simple-qrcode:^4.2 --ignore-platform-reqs
+elif [ ! -f "vendor/autoload.php" ]; then
   echo "Installation des dépendances Laravel..."
-  composer install --no-interaction --no-progress
+  composer install --no-interaction --no-progress --ignore-platform-reqs
 fi
 
 # Vérifier si le fichier .env existe
@@ -56,6 +75,10 @@ fi
 
 # Attendre que MySQL soit prêt
 wait_for_mysql
+
+# Créer les répertoires nécessaires
+mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+chmod -R 775 storage bootstrap/cache
 
 # Vérifier si les migrations ont été exécutées
 if [ ! -f "storage/app/migrations_run" ]; then
