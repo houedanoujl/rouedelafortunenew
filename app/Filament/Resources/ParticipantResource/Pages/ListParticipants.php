@@ -13,8 +13,7 @@ class ListParticipants extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->label('Créer un participant'),
+            Actions\CreateAction::make(),
         ];
     }
 }

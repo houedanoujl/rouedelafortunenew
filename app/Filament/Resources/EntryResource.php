@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ContestResource\Pages;
-use App\Filament\Resources\ContestResource\RelationManagers;
-use App\Models\Contest;
+use App\Filament\Resources\EntryResource\Pages;
+use App\Filament\Resources\EntryResource\RelationManagers;
+use App\Models\Entry;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,9 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class ContestResource extends Resource
+class EntryResource extends Resource
 {
-    protected static ?string $model = Contest::class;
+    protected static ?string $model = Entry::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -56,9 +56,9 @@ class ContestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListContests::route('/'),
-            'create' => Pages\CreateContest::route('/create'),
-            'edit' => Pages\EditContest::route('/{record}/edit'),
+            'index' => Pages\ListEntries::route('/'),
+            'create' => Pages\CreateEntry::route('/create'),
+            'edit' => Pages\EditEntry::route('/{record}/edit'),
         ];
     }
 }

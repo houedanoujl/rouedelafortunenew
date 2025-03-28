@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ContestResource\Pages;
-use App\Filament\Resources\ContestResource\RelationManagers;
-use App\Models\Contest;
+use App\Filament\Resources\QrCodeResource\Pages;
+use App\Filament\Resources\QrCodeResource\RelationManagers;
+use App\Models\QrCode;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,9 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class ContestResource extends Resource
+class QrCodeResource extends Resource
 {
-    protected static ?string $model = Contest::class;
+    protected static ?string $model = QrCode::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -56,9 +56,9 @@ class ContestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListContests::route('/'),
-            'create' => Pages\CreateContest::route('/create'),
-            'edit' => Pages\EditContest::route('/{record}/edit'),
+            'index' => Pages\ListQrCodes::route('/'),
+            'create' => Pages\CreateQrCode::route('/create'),
+            'edit' => Pages\EditQrCode::route('/{record}/edit'),
         ];
     }
 }

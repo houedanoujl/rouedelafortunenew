@@ -13,8 +13,7 @@ class ListPrizes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->label('Créer un prix'),
+            Actions\CreateAction::make(),
         ];
     }
 }
