@@ -7,7 +7,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       supabaseUrl: process.env.SUPABASE_URL || '',
-      supabaseKey: process.env.SUPABASE_KEY || ''
+      supabaseKey: process.env.SUPABASE_KEY || '',
+      databaseUrl: process.env.DATABASE_URL || 'mysql://user:password@mysql:3306/rouedelafortune',
+      mockMode: process.env.MOCK_MODE === 'true',
+      useMySQL: process.env.USE_MYSQL === 'true'
     }
   },
   

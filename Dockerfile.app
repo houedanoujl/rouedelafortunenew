@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+# Installer les dépendances MySQL
+RUN apk add --no-cache mysql-client
+
 # Créer le répertoire de l'application
 WORKDIR /app
 
@@ -9,6 +12,7 @@ COPY nuxt.config.ts ./
 
 # Installer les dépendances
 RUN npm install
+RUN npm install mysql2 --save
 
 # Copier le reste des fichiers
 COPY . .

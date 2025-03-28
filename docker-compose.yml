@@ -1,36 +1,37 @@
 version: '3.8'
 
 services:
-  # Base de données PostgreSQL pour Supabase
-  postgres:
-    image: postgres:14-alpine
+  # Base de données MySQL
+  mysql:
+    image: mysql:8.0
     restart: always
     ports:
-      - "5432:5432"
+      - "3306:3306"
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rouedelafortune
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./supabase-local/migrations:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d  # Les scripts SQL seront exécutés automatiquement au premier démarrage
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # Application d'initialisation (exécute les migrations au premier lancement uniquement)
-  db-init:
-    build:
-      context: ./db-init
-      dockerfile: Dockerfile
+  # Interface phpMyAdmin pour gérer la base de données
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
     depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./supabase-local/migrations:/migrations
-      - db-init-data:/init-data
+      - mysql
 
   # Application frontend (Rouedelafortune)
   app:
@@ -40,15 +41,18 @@ services:
     ports:
       - "8888:3000"  # 3000 est le port par défaut de Nuxt.js
     depends_on:
-      - postgres
+      mysql:
+        condition: service_healthy
     volumes:
       - ./:/app
       - /app/node_modules/
     environment:
-      SUPABASE_URL: http://postgres:5432
-      SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsaG9zdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjE2OTYwMDAwLCJleHAiOjQ3NzA1NjAwMDB9.lbGII8LrENJZpYpsSKdW817FpeWx-8KmgXYy1xtA61Q
+      # Configuration pour l'accès direct à MySQL
+      DATABASE_URL: mysql://user:password@mysql:3306/rouedelafortune
+      # Désactiver le mode mock
+      MOCK_MODE: "false"
+      USE_MYSQL: "true"
       NODE_ENV: development
 
 volumes:
-  postgres-data:
-  db-init-data:  # Volume pour stocker l'état de l'initialisation
+  mysql-data:

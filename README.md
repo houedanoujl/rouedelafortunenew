@@ -13,9 +13,30 @@ Application de jeu concours "Roue de la Fortune" pour les produits DINOR. Cette 
 ## Configuration requise
 
 - Node.js (v16+)
+- Docker et Docker Compose (recommandé)
 - Base de données Supabase
 
 ## Installation
+
+### Méthode avec Docker (recommandée)
+
+1. Cloner le dépôt
+```bash
+git clone <repository-url>
+cd rouedelafortune
+```
+
+2. Lancer l'application avec Docker Compose
+```bash
+docker-compose up -d
+```
+
+3. Accéder à l'application
+```
+http://localhost:8888
+```
+
+### Méthode traditionnelle (sans Docker)
 
 1. Cloner le dépôt
 ```bash
@@ -44,6 +65,40 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Résolution des problèmes
+
+### Erreur "Failed to fetch" lors de l'inscription
+
+Si vous rencontrez une erreur "Failed to fetch" lors de l'inscription, cela peut être lié à un problème de connexion entre le frontend et le backend Supabase. Pour résoudre ce problème :
+
+1. Vérifiez que tous les services Docker sont en cours d'exécution :
+```bash
+docker-compose ps
+```
+
+2. Si le problème persiste, modifiez le fichier `docker-compose.yml` et remplacez :
+```yaml
+SUPABASE_URL: http://postgres:5432
+```
+par :
+```yaml
+SUPABASE_URL: http://localhost:5432
+```
+
+3. Redémarrez les conteneurs Docker :
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+## Structure Docker
+
+Le projet est configuré avec Docker pour faciliter le développement et le déploiement :
+
+- **postgres** : Base de données PostgreSQL pour Supabase (port 5432)
+- **db-init** : Service d'initialisation de la base de données
+- **app** : Application Nuxt.js (exposée sur le port 8888)
 
 ## Base de données
 

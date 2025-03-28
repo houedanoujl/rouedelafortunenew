@@ -153,54 +153,73 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useSupabase } from '~/composables/useSupabase';
-import { useTranslation } from '~/composables/useTranslation';
-import { useParticipantCheck } from '~/composables/useParticipantCheck';
+import { useDatabase } from '~/composables/useDatabase';
+import { useRuntimeConfig } from '#app';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const emit = defineEmits(['participant-registered']);
-const { t } = useTranslation();
 
+// Éléments du formulaire
 const firstName = ref('');
 const lastName = ref('');
 const phone = ref('');
 const email = ref('');
 const agreeTerms = ref(false);
-const showTermsModal = ref(false);
-const activeTab = ref('terms');
 
+// États
 const isLoading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
-// Utiliser le composable pour la vérification des participants
-const { checkParticipantByPhone, participantState } = useParticipantCheck();
+// Configuration
+const config = useRuntimeConfig();
+const mockMode = config.public.mockMode;
 
-// Vérifier si Supabase est disponible
-let supabase;
-let mockMode = false;
-let supabaseConfig;
+// Connexion à la base de données
+const { database, isConnected, isReal, type } = useDatabase();
+console.log(`Connexion base de données - Type: ${type}, Réelle: ${isReal}, Connectée: ${isConnected}`);
 
-try {
-  const supabaseInstance = useSupabase();
-  supabase = supabaseInstance.supabase;
-  mockMode = !supabaseInstance.isReal;
-  supabaseConfig = supabaseInstance.config;
-  console.log('Supabase instance in RegistrationForm:', {
-    isReal: supabaseInstance.isReal,
-    config: supabaseInstance.config
-  });
-} catch (err) {
-  console.error('Error initializing Supabase in RegistrationForm:', err);
-  mockMode = true;
-}
-
-// Validation des données du formulaire
+// Vérifier si le formulaire est valide
 const isFormValid = computed(() => {
-  return firstName.value.trim() !== '' 
-      && lastName.value.trim() !== '' 
+  return firstName.value.trim() !== ''
+      && lastName.value.trim() !== ''
       && phone.value.trim() !== ''
       && agreeTerms.value === true;
 });
+
+// Vérifier si un participant existe déjà avec ce numéro de téléphone
+async function checkParticipantByPhone(phoneNumber) {
+  try {
+    console.log(`Recherche du participant avec le téléphone: ${phoneNumber}`);
+    
+    // Si on est en mode mock, on simule
+    if (mockMode) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return null; // Simuler aucun participant existant
+    }
+    
+    // Requête à la base de données
+    let result;
+    if (type === 'mysql') {
+      // Pour MySQL
+      const { data, error } = await database.from('participant').select('*').eq('phone', phoneNumber).execute();
+      if (error) throw error;
+      result = data && data.length > 0 ? data[0] : null;
+    } else {
+      // Pour Supabase
+      const { data, error } = await database.from('participant').select('*').eq('phone', phoneNumber).single();
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+      result = data;
+    }
+    
+    console.log(`Résultat de la recherche:`, result);
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la recherche du participant:', error);
+    throw error;
+  }
+}
 
 // Enregistrement du participant
 async function registerParticipant() {
@@ -225,10 +244,9 @@ async function registerParticipant() {
     };
     
     console.log('Participant data to register:', participantData);
-    console.log('Using Supabase config:', supabaseConfig);
     
-    // Si Supabase n'est pas disponible ou en mode mock, utiliser les données simulées
-    if (mockMode || !supabase) {
+    // Si en mode mock, utiliser des données simulées
+    if (mockMode) {
       console.log('Using mock mode for registration');
       // Simuler un délai de traitement
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -273,16 +291,29 @@ async function registerParticipant() {
       if (existingParticipant) {
         // Mettre à jour les informations du participant existant
         console.log('Updating existing participant with ID:', existingParticipant.id);
-        const { data: updatedParticipant, error: updateError } = await supabase
-          .from('participant')
-          .update({
-            first_name: participantData.first_name,
-            last_name: participantData.last_name,
-            email: participantData.email,
-            updated_at: participantData.updated_at
-          })
-          .eq('id', existingParticipant.id)
-          .select();
+        const updateData = {
+          first_name: participantData.first_name,
+          last_name: participantData.last_name,
+          email: participantData.email,
+          updated_at: participantData.updated_at
+        };
+        
+        let updateResult;
+        if (type === 'mysql') {
+          // Pour MySQL
+          updateResult = await database.from('participant')
+            .update(updateData)
+            .eq('id', existingParticipant.id)
+            .select();
+        } else {
+          // Pour Supabase
+          updateResult = await database.from('participant')
+            .update(updateData)
+            .eq('id', existingParticipant.id)
+            .select();
+        }
+        
+        const { data: updatedParticipant, error: updateError } = updateResult;
         
         if (updateError) {
           console.error('Update error:', updateError);
@@ -291,12 +322,23 @@ async function registerParticipant() {
         
         participant = updatedParticipant?.[0] || existingParticipant;
       } else {
-        // Enregistrer le nouveau participant dans Supabase
+        // Enregistrer le nouveau participant dans la base de données
         console.log('Inserting new participant');
-        const { data: newParticipant, error: insertError } = await supabase
-          .from('participant')
-          .insert([participantData])
-          .select();
+        
+        let insertResult;
+        if (type === 'mysql') {
+          // Pour MySQL
+          insertResult = await database.from('participant')
+            .insert([participantData])
+            .select();
+        } else {
+          // Pour Supabase
+          insertResult = await database.from('participant')
+            .insert([participantData])
+            .select();
+        }
+        
+        const { data: newParticipant, error: insertError } = insertResult;
         
         if (insertError) {
           console.error('Insert error:', insertError);
@@ -333,7 +375,7 @@ async function registerParticipant() {
     
     // Déterminer le type d'erreur pour afficher un message approprié
     if (error.code) {
-      // Erreurs Supabase avec des codes
+      // Erreurs avec des codes
       switch (error.code) {
         case 'PGRST301':
         case 'PGRST302':
@@ -373,9 +415,6 @@ async function registerParticipant() {
       // Erreur inconnue
       errorMessage.value = t('registration.messages.unknownError');
     }
-    
-    // Ajouter des informations de débogage dans la console
-    console.log('Supabase config utilisée lors de l\'erreur:', supabaseConfig);
   } finally {
     isLoading.value = false;
   }
