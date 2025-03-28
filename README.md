@@ -10,7 +10,7 @@ cd rouedelafortune
 
 2. Lancer l'application
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 3. Accéder aux interfaces
