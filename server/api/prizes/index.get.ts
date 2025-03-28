@@ -1,55 +1,47 @@
-import { createPool } from 'mysql2/promise';
-import { defineEventHandler, createError, getQuery } from 'h3';
+import { defineEventHandler, createError, getQuery, H3Event } from 'h3';
+import { query } from '~/server/utils/postgres';
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: H3Event) => {
   try {
     // Récupérer les paramètres de requête
-    const query = getQuery(event);
-    const filters = {};
+    const queryParams = getQuery(event);
+    const filters: Record<string, any> = {};
     
     // Construire la liste des filtres à partir des paramètres de requête
-    for (const [key, value] of Object.entries(query)) {
+    for (const [key, value] of Object.entries(queryParams)) {
       if (key !== 'sort' && key !== 'order') {
         filters[key] = value;
       }
     }
 
-    // Créer une connexion à la base de données MySQL
-    const pool = createPool({
-      host: process.env.MYSQL_HOST || 'mysql',
-      user: process.env.MYSQL_USER || 'root',
-      password: process.env.MYSQL_PASSWORD || 'root',
-      database: process.env.MYSQL_DATABASE || 'rouedelafortune',
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
-
-    // Construire la requête SQL
+    // Construire la requête SQL pour PostgreSQL
     let sql = 'SELECT * FROM prize';
     const params = [];
+    let paramIndex = 1;
     
     // Ajouter les conditions WHERE si des filtres sont spécifiés
     if (Object.keys(filters).length > 0) {
       sql += ' WHERE ';
       sql += Object.entries(filters)
-        .map(([key, _]) => `${key} = ?`)
+        .map(([key, _]) => {
+          return `${key} = $${paramIndex++}`;
+        })
         .join(' AND ');
       
       params.push(...Object.values(filters));
     }
     
     // Ajouter ORDER BY si spécifié
-    if (query.sort) {
-      sql += ` ORDER BY ${query.sort} ${query.order === 'asc' ? 'ASC' : 'DESC'}`;
+    if (queryParams.sort) {
+      sql += ` ORDER BY ${queryParams.sort} ${queryParams.order === 'asc' ? 'ASC' : 'DESC'}`;
     }
 
-    // Exécution de la requête
-    const [rows] = await pool.execute(sql, params);
+    // Exécution de la requête avec PostgreSQL
+    const result = await query(sql, params);
 
     return {
       success: true,
-      data: rows
+      data: result.rows
     };
   } catch (error) {
     console.error('Erreur lors de la récupération des prix:', error);

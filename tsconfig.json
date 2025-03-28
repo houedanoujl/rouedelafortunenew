@@ -2,7 +2,7 @@
   // https://nuxt.com/docs/guide/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "mysql2"],
+    "types": ["node", "pg"],
     "skipLibCheck": true
   }
 }

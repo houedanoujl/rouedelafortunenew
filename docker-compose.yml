@@ -1,23 +1,19 @@
 services:
-  # Base de données MySQL
-  mysql:
-    image: mysql:8
-    container_name: rouedelafortune-mysql
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:14
+    container_name: rouedelafortune-postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: rouedelafortune
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: rouedelafortune
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
-      # Les scripts ne s'exécutent qu'à la première initialisation du volume
-      - ./db/init-mysql.sql:/docker-entrypoint-initdb.d/01-init-mysql.sql
-      - ./db/init-mysql-admin.sql:/docker-entrypoint-initdb.d/02-init-mysql-admin.sql
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,43 +21,42 @@ services:
   # Service de migration de base de données
   # Ce service vérifie si les tables existent et exécute les migrations au besoin
   db-migrations:
-    image: mysql:8
+    image: postgres:14
     container_name: rouedelafortune-migrations
     restart: "no"
     environment:
-      MYSQL_HOST: mysql
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: rouedelafortune
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rouedelafortune
     volumes:
       - ./db:/db
       - ./scripts:/scripts
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     command: >
       /bin/bash -c "
       echo 'Vérification et création des tables de la base de données...' &&
-      mysql -h mysql -u root -proot -e 'USE rouedelafortune; SHOW TABLES;' | grep -q 'participant' ||
+      PGPASSWORD=postgres psql -h postgres -U postgres -d rouedelafortune -c 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ''public'' AND table_name = ''participant'';' | grep -q '0' &&
       (echo 'Tables non trouvées, exécution des scripts de migration...' &&
-       mysql -h mysql -u root -proot rouedelafortune < /db/init-mysql.sql &&
-       mysql -h mysql -u root -proot rouedelafortune < /db/init-mysql-admin.sql &&
+       PGPASSWORD=postgres psql -h postgres -U postgres -d rouedelafortune -f /db/init-postgres.sql &&
+       PGPASSWORD=postgres psql -h postgres -U postgres -d rouedelafortune -f /db/init-postgres-admin.sql &&
        echo 'Migration terminée avec succès!') ||
       echo 'Les tables existent déjà, aucune migration nécessaire.'"
 
-  # Interface phpMyAdmin pour gérer la base de données
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: rouedelafortune-phpmyadmin
+  # Interface pgAdmin pour gérer la base de données
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: rouedelafortune-pgadmin
     restart: always
     environment:
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: root
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "8080:80"
     depends_on:
-      - mysql
+      - postgres
 
   # Application frontend (Rouedelafortune)
   app:
@@ -71,13 +66,13 @@ services:
     container_name: rouedelafortune-app
     restart: always
     environment:
-      DATABASE_URL: mysql://user:password@mysql:3306/rouedelafortune
-      USE_MYSQL: 'true'
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/rouedelafortune
+      USE_POSTGRES: 'true'
       MOCK_MODE: 'false'
-      MYSQL_HOST: mysql
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-      MYSQL_DATABASE: rouedelafortune
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: rouedelafortune
     ports:
       - "8888:3000"
     depends_on:
@@ -88,4 +83,4 @@ services:
       - /app/node_modules/
 
 volumes:
-  mysql-data:
+  postgres-data:
