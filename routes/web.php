@@ -39,3 +39,8 @@ Route::post('/admin/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware('auth')->name('dashboard');
+
+// Ajouter la route pour le règlement
+Route::get('/rules', function () {
+    return view('rules');
+})->name('rules');

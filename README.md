@@ -6,7 +6,7 @@ Cette application Laravel "Roue de la Fortune" est configurée pour fonctionner 
 
 - Docker et Docker Compose installés sur votre machine
 
-## Installation
+## Installation et démarrage
 
 1. Clonez ce dépôt :
    ```bash
@@ -14,15 +14,107 @@ Cette application Laravel "Roue de la Fortune" est configurée pour fonctionner 
    cd rouedelafortune
    ```
 
-2. Lancez l'application avec Docker Compose :
+2. Créez et configurez le fichier .env :
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Lancez l'application avec Docker Compose :
    ```bash
    docker compose up -d
    ```
 
-3. L'application sera accessible aux adresses suivantes :
-   - Application principale : http://localhost:8888
-   - Interface d'administration : http://localhost:8888/admin
-   - Interface phpMyAdmin : http://localhost:8081
+4. Installez les dépendances PHP :
+   ```bash
+   docker compose exec app composer install
+   ```
+
+5. Générez la clé d'application Laravel :
+   ```bash
+   docker compose exec app php artisan key:generate
+   ```
+
+6. Exécutez les migrations de base de données :
+   ```bash
+   docker compose exec app php artisan migrate
+   ```
+
+7. Remplissez la base de données avec des données de test :
+   ```bash
+   docker compose exec app php artisan db:seed
+   ```
+
+8. Installez les dépendances NPM :
+   ```bash
+   docker compose exec app npm install
+   ```
+
+9. Compilez les assets frontend :
+   ```bash
+   docker compose exec app npm run build
+   ```
+
+10. Définissez les permissions des répertoires de stockage :
+    ```bash
+    docker compose exec app chmod -R 777 storage bootstrap/cache
+    ```
+
+11. Nettoyez les caches de configuration :
+    ```bash
+    docker compose exec app php artisan config:clear
+    docker compose exec app php artisan cache:clear
+    docker compose exec app php artisan view:clear
+    ```
+
+12. L'application sera accessible aux adresses suivantes :
+    - Application principale : http://localhost:8888
+    - Interface d'administration : http://localhost:8888/admin
+    - Interface phpMyAdmin : http://localhost:8081
+
+## Résolution des problèmes courants
+
+### Erreur 502 Bad Gateway
+
+Si vous rencontrez une erreur 502 Bad Gateway, vérifiez que la configuration Nginx est correcte :
+
+```bash
+docker compose exec nginx bash -c "cat > /etc/nginx/nginx.conf << 'EOF'
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    
+    server {
+        listen 8888;
+        root /var/www/html/public;
+        index index.php;
+        
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+        
+        location ~ \.php$ {
+            fastcgi_pass app:9000;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+    }
+}
+EOF"
+```
+
+Puis redémarrez Nginx :
+```bash
+docker compose restart nginx
+```
+
+### Erreur Vite Manifest Not Found
+
+Si vous rencontrez une erreur concernant le manifeste Vite, assurez-vous d'avoir bien exécuté les commandes pour compiler les assets frontend (étapes 8 et 9).
 
 ## Identifiants par défaut
 
@@ -36,6 +128,36 @@ Cette application Laravel "Roue de la Fortune" est configurée pour fonctionner 
 - ou
 - Nom d'utilisateur : root
 - Mot de passe : root
+
+## Commandes Docker utiles
+
+### Afficher les logs des conteneurs
+```bash
+docker compose logs app
+docker compose logs nginx
+docker compose logs mysql
+```
+
+### Redémarrer tous les services
+```bash
+docker compose restart
+```
+
+### Arrêter l'application
+```bash
+docker compose down
+```
+
+### Reconstruire les conteneurs
+```bash
+docker compose build
+docker compose up -d
+```
+
+### Accéder au shell du conteneur de l'application
+```bash
+docker compose exec app bash
+```
 
 ## Structure de l'application
 
@@ -80,35 +202,6 @@ Puis créez la ressource Filament correspondante :
 ```bash
 docker compose exec app php artisan make:filament-resource NomDuModele
 ```
-
-### Exécution des migrations
-
-Pour exécuter les migrations de la base de données :
-
-```bash
-docker compose exec app php artisan migrate
-```
-
-### Exécution des seeders
-
-Pour remplir la base de données avec des données de test :
-
-```bash
-docker compose exec app php artisan db:seed
-```
-
-## Configuration Docker
-
-L'application utilise plusieurs services Docker :
-
-- **app** : Application Laravel avec PHP 8.3
-- **mysql** : Base de données MySQL 8.0
-- **nginx** : Serveur web Nginx
-- **phpmyadmin** : Interface d'administration pour MySQL
-
-## Personnalisation
-
-Pour personnaliser la page d'accueil de l'application, modifiez le fichier `routes/web.php` et créez un contrôleur et une vue correspondants.
 
 ## Licence
 
