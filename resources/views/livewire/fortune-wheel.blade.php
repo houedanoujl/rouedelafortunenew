@@ -74,10 +74,10 @@
                     <div class="result {{ $result['status'] }}">
                         <h3>{{ $result['message'] }}</h3>
                         
-                        @if ($result['status'] === 'win' && $qrCodeUrl)
+                        @if ($qrCodeUrl)
                             <div class="qr-code-container">
-                                <p>Scannez ce code QR pour récupérer votre prix</p>
-                                <div id="qrcode" class="qr-code"></div>
+                                <p>Scannez ce code QR pour découvrir votre résultat</p>
+                                <div id="qrcode-livewire" class="qr-code"></div>
                                 <p class="qr-code-text">Code: {{ $qrCodeUrl }}</p>
                             </div>
                         @endif
@@ -97,8 +97,6 @@
             @endif
         </div>
     </div>
-    
-    <script src="https://unpkg.com/qrcodejs@1.0.0/dist/qrcode.min.js"></script>
     
     <!-- Ajout du token CSRF pour les requêtes AJAX -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -181,18 +179,38 @@
             return false;
         }
         
-        // Initialiser le QR code si nécessaire
+        // Initialiser le QR code avec qrcode-generator
         document.addEventListener('DOMContentLoaded', function() {
-            const qrcodeEl = document.getElementById('qrcode');
-            if (qrcodeEl) {
-                new QRCode(qrcodeEl, {
-                    text: "{{ $qrCodeUrl ?? '' }}",
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
+            const qrcodeContainer = document.getElementById('qrcode-livewire');
+            if (qrcodeContainer) {
+                // Vider le conteneur au cas où
+                qrcodeContainer.innerHTML = '';
+                
+                // Vérifier si la bibliothèque est chargée
+                if (typeof qrcode === 'function') {
+                    // Créer le QR code
+                    const qr = qrcode(0, 'L');
+                    qr.addData('{{ url('/qr/' . $qrCodeUrl) }}');
+                    qr.make();
+                    
+                    // Ajouter l'image au conteneur avec une taille plus grande
+                    const qrImage = qr.createImgTag(10);
+                    qrcodeContainer.innerHTML = qrImage;
+                    console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
+                } else {
+                    // Charger la bibliothèque si elle n'est pas déjà chargée
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
+                    script.onload = function() {
+                        const qr = qrcode(0, 'L');
+                        qr.addData('{{ url('/qr/' . $qrCodeUrl) }}');
+                        qr.make();
+                        const qrImage = qr.createImgTag(10);
+                        qrcodeContainer.innerHTML = qrImage;
+                        console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
+                    };
+                    document.head.appendChild(script);
+                }
             }
         });
     </script>

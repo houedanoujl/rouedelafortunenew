@@ -33,6 +33,10 @@ Route::post('/wheel/spin', [ParticipantController::class, 'spinWheel'])->name('w
 // Affichage du résultat
 Route::get('/result/{entry}', [ParticipantController::class, 'showResult'])->name('result.show');
 
+// Routes pour le QR code
+Route::get('/qr/{code}', [ParticipantController::class, 'qrCodeResultPage'])->name('qrcode.result');
+Route::get('/api/check-qrcode/{code}', [ParticipantController::class, 'checkQrCode'])->name('qrcode.check');
+
 // Routes d'authentification pour l'administration (Filament)
 Route::get('/admin/login', [AuthController::class, 'showLoginForm'])->name('filament.admin.auth.login');
 Route::post('/admin/login', [AuthController::class, 'login'])->name('login');

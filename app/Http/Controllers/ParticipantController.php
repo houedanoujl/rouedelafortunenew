@@ -95,16 +95,15 @@ class ParticipantController extends Controller
             $qrCodeUrl = null;
             
             if ($entry->result !== 'en attente') {
-                $message = $entry->result === 'win' 
-                    ? 'Félicitations ! Vous avez gagné ' . ($entry->prize->name ?? 'un prix') 
-                    : 'Pas de chance cette fois-ci. Merci d\'avoir participé !';
+                // Ne pas afficher le résultat, juste indiquer que la participation est terminée
+                $message = 'Votre participation est terminée. Scannez le QR code pour découvrir votre résultat!';
                 
                 $result = [
-                    'status' => $entry->result,
+                    'status' => 'completed',
                     'message' => $message
                 ];
                 
-                if ($entry->result === 'win' && $entry->qr_code) {
+                if ($entry->qr_code) {
                     $qrCodeUrl = $entry->qr_code;
                 }
             }
@@ -236,7 +235,91 @@ class ParticipantController extends Controller
     {
         $entry = Entry::with(['participant', 'prize'])->findOrFail($entry);
         
-        return view('result', ['entry' => $entry]);
+        return view('result', ['entry' => $entry, 'entryId' => $entry->id]);
+    }
+    
+    /**
+     * Vérifie le QR code et retourne le résultat
+     */
+    public function checkQrCode($code)
+    {
+        // Journaliser la requête pour débogage
+        \Log::info('Vérification QR code', ['code' => $code]);
+        
+        try {
+            // Chercher l'entrée soit par le champ qr_code, soit par le code dans QrCodeModel
+            $entry = Entry::where('qr_code', 'LIKE', '%' . $code . '%')->first();
+            
+            if (!$entry) {
+                // Essayer de trouver par le modèle QrCode
+                $qrCode = QrCodeModel::where('code', 'LIKE', '%' . $code . '%')->first();
+                if ($qrCode) {
+                    $entry = Entry::find($qrCode->entry_id);
+                }
+            }
+            
+            if (!$entry) {
+                \Log::warning('QR code non trouvé', ['code' => $code]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'QR code non valide ou introuvable.'
+                ]);
+            }
+            
+            // Charger les relations nécessaires
+            $entry->load(['participant', 'prize']);
+            
+            // Marquer le QR code comme scanné si ce n'est pas déjà fait
+            $qrCode = QrCodeModel::where('entry_id', $entry->id)->first();
+            
+            if ($qrCode && !$qrCode->scanned) {
+                $qrCode->scanned = true;
+                $qrCode->scanned_at = now();
+                $qrCode->save();
+                \Log::info('QR code marqué comme scanné', ['entry_id' => $entry->id]);
+            } else if (!$qrCode) {
+                // Créer un enregistrement QR code si inexistant
+                QrCodeModel::create([
+                    'entry_id' => $entry->id,
+                    'code' => $entry->qr_code ?? $code,
+                    'scanned' => true,
+                    'scanned_at' => now()
+                ]);
+                \Log::info('Nouvel enregistrement QR code créé', ['entry_id' => $entry->id]);
+            }
+            
+            // Déterminer le message en fonction du résultat
+            $message = $entry->result === 'win' 
+                ? 'Félicitations ! Vous avez gagné : ' . ($entry->prize->name ?? 'un prix')
+                : 'Pas de chance cette fois-ci. Merci d\'avoir participé !';
+                
+            return response()->json([
+                'success' => true,
+                'status' => $entry->result,
+                'message' => $message,
+                'prize' => $entry->prize ? $entry->prize->name : null,
+                'participant' => $entry->participant ? $entry->participant->first_name . ' ' . $entry->participant->last_name : 'Participant'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la vérification du QR code', [
+                'code' => $code,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la vérification du QR code: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Affiche la page de vérification du QR code
+     */
+    public function qrCodeResultPage($code)
+    {
+        return view('qr-result', ['code' => $code]);
     }
     
     /**

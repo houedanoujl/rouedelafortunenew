@@ -2,10 +2,10 @@
     @if ($entry)
         <div class="card">
             <div class="card-header">
-                <h3>Code QR pour {{ $entry->participant->full_name }}</h3>
+                <h3>Résultat pour {{ $entry->participant->full_name }}</h3>
             </div>
             <div class="card-body text-center">
-                @if ($qrCodeUrl)
+                @if ($entry->result === 'win' && $qrCodeUrl)
                     <div class="qr-code-container mb-4">
                         <img src="{{ $qrCodeUrl }}" alt="QR Code" class="qr-code">
                     </div>
@@ -18,21 +18,29 @@
                             <p>Réclamé le: {{ $entry->qrCode->scanned_at->format('d/m/Y H:i') }}</p>
                         @endif
                     </div>
+                @elseif ($entry->result === 'lose')
+                    <div class="alert alert-warning">
+                        <h4>Pas de chance cette fois-ci.</h4>
+                        <p>Vous n'avez pas gagné à cette participation.</p>
+                        <p>Merci d'avoir participé !</p>
+                    </div>
                 @else
                     <div class="alert alert-warning">
-                        Aucun code QR n'est associé à cette participation.
+                        Aucun résultat n'est associé à cette participation.
                     </div>
                 @endif
                 
-                <button class="btn btn-primary" wire:click="regenerateQrCode" wire:loading.attr="disabled">
-                    <span wire:loading wire:target="regenerateQrCode">
-                        <i class="fas fa-spinner fa-spin"></i>
-                    </span>
-                    Régénérer le code QR
-                </button>
+                @if ($entry->result === 'win' && !$qrCodeUrl)
+                    <button class="btn btn-primary" wire:click="regenerateQrCode" wire:loading.attr="disabled">
+                        <span wire:loading wire:target="regenerateQrCode">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                        Générer le code QR
+                    </button>
+                @endif
                 
-                <a href="{{ route('admin.entries') }}" class="btn btn-secondary ml-2">
-                    Retour à la liste
+                <a href="{{ route('home') }}" class="btn btn-secondary ml-2">
+                    Retour à l'accueil
                 </a>
             </div>
         </div>

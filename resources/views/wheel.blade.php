@@ -92,9 +92,9 @@
                                     <div class="result {{ $result['status'] }}">
                                         <h3>{{ $result['message'] }}</h3>
                                         
-                                        @if ($result['status'] === 'win' && $qrCodeUrl)
+                                        @if ($qrCodeUrl)
                                             <div class="qr-code-container">
-                                                <p>Scannez ce code QR pour récupérer votre prix</p>
+                                                <p>Scannez ce code QR pour découvrir votre résultat</p>
                                                 <div id="qrcode" class="qr-code"></div>
                                                 <p class="qr-code-text">Code: {{ $qrCodeUrl }}</p>
                                             </div>
@@ -125,7 +125,7 @@
 </div>
 
 <!-- Scripts et styles -->
-<script src="https://unpkg.com/qrcodejs@1.0.0/dist/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <script>
@@ -206,18 +206,24 @@
         return false;
     }
     
-    // Initialiser le QR code si nécessaire
+    // Initialisation du QR code avec une bibliothèque différente
     document.addEventListener('DOMContentLoaded', function() {
-        const qrcodeEl = document.getElementById('qrcode');
-        if (qrcodeEl) {
-            new QRCode(qrcodeEl, {
-                text: "{{ $qrCodeUrl ?? '' }}",
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+        const qrcodeContainer = document.getElementById('qrcode');
+        if (qrcodeContainer) {
+            // Vider le conteneur au cas où
+            qrcodeContainer.innerHTML = '';
+            
+            // Créer le QR code
+            const qr = qrcode(0, 'L');
+            qr.addData('{{ url('/qr/' . $qrCodeUrl) }}');
+            qr.make();
+            
+            // Ajouter l'image au conteneur avec une taille plus grande
+            const qrImage = qr.createImgTag(10);
+            qrcodeContainer.innerHTML = qrImage;
+            
+            // Ajouter un log pour débogage
+            console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
         }
     });
 </script>

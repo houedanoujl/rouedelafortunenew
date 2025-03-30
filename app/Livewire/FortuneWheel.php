@@ -199,7 +199,7 @@ class FortuneWheel extends Component
                 $this->entry->qr_code = $qrCodeText;
                 $this->entry->save();
                 
-                // Stocker le texte du QR code pour l'affichage
+                // Stocker le texte du QR code pour l'affichage et l'URL de la page de résultat
                 $this->qrCodeUrl = $qrCodeText;
             }
             else {
