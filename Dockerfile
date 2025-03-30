@@ -26,8 +26,20 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Installer les extensions PHP
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
-# Installer l'extension Imagick
-RUN pecl install imagick && docker-php-ext-enable imagick
+# Installer les dépendances nécessaires pour Imagick
+RUN apt-get update && apt-get install -y \
+    libmagickwand-dev \
+    git \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && cd /tmp \
+    && git clone https://github.com/Imagick/imagick.git \
+    && cd imagick \
+    && phpize \
+    && ./configure \
+    && make \
+    && make install \
+    && docker-php-ext-enable imagick
 
 # Obtenir Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
