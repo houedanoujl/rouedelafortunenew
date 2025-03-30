@@ -100,6 +100,9 @@
     
     <script src="https://unpkg.com/qrcodejs@1.0.0/dist/qrcode.min.js"></script>
     
+    <!-- Ajout du token CSRF pour les requêtes AJAX -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <script>
         // Animation de la roue et appel AJAX vers le contrôleur
         function startSpin() {
@@ -136,17 +139,19 @@
                 const entryId = '{{ $entry->id ?? "" }}';
                 console.log('ID Entrée:', entryId);
                 
+                // Encodage des données en format formulaire (au lieu de JSON)
+                const formData = new FormData();
+                formData.append('entry_id', entryId);
+                formData.append('_token', csrfToken);
+                
                 // Faire la requête
                 fetch('/wheel/spin', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        entry_id: entryId
-                    })
+                    body: formData
                 })
                 .then(response => {
                     console.log('Statut de la réponse:', response.status);

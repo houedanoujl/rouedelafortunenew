@@ -8,7 +8,6 @@ use App\Models\Entry;
 use App\Models\Contest;
 use App\Models\Prize;
 use App\Models\PrizeDistribution;
-use App\Models\QrCode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -89,33 +88,119 @@ class ParticipantController extends Controller
     {
         try {
             $entry = Entry::findOrFail($entryId);
-            
-            // Récupérer le concours associé à l'inscription
             $contest = $entry->contest;
             
-            // Récupérer les prix disponibles via les distributions de prix
+            // Si déjà joué, préparer les données de résultat
+            $result = null;
+            $qrCodeUrl = null;
+            
+            if ($entry->result !== 'en attente') {
+                $message = $entry->result === 'win' 
+                    ? 'Félicitations ! Vous avez gagné ' . ($entry->prize->name ?? 'un prix') 
+                    : 'Pas de chance cette fois-ci. Merci d\'avoir participé !';
+                
+                $result = [
+                    'status' => $entry->result,
+                    'message' => $message
+                ];
+                
+                if ($entry->result === 'win' && $entry->qr_code) {
+                    $qrCodeUrl = $entry->qr_code;
+                }
+            }
+            
+            // Préparer les prix pour la roue
             $distributions = PrizeDistribution::where('contest_id', $contest->id)
-                ->where('remaining', '>', 0)
                 ->whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now())
                 ->with('prize')
                 ->get();
                 
-            $prizes = collect();
-            foreach ($distributions as $distribution) {
-                if ($distribution->prize && $distribution->prize->stock > 0) {
-                    $prizes->push($distribution->prize);
+            $prizes = [];
+            
+            // Si le joueur a déjà joué et perdu, on affiche une roue vide
+            if ($entry->result !== 'en attente') {
+                // Récupérer le résultat déjà enregistré
+                if ($entry->result === 'win' && $entry->prize_id) {
+                    // Pour les gagnants, on montre un secteur gagnant
+                    $winningSector = [
+                        'id' => $entry->prize_id,
+                        'name' => 'Gagné',
+                        'is_winning' => true
+                    ];
+                    
+                    // Ajouter 1 secteur gagnant et des secteurs perdants
+                    $prizes[] = $winningSector;
+                    // 9 secteurs perdants (pour un total de 10)
+                    for ($i = 0; $i < 9; $i++) {
+                        $prizes[] = [
+                            'id' => null,
+                            'name' => 'Pas de chance',
+                            'is_winning' => false
+                        ];
+                    }
+                } else {
+                    // Pour les perdants, on montre tous les secteurs perdants
+                    for ($i = 0; $i < 10; $i++) {
+                        $prizes[] = [
+                            'id' => null,
+                            'name' => 'Pas de chance',
+                            'is_winning' => false
+                        ];
+                    }
+                }
+            } else {
+                // Joueur n'a pas encore joué, on prépare les vrais secteurs
+                // Préparer les secteurs gagnants
+                $winningSectors = [];
+                foreach ($distributions as $distribution) {
+                    if ($distribution->prize && $distribution->prize->stock > 0 && $distribution->remaining > 0) {
+                        $winningSectors[] = [
+                            'id' => $distribution->prize->id,
+                            'name' => 'Gagné',
+                            'distribution_id' => $distribution->id,
+                            'probability' => $distribution->remaining / $distributions->sum('remaining'),
+                            'is_winning' => true
+                        ];
+                    }
+                }
+                
+                // Limiter à 5 secteurs gagnants
+                if (count($winningSectors) > 5) {
+                    $winningSectors = array_slice($winningSectors, 0, 5);
+                }
+                
+                // Si moins de 5 secteurs gagnants, on duplique
+                if (count($winningSectors) < 5 && count($winningSectors) > 0) {
+                    $existingCount = count($winningSectors);
+                    for ($i = count($winningSectors); $i < 5; $i++) {
+                        $index = $i % $existingCount;
+                        $winningSectors[] = $winningSectors[$index];
+                    }
+                }
+                
+                // Créer autant de secteurs perdants que de secteurs gagnants
+                $losingSectors = [];
+                $winningCount = count($winningSectors);
+                for ($i = 0; $i < $winningCount; $i++) {
+                    $losingSectors[] = [
+                        'id' => null,
+                        'name' => 'Pas de chance',
+                        'is_winning' => false
+                    ];
+                }
+                
+                // Alternance des secteurs gagnants et perdants
+                for ($i = 0; $i < $winningCount; $i++) {
+                    $prizes[] = $winningSectors[$i]; // Secteur gagnant
+                    $prizes[] = $losingSectors[$i];  // Secteur perdant
                 }
             }
             
-            return view('wheel', [
-                'entry' => $entry,
-                'contest' => $contest,
-                'prizes' => $prizes,
-                'distributions' => $distributions,
-            ]);
+            return view('wheel', compact('entry', 'prizes', 'result', 'qrCodeUrl'));
+            
         } catch (\Exception $e) {
-            return redirect()->route('home')->with('error', 'Une erreur est survenue : ' . $e->getMessage());
+            return redirect()->route('home')->with('error', 'Une erreur est survenue: ' . $e->getMessage());
         }
     }
     
@@ -161,9 +246,9 @@ class ParticipantController extends Controller
     {
         \Log::info('Requête spinWheel reçue', $request->all());
         
-        // Validation
+        // Validation adaptée au format FormData
         $validated = $request->validate([
-            'entry_id' => 'required|exists:entries,id'
+            'entry_id' => 'required'
         ]);
         
         try {
@@ -294,13 +379,7 @@ class ParticipantController extends Controller
                     $prizeName = $prize ? $prize->name : 'Prix inconnu';
                     $qrCode = 'DINOR-' . $entry->id . '-' . $prizeName . '-' . Str::random(8);
                     
-                    // Enregistrer le QR code
-                    \App\Models\QrCode::create([
-                        'entry_id' => $entry->id,
-                        'code' => $qrCode,
-                        'scanned' => false
-                    ]);
-                    
+                    // Enregistrer le QR code dans l'entrée directement
                     $entry->qr_code = $qrCode;
                     $entry->save();
                 } 
