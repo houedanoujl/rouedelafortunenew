@@ -18,12 +18,26 @@ class QrCodeResource extends Resource
     protected static ?string $model = QrCode::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    protected static ?string $modelLabel = 'Code QR';
+    
+    protected static ?string $pluralModelLabel = 'Codes QR';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                //
+                Forms\Components\Select::make('entry_id')
+                    ->relationship('entry', 'id')
+                    ->required(),
+                Forms\Components\TextInput::make('code')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Toggle::make('scanned')
+                    ->default(false),
+                Forms\Components\DateTimePicker::make('scanned_at'),
+                Forms\Components\TextInput::make('scanned_by')
+                    ->maxLength(255),
             ]);
     }
 
@@ -31,7 +45,32 @@ class QrCodeResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('entry.participant.first_name')
+                    ->label('Prénom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('entry.participant.last_name')
+                    ->label('Nom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('code')
+                    ->label('Code')
+                    ->searchable(),
+                Tables\Columns\IconColumn::make('scanned')
+                    ->label('Scanné')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('scanned_at')
+                    ->label('Scanné le')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('scanned_by')
+                    ->label('Scanné par')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Créé le')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

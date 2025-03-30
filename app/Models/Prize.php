@@ -35,15 +35,15 @@ class Prize extends Model
     ];
 
     /**
-     * Obtenir les distributions de prix associées au prix.
+     * Obtenir les distributions de ce prix.
      */
-    public function distributions(): HasMany
+    public function prizeDistributions(): HasMany
     {
         return $this->hasMany(PrizeDistribution::class);
     }
 
     /**
-     * Obtenir les participations associées au prix.
+     * Obtenir les participations associées à ce prix.
      */
     public function entries(): HasMany
     {

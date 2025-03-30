@@ -7,18 +7,17 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
-    protected  = [
+    protected $fillable = [
         'name',
         'email',
         'password',
@@ -29,7 +28,7 @@ class User extends Authenticatable implements FilamentUser
      *
      * @var array<int, string>
      */
-    protected  = [
+    protected $hidden = [
         'password',
         'remember_token',
     ];
@@ -39,7 +38,7 @@ class User extends Authenticatable implements FilamentUser
      *
      * @var array<string, string>
      */
-    protected  = [
+    protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
@@ -47,7 +46,7 @@ class User extends Authenticatable implements FilamentUser
     /**
      * Determine if the user can access the Filament panel.
      */
-    public function canAccessPanel(Panel ): bool
+    public function canAccessPanel(Panel $panel): bool
     {
         return true; // Vous pouvez ajouter des conditions ici si nécessaire
     }

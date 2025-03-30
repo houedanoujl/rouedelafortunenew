@@ -211,7 +211,7 @@ body {
 
 .wheel-container {
     position: relative;
-    width: 300px;
+    width: 80vw;
     height: 300px;
     margin: 0 auto 2rem;
 }

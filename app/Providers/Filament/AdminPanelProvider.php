@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Http\Middleware\FilamentAuthenticate;
+use App\Http\Middleware\CustomFilamentAuthenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
@@ -20,9 +20,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
-    public function panel(Panel ): Panel
+    public function panel(Panel $panel): Panel
     {
-        return 
+        return $panel
             ->default()
             ->id('admin')
             ->path('admin')
@@ -52,7 +52,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                FilamentAuthenticate::class,
+                CustomFilamentAuthenticate::class,
             ]);
     }
 }

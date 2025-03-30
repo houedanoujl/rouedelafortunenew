@@ -17,13 +17,17 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     default-mysql-client \
-    libicu-dev
+    libicu-dev \
+    libmagickwand-dev \
+    imagemagick
 
 # Nettoyer le cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Installer les extensions PHP
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
+# Installer l'extension Imagick
+RUN pecl install imagick && docker-php-ext-enable imagick
 
 # Obtenir Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

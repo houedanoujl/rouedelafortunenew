@@ -18,12 +18,29 @@ class ParticipantResource extends Resource
     protected static ?string $model = Participant::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    protected static ?string $modelLabel = 'Participant';
+    
+    protected static ?string $pluralModelLabel = 'Participants';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                //
+                Forms\Components\TextInput::make('first_name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('last_name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('phone')
+                    ->tel()
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->email()
+                    ->required()
+                    ->maxLength(255),
             ]);
     }
 
@@ -31,7 +48,26 @@ class ParticipantResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('first_name')
+                    ->label('Prénom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_name')
+                    ->label('Nom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('Téléphone')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Créé le')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

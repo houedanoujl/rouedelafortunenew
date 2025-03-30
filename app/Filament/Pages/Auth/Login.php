@@ -9,9 +9,9 @@ use Filament\Pages\Auth\Login as BaseLogin;
 
 class Login extends BaseLogin
 {
-    public function form(Form ): Form
+    public function form(Form $form): Form
     {
-        return 
+        return Form::make()
             ->schema([
                 TextInput::make('username')
                     ->label('Nom d\'utilisateur')

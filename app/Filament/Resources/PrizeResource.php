@@ -18,12 +18,32 @@ class PrizeResource extends Resource
     protected static ?string $model = Prize::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    protected static ?string $modelLabel = 'Prix';
+    
+    protected static ?string $pluralModelLabel = 'Prix';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                //
+                Forms\Components\TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Textarea::make('description')
+                    ->maxLength(65535)
+                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('type')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('value')
+                    ->required(),
+                Forms\Components\TextInput::make('image_url')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('stock')
+                    ->required()
+                    ->numeric()
+                    ->default(1),
             ]);
     }
 
@@ -31,7 +51,27 @@ class PrizeResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('value')
+                    ->label('Valeur')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('stock')
+                    ->label('Stock')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Créé le')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

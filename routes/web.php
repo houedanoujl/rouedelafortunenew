@@ -27,13 +27,16 @@ Route::get('/wheel/{entry}', [ParticipantController::class, 'showWheel'])->name(
 // Traitement du résultat de la roue
 Route::post('/wheel/result', [ParticipantController::class, 'processWheelResult'])->name('wheel.result');
 
+// Route AJAX pour le spin de la roue
+Route::post('/wheel/spin', [ParticipantController::class, 'spinWheel'])->name('wheel.spin');
+
 // Affichage du résultat
 Route::get('/result/{entry}', [ParticipantController::class, 'showResult'])->name('result.show');
 
 // Routes d'authentification pour l'administration (Filament)
 Route::get('/admin/login', [AuthController::class, 'showLoginForm'])->name('filament.admin.auth.login');
 Route::post('/admin/login', [AuthController::class, 'login'])->name('login');
-Route::post('/admin/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/admin/logout', [AuthController::class, 'logout'])->name('filament.admin.auth.logout');
 
 // Route du tableau de bord (protégée par authentification)
 Route::get('/dashboard', function () {

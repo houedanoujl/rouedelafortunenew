@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Contest;
 use App\Models\Participant;
+use App\Models\Entry;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class RegistrationForm extends Component
@@ -15,6 +17,8 @@ class RegistrationForm extends Component
     public $contestId = null;
     public $registered = false;
     public $participantId = null;
+    public $limitedUntil = null;
+    public $isBlocked = false;
 
     protected $rules = [
         'firstName' => 'required|string|max:255',
@@ -34,6 +38,20 @@ class RegistrationForm extends Component
     public function mount($contestId = null)
     {
         $this->contestId = $contestId ?? Contest::where('status', 'active')->first()?->id;
+        
+        // Vérifier si le joueur est limité par un cookie
+        $playedCookie = request()->cookie('played_fortune_wheel');
+        
+        if ($playedCookie) {
+            $this->isBlocked = true;
+            
+            // Calculer quand le joueur pourra rejouer (7 jours après la dernière défaite)
+            $cookieDate = now()->subMinutes(1); // Par défaut, au cas où le cookie n'a pas de date
+            
+            // Date d'expiration du cookie
+            $cookieExpire = $cookieDate->addDays(7);
+            $this->limitedUntil = $cookieExpire->format('d/m/Y à H:i');
+        }
     }
 
     public function updated($propertyName)
@@ -69,16 +87,29 @@ class RegistrationForm extends Component
             $this->participantId = $participant->id;
             $this->registered = true;
             
-            // Rediriger vers la roue de la fortune
-            if ($this->contestId) {
-                return redirect()->route('play', [
-                    'participantId' => $this->participantId,
-                    'contestId' => $this->contestId
-                ]);
+            // Vérifier si le participant a déjà participé à ce concours
+            $existingEntry = Entry::where('participant_id', $participant->id)
+                ->where('contest_id', $this->contestId)
+                ->first();
+                
+            if ($existingEntry) {
+                return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
             }
             
+            // Créer une nouvelle participation
+            $entry = Entry::create([
+                'participant_id' => $participant->id,
+                'contest_id' => $this->contestId,
+                'qr_code' => 'QR-' . Str::random(8),
+                'played_at' => now(),
+                'result' => 'en attente',
+            ]);
+            
+            // Rediriger vers la roue de la fortune
+            return redirect()->route('wheel.show', ['entry' => $entry->id]);
+            
         } catch (\Exception $e) {
-            session()->flash('error', 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.');
+            session()->flash('error', 'Une erreur est survenue lors de l\'inscription: ' . $e->getMessage());
         }
     }
 

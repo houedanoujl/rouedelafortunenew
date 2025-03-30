@@ -11,7 +11,7 @@
                 <div class="card-body text-center">
                     <p class="lead mb-4">Bonjour {{ $entry->participant->first_name }} {{ $entry->participant->last_name }}, tournez la roue et tentez votre chance !</p>
                     
-                    @livewire('fortune-wheel', ['entry' => $entry, 'prizes' => $prizes])
+                    @livewire('fortune-wheel', ['entry' => $entry, 'prizes' => $prizes, 'distributions' => $distributions])
                     
                     <div class="mt-4">
                         <p class="text-muted">Concours: {{ $contest->name }}</p>

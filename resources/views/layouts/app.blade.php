@@ -55,16 +55,16 @@
                                         Administration
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                        <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">Tableau de bord</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('admin.participants') }}">Participants</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('admin.entries') }}">Participations</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('admin.prizes') }}">Prix</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('admin.scan-qr-code') }}">Scanner QR Code</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('filament.admin.pages.dashboard') }}">Tableau de bord</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('filament.admin.resources.participants.index') }}">Participants</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('filament.admin.resources.entries.index') }}">Participations</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('filament.admin.resources.prizes.index') }}">Prix</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('filament.admin.resources.qr-codes.index') }}">QR Codes</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form method="POST" action="{{ route('logout') }}">
+                                            <form method="POST" action="{{ route('filament.admin.auth.logout') }}">
                                                 @csrf
-                                                <button type="submit" class="dropdown-item">Déconnexion</button>
+                                                <button type="submit" class="dropdown-item">Se déconnecter</button>
                                             </form>
                                         </li>
                                     </ul>
