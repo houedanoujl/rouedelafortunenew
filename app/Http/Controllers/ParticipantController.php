@@ -40,8 +40,13 @@ class ParticipantController extends Controller
             'contestId' => 'required|exists:contests,id'
         ]);
         
-        // Vérifier si le participant existe déjà
+        // Vérifier si le participant existe déjà par téléphone
         $participant = Participant::where('phone', $request->phone)->first();
+        
+        // Si non trouvé par téléphone et qu'un email valide est fourni, chercher par email
+        if (!$participant && $request->email) {
+            $participant = Participant::where('email', $request->email)->first();
+        }
         
         if (!$participant) {
             // Créer un nouveau participant
@@ -87,7 +92,14 @@ class ParticipantController extends Controller
     public function showWheel($entryId)
     {
         try {
-            $entry = Entry::findOrFail($entryId);
+            // Utiliser find() au lieu de findOrFail() pour gérer manuellement le cas où l'entrée n'existe pas
+            $entry = Entry::find($entryId);
+            
+            // Si l'entrée n'existe pas, rediriger vers la page d'accueil avec un message d'erreur
+            if (!$entry) {
+                return redirect()->route('home')->with('error', 'Participation introuvable. Veuillez vous inscrire à nouveau.');
+            }
+            
             $contest = $entry->contest;
             
             // Si déjà joué, préparer les données de résultat
@@ -226,7 +238,13 @@ class ParticipantController extends Controller
             'prize_id' => 'nullable|exists:prizes,id'
         ]);
         
-        $entry = Entry::findOrFail($request->entry_id);
+        // Utiliser find() au lieu de findOrFail()
+        $entry = Entry::find($request->entry_id);
+        
+        // Si l'entrée n'existe pas, rediriger avec un message d'erreur
+        if (!$entry) {
+            return redirect()->route('home')->with('error', 'Participation introuvable. Veuillez vous inscrire à nouveau.');
+        }
         
         // Marquer comme joué
         $entry->played_at = now();
@@ -246,7 +264,13 @@ class ParticipantController extends Controller
      */
     public function showResult($entry)
     {
-        $entry = Entry::with(['participant', 'prize'])->findOrFail($entry);
+        // Utiliser find() au lieu de findOrFail()
+        $entry = Entry::with(['participant', 'prize'])->find($entry);
+        
+        // Si l'entrée n'existe pas, rediriger avec un message d'erreur
+        if (!$entry) {
+            return redirect()->route('home')->with('error', 'Résultat introuvable. Veuillez vous inscrire à nouveau.');
+        }
         
         return view('result', ['entry' => $entry, 'entryId' => $entry->id]);
     }
@@ -328,7 +352,16 @@ class ParticipantController extends Controller
         ]);
         
         try {
-            $entry = Entry::findOrFail($validated['entry_id']);
+            // Utiliser find() au lieu de findOrFail()
+            $entry = Entry::find($validated['entry_id']);
+            
+            // Si l'entrée n'existe pas, retourner une erreur
+            if (!$entry) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Participation introuvable. Veuillez vous inscrire à nouveau.'
+                ], 404);
+            }
             
             // Vérifier si la roue a déjà été tournée pour cette entrée
             if ($entry->prize_id !== null) {
