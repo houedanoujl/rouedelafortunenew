@@ -6,7 +6,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">Résultat de la Roue de la Fortune</h2>
+                    <h2 class="mb-0">Résultat du Tirage</h2>
                 </div>
                 <div class="card-body text-center">
                     <div id="loading" class="my-5">
@@ -32,6 +32,16 @@
                         <div class="mt-5">
                             <p class="text-muted">Ce QR code a été validé et ne peut plus être utilisé.</p>
                         </div>
+                    </div>
+                    
+                    <!-- Boutons du lien QR code déplacés ici pour être toujours visibles -->
+                    <div class="mt-4 link-button-container">
+                        <a href="{{ url('/qr/'.$code) }}" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-link mr-2"></i> Ouvrir le lien du QR code
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary ml-2" onclick="copyQrLink()">
+                            <i class="fas fa-copy mr-2"></i> Copier le lien
+                        </button>
                     </div>
                     
                     <div id="error-message" class="alert alert-danger d-none">
@@ -159,6 +169,28 @@ document.addEventListener('DOMContentLoaded', function() {
             showError('Une erreur est survenue lors de la vérification du QR code.');
         });
 });
+
+function copyQrLink() {
+    const link = "{{ url('/qr/'.$code) }}";
+    navigator.clipboard.writeText(link)
+        .then(() => {
+            // Afficher une notification de succès
+            const button = document.querySelector('.link-button-container .btn-outline-secondary');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-2"></i> Lien copié!';
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Erreur lors de la copie du lien:', err);
+        });
+}
 </script>
 
 <style>
@@ -183,6 +215,10 @@ document.addEventListener('DOMContentLoaded', function() {
 .instructions {
     font-style: italic;
     color: #6c757d;
+}
+
+.link-button-container {
+    margin-bottom: 20px;
 }
 
 /* Animation pour le chargement */
