@@ -94,7 +94,7 @@ class ParticipantController extends Controller
             $result = null;
             $qrCodeUrl = null;
             
-            if ($entry->result !== 'en attente') {
+            if ($entry->result !== 'en attente' || $entry->prize_id !== null) {
                 // Ne pas afficher le résultat, juste indiquer que la participation est terminée
                 $message = 'Votre participation est terminée. Scannez le QR code pour découvrir votre résultat!';
                 

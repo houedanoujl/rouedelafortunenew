@@ -87,25 +87,7 @@
                         </div>
                     
                         <div class="wheel-controls">
-                            @if ($result)
-                                <div class="result-container">
-                                    <div class="result {{ $result['status'] }}">
-                                        <h3>{{ $result['message'] }}</h3>
-                                        
-                                        @if ($qrCodeUrl)
-                                            <div class="qr-code-container">
-                                                <p>Scannez ce code QR pour découvrir votre résultat</p>
-                                                <div id="qrcode" class="qr-code"></div>
-                                                <p class="qr-code-text">Code: {{ $qrCodeUrl }}</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                                
-                                <a href="{{ route('home') }}" class="btn btn-primary mt-4">
-                                    Retour à l'accueil
-                                </a>
-                            @else
+                            @if (!$result)
                                 <button 
                                     class="btn btn-primary spin-button" 
                                     onclick="startSpin(); return false;">
@@ -114,6 +96,28 @@
                             @endif
                         </div>
                     </div>
+                    
+                    @if ($result)
+                        <div class="result-container mt-4">
+                            <div class="result {{ $result['status'] }}">
+                                <h3>{{ $result['message'] }}</h3>
+                                
+                                @if ($qrCodeUrl)
+                                    <div class="qr-code-container">
+                                        <p>Scannez ce code QR pour découvrir votre résultat</p>
+                                        <a href="{{ url('/qr/' . $qrCodeUrl) }}" target="_blank" id="qrcode-link">
+                                            <div id="qrcode" class="qr-code"></div>
+                                        </a>
+                                        <p class="qr-code-text">Code: {{ $qrCodeUrl }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            <a href="{{ route('home') }}" class="btn btn-primary mt-4">
+                                Retour à l'accueil
+                            </a>
+                        </div>
+                    @endif
                     
                     <div class="mt-4">
                         <p class="text-muted">Concours: {{ $entry->contest->name }}</p>
