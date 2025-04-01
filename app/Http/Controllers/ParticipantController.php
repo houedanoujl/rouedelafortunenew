@@ -117,9 +117,22 @@ class ParticipantController extends Controller
                 
             $prizes = [];
             
-            // Si le joueur a déjà joué et perdu, on affiche une roue vide
-            if ($entry->result !== 'en attente') {
-                // Récupérer le résultat déjà enregistré
+            // Vérifier si nous avons une configuration de roue sauvegardée
+            if ($entry->wheel_config && $entry->result !== 'en attente') {
+                // Utiliser la configuration sauvegardée si elle existe
+                $prizes = json_decode($entry->wheel_config, true);
+                
+                // Ajouter des informations sur le secteur gagnant si nécessaire
+                if ($entry->result === 'win' && $entry->prize_id) {
+                    foreach ($prizes as &$prize) {
+                        if ($prize['id'] == $entry->prize_id) {
+                            $prize['is_winning'] = true;
+                            break;
+                        }
+                    }
+                }
+            } else if ($entry->result !== 'en attente') {
+                // Si pas de configuration sauvegardée mais déjà joué, créer une roue générique
                 if ($entry->result === 'win' && $entry->prize_id) {
                     // Pour les gagnants, on montre un secteur gagnant
                     $winningSector = [
@@ -247,16 +260,8 @@ class ParticipantController extends Controller
         \Log::info('Vérification QR code', ['code' => $code]);
         
         try {
-            // Chercher l'entrée soit par le champ qr_code, soit par le code dans QrCodeModel
+            // Chercher l'entrée par le champ qr_code
             $entry = Entry::where('qr_code', 'LIKE', '%' . $code . '%')->first();
-            
-            if (!$entry) {
-                // Essayer de trouver par le modèle QrCode
-                $qrCode = QrCodeModel::where('code', 'LIKE', '%' . $code . '%')->first();
-                if ($qrCode) {
-                    $entry = Entry::find($qrCode->entry_id);
-                }
-            }
             
             if (!$entry) {
                 \Log::warning('QR code non trouvé', ['code' => $code]);
@@ -269,23 +274,11 @@ class ParticipantController extends Controller
             // Charger les relations nécessaires
             $entry->load(['participant', 'prize']);
             
-            // Marquer le QR code comme scanné si ce n'est pas déjà fait
-            $qrCode = QrCodeModel::where('entry_id', $entry->id)->first();
-            
-            if ($qrCode && !$qrCode->scanned) {
-                $qrCode->scanned = true;
-                $qrCode->scanned_at = now();
-                $qrCode->save();
-                \Log::info('QR code marqué comme scanné', ['entry_id' => $entry->id]);
-            } else if (!$qrCode) {
-                // Créer un enregistrement QR code si inexistant
-                QrCodeModel::create([
-                    'entry_id' => $entry->id,
-                    'code' => $entry->qr_code ?? $code,
-                    'scanned' => true,
-                    'scanned_at' => now()
-                ]);
-                \Log::info('Nouvel enregistrement QR code créé', ['entry_id' => $entry->id]);
+            // Marquer l'entrée comme réclamée si ce n'est pas déjà fait
+            if (!$entry->claimed) {
+                $entry->claimed = true;
+                $entry->save();
+                \Log::info('QR code marqué comme réclamé', ['entry_id' => $entry->id]);
             }
             
             // Déterminer le message en fonction du résultat
@@ -410,10 +403,18 @@ class ParticipantController extends Controller
                 $allSectors[] = $losingSectors[$i];  // Secteur perdant
             }
             
-            // Générer un nombre aléatoire
+            // Normaliser les probabilités pour qu'elles somment à 1
+            $totalProbability = array_sum(array_column($allSectors, 'probability'));
+            if ($totalProbability > 0) {
+                foreach ($allSectors as &$sector) {
+                    $sector['probability'] = $sector['probability'] / $totalProbability;
+                }
+            }
+            
+            // Générer un nombre aléatoire entre 0 et 1
             $rand = mt_rand(0, 100) / 100;
             
-            // Sélectionner un secteur selon la probabilité
+            // Sélectionner un secteur basé sur les probabilités
             $selectedSector = null;
             $cumulativeProbability = 0;
             
@@ -425,72 +426,77 @@ class ParticipantController extends Controller
                 }
             }
             
-            // Si aucun secteur n'a été sélectionné, choisir le dernier
-            if (!$selectedSector) {
+            // Si aucun secteur n'a été sélectionné, prendre le dernier
+            if (!$selectedSector && !empty($allSectors)) {
                 $selectedSector = end($allSectors);
             }
             
-            // Mettre à jour l'entrée dans la base de données
+            // Enregistrer le résultat dans la base de données
             DB::beginTransaction();
             
             try {
-                // Enregistrer le résultat
-                $entry->result = $selectedSector['is_winning'] ? 'win' : 'lose';
-                $entry->prize_id = $selectedSector['id'];
+                // Mettre à jour l'entrée
+                $entry->result = $selectedSector && $selectedSector['is_winning'] ? 'win' : 'lose';
+                $entry->prize_id = $selectedSector && $selectedSector['is_winning'] ? $selectedSector['id'] : null;
                 $entry->played_at = now();
-                $entry->won_date = $selectedSector['is_winning'] ? now() : null;
+                
+                // Sauvegarder la configuration actuelle de la roue
+                $entry->wheel_config = json_encode($allSectors);
+                
                 $entry->save();
                 
-                // Si c'est un gain, mettre à jour la distribution et le stock
-                if ($selectedSector['is_winning'] && $selectedSector['distribution_id']) {
-                    // Mettre à jour la distribution
+                // Si c'est un prix gagnant, mettre à jour la distribution
+                if ($selectedSector && $selectedSector['is_winning'] && isset($selectedSector['distribution_id'])) {
                     $distribution = PrizeDistribution::find($selectedSector['distribution_id']);
                     if ($distribution) {
                         $distribution->remaining = $distribution->remaining - 1;
                         $distribution->save();
-                        
-                        // Mettre à jour le stock du prix
-                        $prize = Prize::find($selectedSector['id']);
-                        if ($prize) {
-                            $prize->stock = $prize->stock - 1;
-                            $prize->save();
-                        }
                     }
                     
-                    // Générer un code QR texte avec la dénomination du lot
+                    // Mettre à jour le stock du prix
                     $prize = Prize::find($selectedSector['id']);
-                    $prizeName = $prize ? $prize->name : 'Prix inconnu';
-                    $qrCode = 'DINOR-' . $entry->id . '-' . $prizeName . '-' . Str::random(8);
-                    
-                    // Enregistrer le QR code dans l'entrée directement
+                    if ($prize) {
+                        $prize->stock = $prize->stock - 1;
+                        $prize->save();
+                    }
+                }
+                
+                // Générer un QR code unique pour cette participation
+                if ($entry->result === 'win' || true) { // Générer un QR code même pour les perdants
+                    $qrCode = 'QR-' . Str::random(8);
                     $entry->qr_code = $qrCode;
                     $entry->save();
-                } 
-                else {
-                    // En cas de perte, définir un cookie pour limiter les tentatives
-                    cookie()->queue('played_fortune_wheel', '1', 10080); // 10080 minutes = 7 jours
                 }
                 
                 DB::commit();
                 
                 return response()->json([
                     'success' => true,
-                    'is_winning' => $selectedSector['is_winning'],
                     'result' => $entry->result,
-                    'message' => $selectedSector['is_winning'] 
-                        ? 'Félicitations ! Vous avez gagné : ' . ($selectedSector['name'] ?? 'un prix')
-                        : 'Pas de chance cette fois-ci. Merci d\'avoir participé !'
+                    'prize_id' => $entry->prize_id
                 ]);
                 
             } catch (\Exception $e) {
                 DB::rollback();
-                throw $e;
+                \Log::error('Erreur lors du traitement du résultat de la roue', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Une erreur est survenue lors du traitement du résultat: ' . $e->getMessage()
+                ], 500);
             }
-            
         } catch (\Exception $e) {
+            \Log::error('Erreur lors du traitement de la requête spinWheel', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue : ' . $e->getMessage()
+                'message' => 'Une erreur est survenue: ' . $e->getMessage()
             ], 500);
         }
     }
