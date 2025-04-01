@@ -1,0 +1,249 @@
+=====================================================================
+GUIDE DE DÉPLOIEMENT - ROUE DE LA FORTUNE AVEC LARAVEL FORGE
+=====================================================================
+
+Ce document détaille les étapes nécessaires pour déployer l'application "Roue de la Fortune" 
+sur un serveur de production en utilisant Laravel Forge.
+
+PRÉREQUIS
+---------
+- Un compte Laravel Forge (https://forge.laravel.com)
+- Un compte GitHub avec accès au dépôt de l'application
+- Un nom de domaine pour l'application
+- (Optionnel) Un compte Cloudflare pour la gestion DNS et SSL
+
+1. CONFIGURATION DU SERVEUR FORGE
+---------------------------------
+
+1.1. Créer un nouveau serveur
+    - Connectez-vous à votre compte Laravel Forge
+    - Cliquez sur "Create Server"
+    - Choisissez votre fournisseur cloud (AWS, DigitalOcean, Linode, etc.)
+    - Sélectionnez une région proche de vos utilisateurs
+    - Choisissez PHP 8.3
+    - Sélectionnez MariaDB 10.6 (ou MySQL 8.0)
+    - Complétez la configuration et cliquez sur "Create Server"
+
+1.2. Configuration de la base de données
+    - Une fois le serveur provisionné, allez dans l'onglet "Database"
+    - Créez une nouvelle base de données nommée "rouedelafortune"
+    - Notez le nom d'utilisateur et le mot de passe générés
+
+2. CRÉATION DU SITE
+------------------
+
+2.1. Ajouter un nouveau site
+    - Dans l'onglet "Sites", cliquez sur "New Site"
+    - Entrez votre nom de domaine (ex: rouedelafortune.example.com)
+    - Sélectionnez PHP 8.3
+    - Laissez les autres paramètres par défaut et cliquez sur "Add Site"
+
+2.2. Configuration du dépôt Git
+    - Dans la page du site, allez à la section "Git Repository"
+    - Cliquez sur "Install Repository"
+    - Sélectionnez "GitHub" et connectez votre compte si nécessaire
+    - Choisissez le dépôt "rouedelafortune" et la branche "main" (ou "master")
+    - Cochez "Install Composer Dependencies" pour installer automatiquement les dépendances
+    - Cliquez sur "Install Repository"
+
+3. CONFIGURATION DE L'ENVIRONNEMENT
+----------------------------------
+
+3.1. Variables d'environnement (.env)
+    - Allez dans l'onglet "Environment"
+    - Modifiez le fichier .env avec les paramètres suivants:
+        APP_NAME="Roue de la Fortune"
+        APP_ENV=production
+        APP_KEY=base64:VOTRE_CLE_GENEREE_AUTOMATIQUEMENT
+        APP_DEBUG=false
+        APP_URL=https://votre-domaine.com
+        
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=rouedelafortune
+        DB_USERNAME=forge_username
+        DB_PASSWORD=forge_password
+        
+        CACHE_DRIVER=redis
+        SESSION_DRIVER=redis
+        QUEUE_CONNECTION=redis
+        
+        MAIL_MAILER=smtp
+        # Complétez avec vos paramètres SMTP
+    
+    - Cliquez sur "Save Environment"
+
+4. INSTALLATION DE L'APPLICATION
+-------------------------------
+
+4.1. Script de déploiement personnalisé
+    - Allez dans l'onglet "Deploy"
+    - Ajoutez les commandes suivantes au script de déploiement:
+    
+```bash
+cd $FORGE_SITE_PATH
+php artisan down
+git pull origin main
+composer install --no-interaction --prefer-dist --optimize-autoloader
+php artisan migrate --force
+php artisan db:seed --force
+npm ci
+npm run build
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan storage:link
+php artisan queue:restart
+php artisan up
+```
+
+    - Cliquez sur "Update Script"
+    - Cliquez sur "Deploy Now" pour exécuter le premier déploiement
+
+4.2. Configuration du planificateur (Scheduler)
+    - Allez dans l'onglet "Scheduler"
+    - Cliquez sur "Create Task"
+    - Commande : "php $FORGE_SITE_PATH/artisan schedule:run"
+    - Fréquence : "Every Minute"
+    - Utilisateur : "forge"
+    - Cliquez sur "Create"
+
+4.3. Configuration des files d'attente (Queues)
+    - Allez dans l'onglet "Queue"
+    - Cliquez sur "Create Worker"
+    - Commande : "php $FORGE_SITE_PATH/artisan queue:work --sleep=3 --tries=3 --timeout=30"
+    - Activez "Auto-Restart Queue On Deploy"
+    - Cliquez sur "Create Worker"
+
+5. CONFIGURATION DU SSL
+---------------------
+
+5.1. Installation du certificat SSL
+    - Allez dans l'onglet "SSL"
+    - Sélectionnez "LetsEncrypt" pour installer un certificat gratuit
+    - Suivez les instructions pour compléter l'installation
+    - Activez "Force HTTPS" une fois le certificat installé
+
+6. CONFIGURATION NGINX PERSONNALISÉE (OPTIONNEL)
+----------------------------------------------
+
+6.1. Paramètres Nginx optimisés
+    - Allez dans l'onglet "Nginx Configuration"
+    - Ajoutez les paramètres suivants pour améliorer les performances:
+    
+```nginx
+# Compression Gzip pour améliorer les performances
+gzip on;
+gzip_comp_level 6;
+gzip_min_length 256;
+gzip_proxied any;
+gzip_vary on;
+gzip_types
+    application/atom+xml
+    application/javascript
+    application/json
+    application/ld+json
+    application/manifest+json
+    application/rss+xml
+    application/vnd.geo+json
+    application/vnd.ms-fontobject
+    application/x-font-ttf
+    application/x-web-app-manifest+json
+    application/xhtml+xml
+    application/xml
+    font/opentype
+    image/bmp
+    image/svg+xml
+    image/x-icon
+    text/cache-manifest
+    text/css
+    text/plain
+    text/vcard
+    text/vnd.rim.location.xloc
+    text/vtt
+    text/x-component
+    text/x-cross-domain-policy;
+
+# Augmenter la taille maximale des téléchargements
+client_max_body_size 64M;
+```
+
+    - Cliquez sur "Update Configuration"
+
+7. CRÉATION DE L'UTILISATEUR ADMINISTRATEUR
+-----------------------------------------
+
+7.1. Création de l'administrateur
+    - Connectez-vous au serveur via SSH (bouton "SSH into Server" sur Laravel Forge)
+    - Exécutez les commandes suivantes:
+    
+```bash
+cd $FORGE_SITE_PATH
+php artisan tinker
+```
+
+    - Dans Tinker, créez l'utilisateur administrateur:
+    
+```php
+$user = new \App\Models\User();
+$user->name = 'Admin';
+$user->email = 'admin@example.com';
+$user->password = \Hash::make('votre_mot_de_passe_sécurisé');
+$user->save();
+exit;
+```
+
+8. SURVEILLANCE ET MAINTENANCE
+----------------------------
+
+8.1. Configuration de la surveillance
+    - Allez dans l'onglet "Monitoring"
+    - Activez la surveillance pour les services critiques (Nginx, MySQL, etc.)
+    - Configurez les notifications par email
+
+8.2. Sauvegardes de base de données
+    - Allez dans l'onglet "Backups"
+    - Configurez des sauvegardes quotidiennes de la base de données
+    - Sélectionnez un emplacement pour stocker les sauvegardes (S3, DigitalOcean Spaces, etc.)
+
+9. DÉPLOIEMENT CONTINU (OPTIONNEL)
+--------------------------------
+
+9.1. Configuration des déploiements automatiques
+    - Allez dans l'onglet "Deploy"
+    - Activez "Deploy Automatically"
+    - Configurez un webhook GitHub pour déclencher les déploiements automatiques
+    - Un déploiement sera effectué à chaque push sur la branche principale
+
+10. PROBLÈMES FRÉQUENTS ET SOLUTIONS
+----------------------------------
+
+10.1. Erreur 500 après déploiement
+    - Vérifiez les logs dans l'onglet "Logs"
+    - Réinitialisez les caches avec la commande suivante:
+    
+```bash
+cd $FORGE_SITE_PATH
+php artisan optimize:clear
+```
+
+10.2. Problèmes de permissions
+    - Assurez-vous que les dossiers storage et bootstrap/cache sont accessibles en écriture:
+    
+```bash
+chown -R forge:forge $FORGE_SITE_PATH
+chmod -R 775 $FORGE_SITE_PATH/storage $FORGE_SITE_PATH/bootstrap/cache
+```
+
+10.3. Problèmes avec les files d'attente
+    - Redémarrez les workers:
+    
+```bash
+cd $FORGE_SITE_PATH
+php artisan queue:restart
+```
+
+=====================================================================
+FIN DU GUIDE DE DÉPLOIEMENT
+=====================================================================

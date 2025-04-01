@@ -33,7 +33,7 @@
             <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
                 <div class="container">
                     <a class="navbar-brand" href="{{ route('home') }}">
-                        <img src="{{ asset('images/logo.png') }}" alt="Roue de la Fortune" height="40">
+                        <img src="{{ asset('assets/images/dinor-logo.svg') }}" alt="DINOR - Roue de la Fortune" height="40">
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
@@ -82,6 +82,35 @@
 
         <main class="app-content py-4">
             <div class="container">
+                <!-- Messages flash -->
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                
+                @if(session('info'))
+                    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                        {{ session('info') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                
+                @if(session('warning'))
+                    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                        {{ session('warning') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                
                 @yield('content')
             </div>
         </main>

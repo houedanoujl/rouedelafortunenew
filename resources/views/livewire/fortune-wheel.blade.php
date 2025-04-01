@@ -30,8 +30,8 @@
                             $textX = $centerX + $textRadius * cos(deg2rad($textAngle));
                             $textY = $centerY + $textRadius * sin(deg2rad($textAngle));
                             
-                            // Orienter le texte à 90 degrés (perpendiculaire au rayon)
-                            $textRotation = $textAngle;
+                            // Orienter le texte
+                            $textRotation = $textAngle + 90; // Ajusté pour meilleure lisibilité
                             
                             // Texte à afficher (simplement "Gagné" pour les secteurs gagnants)
                             $displayText = isset($prize['is_winning']) && $prize['is_winning'] ? 'Gagné' : 'Pas de chance';
@@ -79,6 +79,14 @@
                                 <p>Scannez ce code QR pour découvrir votre résultat</p>
                                 <div id="qrcode-livewire" class="qr-code"></div>
                                 <p class="qr-code-text">Code: {{ $qrCodeUrl }}</p>
+                                <div class="qr-actions mt-3">
+                                    <button id="capture-qr" class="btn btn-success">
+                                        <i class="fas fa-camera"></i> Capturer le QR code
+                                    </button>
+                                    <a id="download-qr" class="btn btn-primary ml-2" download="qrcode_{{ $qrCodeUrl }}.jpg" href="#">
+                                        <i class="fas fa-download"></i> Télécharger en JPG
+                                    </a>
+                                </div>
                             </div>
                         @endif
                     </div>
@@ -101,6 +109,29 @@
     <!-- Ajout du token CSRF pour les requêtes AJAX -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
+    <!-- Modal pour afficher le résultat -->
+    <div class="result-modal" id="resultModal" style="display: none;">
+        <div class="result-modal-content">
+            <span class="result-modal-close">&times;</span>
+            <div class="result-modal-body">
+                <h2 id="result-title"></h2>
+                <p id="result-message"></p>
+                <button id="result-continue" class="btn btn-primary">Continuer</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ajout des éléments audio -->
+    <audio id="wheel-spinning-sound" preload="auto">
+        <source src="{{ asset('sounds/wheel-spinning.mp3') }}" type="audio/mpeg">
+    </audio>
+    <audio id="win-sound" preload="auto">
+        <source src="{{ asset('sounds/win.mp3') }}" type="audio/mpeg">
+    </audio>
+    <audio id="lose-sound" preload="auto">
+        <source src="{{ asset('sounds/lose.mp3') }}" type="audio/mpeg">
+    </audio>
+    
     <script>
         // Animation de la roue et appel AJAX vers le contrôleur
         function startSpin() {
@@ -109,6 +140,13 @@
             // Désactiver le bouton
             const button = document.querySelector('.spin-button');
             if (button) button.disabled = true;
+            
+            // Jouer le son de la roue qui tourne
+            const spinningSound = document.getElementById('wheel-spinning-sound');
+            if (spinningSound) {
+                spinningSound.currentTime = 0;
+                spinningSound.play().catch(e => console.log('Erreur lecture audio:', e));
+            }
             
             // Animer la roue
             const wheel = document.getElementById('wheel');
@@ -159,9 +197,39 @@
                 .then(data => {
                     console.log('Résultat complet reçu:', data);
                     if (data.success) {
-                        // Recharger la page pour afficher le résultat
-                        console.log('Succès, rechargement de la page...');
-                        location.reload();
+                        // Afficher le popup avec le résultat
+                        const resultModal = document.getElementById('resultModal');
+                        const resultTitle = document.getElementById('result-title');
+                        const resultMessage = document.getElementById('result-message');
+                        const resultContinue = document.getElementById('result-continue');
+                        
+                        if (data.result && data.result.status) {
+                            // Jouer le son approprié
+                            const soundElement = document.getElementById(data.result.status === 'win' ? 'win-sound' : 'lose-sound');
+                            if (soundElement) {
+                                soundElement.currentTime = 0;
+                                soundElement.play().catch(e => console.log('Erreur lecture audio:', e));
+                            }
+                            
+                            // Configurer le modal
+                            resultTitle.textContent = data.result.status === 'win' ? 'Félicitations !' : 'Pas de chance...';
+                            resultMessage.textContent = data.result.status === 'win' ? 
+                                'Vous avez gagné ! Consultez votre QR code pour récupérer votre lot.' : 
+                                'Vous n\'avez pas gagné cette fois-ci. Vous pourrez réessayer ultérieurement.';
+                            
+                            // Afficher le modal
+                            resultModal.style.display = 'flex';
+                            
+                            // Configurer le bouton continuer
+                            resultContinue.onclick = function() {
+                                resultModal.style.display = 'none';
+                                location.reload(); // Recharger la page pour afficher le résultat complet
+                            }
+                        } else {
+                            // Si on n'a pas de résultat, rechargement direct
+                            console.log('Succès, rechargement de la page...');
+                            location.reload();
+                        }
                     } else {
                         alert('Une erreur est survenue: ' + (data.message || 'Erreur inconnue'));
                         // Réactiver le bouton
@@ -197,6 +265,9 @@
                     const qrImage = qr.createImgTag(10);
                     qrcodeContainer.innerHTML = qrImage;
                     console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
+                    
+                    // Configurer le bouton de capture et téléchargement
+                    setupQrCodeCapture();
                 } else {
                     // Charger la bibliothèque si elle n'est pas déjà chargée
                     const script = document.createElement('script');
@@ -208,11 +279,70 @@
                         const qrImage = qr.createImgTag(10);
                         qrcodeContainer.innerHTML = qrImage;
                         console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
+                        
+                        // Configurer le bouton de capture et téléchargement
+                        setupQrCodeCapture();
                     };
                     document.head.appendChild(script);
                 }
             }
+            
+            // Fermeture du modal de résultat
+            const closeModal = document.querySelector('.result-modal-close');
+            if (closeModal) {
+                closeModal.onclick = function() {
+                    document.getElementById('resultModal').style.display = 'none';
+                }
+            }
+            
+            // Fermer le modal si on clique en dehors
+            window.onclick = function(event) {
+                const modal = document.getElementById('resultModal');
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
         });
+        
+        // Fonction pour configurer la capture et le téléchargement du QR code
+        function setupQrCodeCapture() {
+            // Ajouter html2canvas pour la capture
+            if (typeof html2canvas !== 'function') {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                document.head.appendChild(script);
+            }
+            
+            // Configurer le bouton de capture
+            const captureButton = document.getElementById('capture-qr');
+            const downloadLink = document.getElementById('download-qr');
+            
+            if (captureButton && downloadLink) {
+                captureButton.addEventListener('click', function() {
+                    const qrContainer = document.getElementById('qrcode-livewire');
+                    if (!qrContainer) return;
+                    
+                    // S'assurer que html2canvas est chargé
+                    if (typeof html2canvas === 'function') {
+                        html2canvas(qrContainer).then(canvas => {
+                            // Convertir en JPG
+                            const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                            
+                            // Mettre à jour le lien de téléchargement
+                            downloadLink.href = imgData;
+                            
+                            // Déclencher automatiquement le téléchargement
+                            downloadLink.click();
+                        });
+                    } else {
+                        alert('Veuillez patienter, chargement des ressources nécessaires...');
+                        setTimeout(() => {
+                            captureButton.click();
+                        }, 1000);
+                    }
+                });
+            }
+        }
     </script>
     
     <style>
@@ -321,6 +451,71 @@
         .spin-button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
+        }
+        
+        /* Styles pour le modal de résultat */
+        .result-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .result-modal-content {
+            position: relative;
+            background-color: #fff;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.5s;
+        }
+        
+        @keyframes modalFadeIn {
+            from {opacity: 0; transform: translateY(-30px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .result-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+        
+        .result-modal-body {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .result-modal-body h2 {
+            color: #2196F3;
+            margin-bottom: 15px;
+        }
+        
+        .qr-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        /* Pour les boutons alignés */
+        .ml-2 {
+            margin-left: 8px;
+        }
+        
+        .mt-3 {
+            margin-top: 12px;
         }
     </style>
 </div>

@@ -71,6 +71,8 @@ class ParticipantController extends Controller
             ->first();
             
         if ($existingEntry) {
+            // Rediriger avec un message explicatif
+            session()->flash('info', 'Vous avez déjà participé à ce concours. Vous ne pouvez participer qu\'une seule fois par concours.');
             return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
         }
         
@@ -388,58 +390,64 @@ class ParticipantController extends Controller
                 ->with('prize')
                 ->get();
                 
-            // Préparer les secteurs gagnants et perdants
-            $winningSectors = [];
+            // Vérifier si tous les stocks de prix sont épuisés
+            $hasPrizesInStock = false;
             foreach ($distributions as $distribution) {
                 if ($distribution->prize && $distribution->prize->stock > 0) {
-                    $winningSectors[] = [
-                        'id' => $distribution->prize->id,
-                        'name' => $distribution->prize->name,
-                        'distribution_id' => $distribution->id,
-                        'probability' => $distribution->remaining / $distributions->sum('remaining'),
+                    $hasPrizesInStock = true;
+                    break;
+                }
+            }
+            
+            // Définir des probabilités de gagner (10% chance de gagner)
+            $chanceToWin = 0.10; // 10% de chance de gagner
+            
+            // Créer 20 secteurs au total: 10 gagnants, 10 perdants
+            $sectors = [];
+            
+            // Si aucun prix en stock, tous les secteurs sont perdants
+            if (!$hasPrizesInStock) {
+                // 20 secteurs perdants
+                for ($i = 0; $i < 20; $i++) {
+                    $sectors[] = [
+                        'id' => null,
+                        'name' => 'Pas de chance',
+                        'distribution_id' => null,
+                        'probability' => 1/20, // Probabilité égale
+                        'is_winning' => false
+                    ];
+                }
+            } else {
+                // Ajouter 10 secteurs gagnants (tous indiquent "Gagné" sans préciser le lot)
+                for ($i = 0; $i < 10; $i++) {
+                    $sectors[] = [
+                        'id' => 'win', // Juste un marqueur, le vrai prix sera choisi aléatoirement
+                        'name' => 'Gagné',
+                        'distribution_id' => null, // Sera déterminé si le joueur gagne
+                        'probability' => $chanceToWin / 10, // Chaque secteur gagnant a une probabilité égale
                         'is_winning' => true
+                    ];
+                }
+                
+                // Ajouter 10 secteurs perdants
+                for ($i = 0; $i < 10; $i++) {
+                    $sectors[] = [
+                        'id' => null,
+                        'name' => 'Pas de chance',
+                        'distribution_id' => null,
+                        'probability' => (1 - $chanceToWin) / 10, // Les secteurs perdants se partagent le reste de probabilité
+                        'is_winning' => false
                     ];
                 }
             }
             
-            // Limiter à 5 secteurs gagnants
-            if (count($winningSectors) > 5) {
-                $winningSectors = array_slice($winningSectors, 0, 5);
-            }
-            
-            // Si moins de 5 secteurs gagnants, on duplique
-            if (count($winningSectors) < 5 && count($winningSectors) > 0) {
-                $existingCount = count($winningSectors);
-                for ($i = count($winningSectors); $i < 5; $i++) {
-                    $index = $i % $existingCount;
-                    $winningSectors[] = $winningSectors[$index];
-                }
-            }
-            
-            // Créer autant de secteurs perdants que de secteurs gagnants
-            $losingSectors = [];
-            $winningCount = count($winningSectors);
-            for ($i = 0; $i < $winningCount; $i++) {
-                $losingSectors[] = [
-                    'id' => null,
-                    'name' => 'Pas de chance',
-                    'distribution_id' => null,
-                    'probability' => 0.5 / $winningCount, // Probabilité partagée équitablement
-                    'is_winning' => false
-                ];
-            }
-            
-            // Alternance des secteurs gagnants et perdants
-            $allSectors = [];
-            for ($i = 0; $i < $winningCount; $i++) {
-                $allSectors[] = $winningSectors[$i]; // Secteur gagnant
-                $allSectors[] = $losingSectors[$i];  // Secteur perdant
-            }
+            // Mélanger les secteurs pour une disposition aléatoire sur la roue
+            shuffle($sectors);
             
             // Normaliser les probabilités pour qu'elles somment à 1
-            $totalProbability = array_sum(array_column($allSectors, 'probability'));
+            $totalProbability = array_sum(array_column($sectors, 'probability'));
             if ($totalProbability > 0) {
-                foreach ($allSectors as &$sector) {
+                foreach ($sectors as &$sector) {
                     $sector['probability'] = $sector['probability'] / $totalProbability;
                 }
             }
@@ -451,7 +459,7 @@ class ParticipantController extends Controller
             $selectedSector = null;
             $cumulativeProbability = 0;
             
-            foreach ($allSectors as $sector) {
+            foreach ($sectors as $sector) {
                 $cumulativeProbability += $sector['probability'];
                 if ($rand <= $cumulativeProbability) {
                     $selectedSector = $sector;
@@ -460,34 +468,65 @@ class ParticipantController extends Controller
             }
             
             // Si aucun secteur n'a été sélectionné, prendre le dernier
-            if (!$selectedSector && !empty($allSectors)) {
-                $selectedSector = end($allSectors);
+            if (!$selectedSector && !empty($sectors)) {
+                $selectedSector = end($sectors);
             }
             
             // Enregistrer le résultat dans la base de données
             DB::beginTransaction();
             
             try {
+                // Déterminer le résultat (gagné ou perdu)
+                $hasWon = $selectedSector && $selectedSector['is_winning'] && $hasPrizesInStock;
+                
+                // Si le joueur a gagné, choisir un prix aléatoirement parmi les disponibles
+                $prizeId = null;
+                $distributionId = null;
+                
+                if ($hasWon) {
+                    // Collecter tous les prix disponibles avec leurs distributions
+                    $availablePrizes = [];
+                    foreach ($distributions as $distribution) {
+                        if ($distribution->prize && $distribution->prize->stock > 0) {
+                            $availablePrizes[] = [
+                                'prize_id' => $distribution->prize->id,
+                                'distribution_id' => $distribution->id
+                            ];
+                        }
+                    }
+                    
+                    // Choisir un prix au hasard
+                    if (count($availablePrizes) > 0) {
+                        $randomIndex = array_rand($availablePrizes);
+                        $selectedPrize = $availablePrizes[$randomIndex];
+                        $prizeId = $selectedPrize['prize_id'];
+                        $distributionId = $selectedPrize['distribution_id'];
+                    } else {
+                        // Pas de prix disponible, faire perdre le joueur
+                        $hasWon = false;
+                    }
+                }
+                
                 // Mettre à jour l'entrée
-                $entry->result = $selectedSector && $selectedSector['is_winning'] ? 'win' : 'lose';
-                $entry->prize_id = $selectedSector && $selectedSector['is_winning'] ? $selectedSector['id'] : null;
+                $entry->result = $hasWon ? 'win' : 'lose';
+                $entry->prize_id = $prizeId;
                 $entry->played_at = now();
                 
                 // Sauvegarder la configuration actuelle de la roue
-                $entry->wheel_config = json_encode($allSectors);
+                $entry->wheel_config = json_encode($sectors);
                 
                 $entry->save();
                 
                 // Si c'est un prix gagnant, mettre à jour la distribution
-                if ($selectedSector && $selectedSector['is_winning'] && isset($selectedSector['distribution_id'])) {
-                    $distribution = PrizeDistribution::find($selectedSector['distribution_id']);
+                if ($hasWon && $distributionId) {
+                    $distribution = PrizeDistribution::find($distributionId);
                     if ($distribution) {
                         $distribution->remaining = $distribution->remaining - 1;
                         $distribution->save();
                     }
                     
                     // Mettre à jour le stock du prix
-                    $prize = Prize::find($selectedSector['id']);
+                    $prize = Prize::find($prizeId);
                     if ($prize) {
                         $prize->stock = $prize->stock - 1;
                         $prize->save();
@@ -495,18 +534,37 @@ class ParticipantController extends Controller
                 }
                 
                 // Générer un QR code unique pour cette participation
-                if ($entry->result === 'win' || true) { // Générer un QR code même pour les perdants
-                    $qrCode = 'QR-' . Str::random(8);
-                    $entry->qr_code = $qrCode;
-                    $entry->save();
+                $qrCode = 'QR-' . Str::random(8);
+                $entry->qr_code = $qrCode;
+                $entry->save();
+                
+                // Si gagné, récupérer les informations du prix pour le résultat
+                $prizeInfo = null;
+                if ($hasWon && $prizeId) {
+                    $prize = Prize::find($prizeId);
+                    if ($prize) {
+                        $prizeInfo = [
+                            'id' => $prize->id,
+                            'name' => $prize->name,
+                            'value' => $prize->value,
+                            'type' => $prize->type,
+                        ];
+                    }
                 }
                 
                 DB::commit();
                 
                 return response()->json([
                     'success' => true,
-                    'result' => $entry->result,
-                    'prize_id' => $entry->prize_id
+                    'result' => [
+                        'status' => $entry->result,
+                        'message' => $entry->result === 'win' 
+                            ? 'Félicitations ! Vous avez gagné !' 
+                            : 'Pas de chance cette fois-ci. Vous pourrez réessayer ultérieurement !',
+                        'prize' => $selectedSector,
+                        'prize_info' => $prizeInfo
+                    ],
+                    'qr_code' => $entry->qr_code
                 ]);
                 
             } catch (\Exception $e) {

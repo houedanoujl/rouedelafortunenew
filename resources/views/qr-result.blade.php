@@ -44,6 +44,16 @@
                         </button>
                     </div>
                     
+                    <!-- Boutons d'impression et de capture d'écran -->
+                    <div class="mt-3 print-buttons">
+                        <button type="button" class="btn btn-success" onclick="printResult()">
+                            <i class="fas fa-print mr-2"></i> Imprimer en PDF
+                        </button>
+                        <button type="button" class="btn btn-info ml-2" onclick="captureResult()">
+                            <i class="fas fa-camera mr-2"></i> Capturer en image
+                        </button>
+                    </div>
+                    
                     <div id="error-message" class="alert alert-danger d-none">
                         <!-- Les messages d'erreur seront affichés ici -->
                     </div>
@@ -191,11 +201,107 @@ function copyQrLink() {
             console.error('Erreur lors de la copie du lien:', err);
         });
 }
+
+// Fonction pour imprimer la page en PDF
+function printResult() {
+    // Ajouter une classe temporaire pour le style d'impression
+    document.body.classList.add('printing');
+    
+    // Utiliser l'API d'impression du navigateur
+    window.print();
+    
+    // Retirer la classe après l'impression
+    setTimeout(function() {
+        document.body.classList.remove('printing');
+    }, 1000);
+}
+
+// Fonction pour capturer la page en image
+function captureResult() {
+    // Charger html2canvas si ce n'est pas déjà fait
+    if (typeof html2canvas !== 'function') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        script.onload = function() {
+            performCapture();
+        };
+        document.head.appendChild(script);
+    } else {
+        performCapture();
+    }
+}
+
+// Fonction pour effectuer la capture d'écran
+function performCapture() {
+    // Montrer un message de chargement
+    const captureBtn = document.querySelector('.print-buttons .btn-info');
+    const originalText = captureBtn.innerHTML;
+    captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Capture en cours...';
+    captureBtn.disabled = true;
+    
+    // Capturer la carte de résultat
+    const card = document.querySelector('.card');
+    
+    html2canvas(card, {
+        allowTaint: true,
+        useCORS: true,
+        scale: 2, // Meilleure qualité
+        backgroundColor: null
+    }).then(canvas => {
+        // Convertir en JPG
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+        
+        // Créer un lien de téléchargement
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = 'resultat-tirage-' + "{{ $code }}" + '.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Restaurer le bouton
+        captureBtn.innerHTML = originalText;
+        captureBtn.disabled = false;
+    }).catch(error => {
+        console.error('Erreur lors de la capture:', error);
+        captureBtn.innerHTML = originalText;
+        captureBtn.disabled = false;
+        alert('Erreur lors de la capture de l\'image. Veuillez réessayer.');
+    });
+}
 </script>
 
 <style>
 .result-container {
     padding: 30px 0;
+}
+
+/* Styles pour l'impression */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .card, .card * {
+        visibility: visible;
+    }
+    .print-buttons, .link-button-container {
+        display: none !important;
+    }
+    .card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+    }
+}
+
+/* Style pour le mode impression */
+body.printing .navbar,
+body.printing footer,
+body.printing .print-buttons,
+body.printing .link-button-container {
+    display: none !important;
 }
 
 .prize-card {

@@ -19,6 +19,8 @@ class RegistrationForm extends Component
     public $participantId = null;
     public $limitedUntil = null;
     public $isBlocked = false;
+    public $existingEntry = null; // Pour stocker une participation existante
+    public $alreadyParticipated = false; // Flag pour indiquer si l'utilisateur a déjà participé
 
     protected $rules = [
         'firstName' => 'required|string|max:255',
@@ -57,6 +59,51 @@ class RegistrationForm extends Component
     public function updated($propertyName)
     {
         $this->validateOnly($propertyName);
+        
+        // Vérifier si l'utilisateur a déjà participé lorsqu'il entre son téléphone ou son email
+        if ($propertyName === 'phone' || $propertyName === 'email') {
+            $this->checkExistingParticipation();
+        }
+    }
+    
+    /**
+     * Vérifie si l'utilisateur a déjà participé au concours actuel
+     */
+    public function checkExistingParticipation()
+    {
+        // Ne rien faire si le téléphone ou l'email sont vides
+        if (empty($this->phone) && empty($this->email)) {
+            return;
+        }
+        
+        // Rechercher le participant par téléphone ou email
+        $participant = null;
+        
+        if (!empty($this->phone)) {
+            $participant = Participant::where('phone', $this->phone)->first();
+        }
+        
+        if (!$participant && !empty($this->email)) {
+            $participant = Participant::where('email', $this->email)->first();
+        }
+        
+        // Si on trouve un participant, vérifier s'il a déjà une participation
+        if ($participant) {
+            $existingEntry = Entry::where('participant_id', $participant->id)
+                ->where('contest_id', $this->contestId)
+                ->first();
+                
+            if ($existingEntry) {
+                $this->existingEntry = $existingEntry;
+                $this->alreadyParticipated = true;
+                
+                // Préremplir les champs avec les données du participant
+                $this->firstName = $participant->first_name;
+                $this->lastName = $participant->last_name;
+                $this->phone = $participant->phone;
+                $this->email = $participant->email;
+            }
+        }
     }
 
     public function register()
@@ -93,6 +140,8 @@ class RegistrationForm extends Component
                 ->first();
                 
             if ($existingEntry) {
+                $this->existingEntry = $existingEntry;
+                $this->alreadyParticipated = true;
                 return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
             }
             

@@ -16,6 +16,17 @@
                     <p>Vous avez déjà participé et vous n'avez pas gagné de prix.</p>
                     <p>Vous pourrez rejouer à partir du: <strong>{{ $limitedUntil }}</strong></p>
                 </div>
+            @elseif ($alreadyParticipated && $existingEntry)
+                <div class="alert alert-info">
+                    <h4><i class="fas fa-info-circle"></i> Vous avez déjà participé</h4>
+                    <p>Vous avez déjà participé à ce concours avec ce numéro de téléphone ou cette adresse email.</p>
+                    <p>Vous ne pouvez participer qu'une seule fois par concours.</p>
+                    <div class="mt-3">
+                        <a href="{{ route('wheel.show', ['entry' => $existingEntry->id]) }}" class="btn btn-primary">
+                            Voir ma participation
+                        </a>
+                    </div>
+                </div>
             @else
                 <form wire:submit.prevent="register">
                     <div class="form-group">
