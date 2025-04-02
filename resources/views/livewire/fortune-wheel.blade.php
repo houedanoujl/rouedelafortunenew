@@ -1,521 +1,281 @@
 <div>
+    @if($showWheel)
     <div class="fortune-wheel-container">
-        <div class="wheel-wrapper">
-            <svg class="wheel" id="wheel" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-                <!-- Sections de la roue -->
-                @if (count($prizes) > 0)
-                    @foreach ($prizes as $index => $prize)
-                        @php
-                            $angle = 360 / count($prizes);
-                            $startAngle = $index * $angle;
-                            $endAngle = ($index + 1) * $angle;
-                            
-                            // Convertir en coordonnées pour le chemin SVG
-                            $centerX = 250;
-                            $centerY = 250;
-                            $radius = 250;
-                            
-                            // Calculer les points du chemin pour ce secteur
-                            $x1 = $centerX + $radius * cos(deg2rad($startAngle));
-                            $y1 = $centerY + $radius * sin(deg2rad($startAngle));
-                            $x2 = $centerX + $radius * cos(deg2rad($endAngle));
-                            $y2 = $centerY + $radius * sin(deg2rad($endAngle));
-                            
-                            // Déterminer la couleur (jaune pour gagnant, rouge pour perdant)
-                            $color = isset($prize['is_winning']) && $prize['is_winning'] ? '#FFCC00' : '#F44336';
-                            
-                            // Calculer position du texte
-                            $textAngle = $startAngle + ($angle / 2);
-                            $textRadius = $radius * 0.6;
-                            $textX = $centerX + $textRadius * cos(deg2rad($textAngle));
-                            $textY = $centerY + $textRadius * sin(deg2rad($textAngle));
-                            
-                            // Orienter le texte
-                            $textRotation = $textAngle + 90; // Ajusté pour meilleure lisibilité
-                            
-                            // Texte à afficher (simplement "Gagné" pour les secteurs gagnants)
-                            $displayText = isset($prize['is_winning']) && $prize['is_winning'] ? 'Gagné' : 'Pas de chance';
-                        @endphp
-                        
-                        <path 
-                            d="M {{ $centerX }},{{ $centerY }} L {{ $x1 }},{{ $y1 }} A {{ $radius }},{{ $radius }} 0 0,1 {{ $x2 }},{{ $y2 }} Z" 
-                            fill="{{ $color }}"
-                            stroke="#333"
-                            stroke-width="1"
-                        />
-                        
-                        <text 
-                            x="{{ $textX }}" 
-                            y="{{ $textY }}" 
-                            text-anchor="middle" 
-                            fill="white" 
-                            font-weight="bold"
-                            font-size="14"
-                            transform="rotate({{ $textRotation }}, {{ $textX }}, {{ $textY }})"
-                            class="prize-name"
-                        >{{ $displayText }}</text>
-                    @endforeach
-                @else
-                    <circle cx="250" cy="250" r="250" fill="#ccc" />
-                    <text x="250" y="250" text-anchor="middle" fill="white" font-weight="bold">Pas de prix</text>
-                @endif
-                
-                <!-- Centre de la roue -->
-                <circle cx="250" cy="250" r="40" fill="#333" stroke="#fff" stroke-width="5" />
-            </svg>
+        <div class="wheel-container">
+            <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+            <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
             
-            <!-- Marqueur / Flèche -->
-            <div class="wheel-marker"></div>
-        </div>
-    
-        <div class="wheel-controls">
-            @if ($result)
-                <div class="result-container">
-                    <div class="result {{ $result['status'] }}">
-                        <h3>{{ $result['message'] }}</h3>
-                        
-                        @if ($qrCodeUrl)
-                            <div class="qr-code-container">
-                                <p>Scannez ce code QR pour découvrir votre résultat</p>
-                                <div id="qrcode-livewire" class="qr-code"></div>
-                                <p class="qr-code-text">Code: {{ $qrCodeUrl }}</p>
-                                <div class="qr-actions mt-3">
-                                    <button id="capture-qr" class="btn btn-success">
-                                        <i class="fas fa-camera"></i> Capturer le QR code
-                                    </button>
-                                    <a id="download-qr" class="btn btn-primary ml-2" download="qrcode_{{ $qrCodeUrl }}.jpg" href="#">
-                                        <i class="fas fa-download"></i> Télécharger en JPG
-                                    </a>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-                
-                <button class="btn btn-primary mt-4" onclick="location.reload();">
-                    Retour à l'accueil
-                </button>
-            @else
-                <button 
-                    class="btn btn-primary spin-button" 
-                    onclick="startSpin(); return false;" 
-                    {{ $spinning || count($prizes) === 0 ? 'disabled' : '' }}>
-                    {{ $spinning ? 'La roue tourne...' : 'Tourner la roue' }}
-                </button>
-            @endif
-        </div>
-    </div>
-    
-    <!-- Ajout du token CSRF pour les requêtes AJAX -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    
-    <!-- Modal pour afficher le résultat -->
-    <div class="result-modal" id="resultModal" style="display: none;">
-        <div class="result-modal-content">
-            <span class="result-modal-close">&times;</span>
-            <div class="result-modal-body">
-                <h2 id="result-title"></h2>
-                <p id="result-message"></p>
-                <button id="result-continue" class="btn btn-primary">Continuer</button>
+            <!-- Pointeur amélioré avec une meilleure position -->
+            <div class="wheel-pointer">
+                <svg width="30" height="40" viewBox="0 0 30 40">
+                    <polygon points="15,40 0,10 30,10" fill="#FF5722" stroke="#000" stroke-width="1" />
+                </svg>
             </div>
+            
+            <div class="wheel-outer">
+                <div id="wheel" class="wheel">
+                    <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                            <linearGradient id="winGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="loseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#f44336;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#e53935;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+
+                        <g id="wheel-inner">
+                            @php
+                                $sectors = 20;
+                                $sectorAngle = 360 / $sectors;
+                                $centerX = 250;
+                                $centerY = 250;
+                                $radius = 200;
+                                $textRadius = 160;
+                                $labelRadius = 145;
+                            @endphp
+                            
+                            @for ($i = 0; $i < $sectors; $i++)
+                                @php
+                                    $startAngle = $i * $sectorAngle;
+                                    $endAngle = ($i + 1) * $sectorAngle;
+                                    $isWinning = $i % 2 === 0;
+                                    
+                                    // Convertir les angles en radians pour les calculs
+                                    $startRad = deg2rad($startAngle);
+                                    $endRad = deg2rad($endAngle);
+                                    $midRad = deg2rad($startAngle + $sectorAngle / 2);
+                                    
+                                    // Calculer les points pour le tracé du secteur
+                                    $x1 = $centerX + cos($startRad) * $radius;
+                                    $y1 = $centerY + sin($startRad) * $radius;
+                                    $x2 = $centerX + cos($endRad) * $radius;
+                                    $y2 = $centerY + sin($endRad) * $radius;
+                                    
+                                    // Position du texte et des labels
+                                    $textX = $centerX + cos($midRad) * $textRadius;
+                                    $textY = $centerY + sin($midRad) * $textRadius;
+                                    $labelX = $centerX + cos($midRad) * $labelRadius;
+                                    $labelY = $centerY + sin($midRad) * $labelRadius;
+                                @endphp
+                                
+                                <!-- Secteur -->
+                                <path d="M {{ $centerX }} {{ $centerY }} L {{ $x1 }} {{ $y1 }} A {{ $radius }} {{ $radius }} 0 0 1 {{ $x2 }} {{ $y2 }} Z" 
+                                      fill="url(#{{ $isWinning ? 'winGradient' : 'loseGradient' }})"
+                                      stroke="#fff"
+                                      stroke-width="1" />
+                                
+                                <!-- Emoji (🎁 ou ❌) -->
+                                <text x="{{ $textX }}" y="{{ $textY }}"
+                                      text-anchor="middle"
+                                      dominant-baseline="middle"
+                                      fill="#ffffff"
+                                      font-size="24px"
+                                      transform="rotate({{ $startAngle + $sectorAngle / 2 }}, {{ $textX }}, {{ $textY }})">
+                                      {{ $isWinning ? '🎁' : '❌' }}
+                                </text>
+                                
+                                <!-- Texte (GAGNÉ ou PERDU) -->
+                                <text x="{{ $labelX }}" y="{{ $labelY }}"
+                                      text-anchor="middle"
+                                      dominant-baseline="middle"
+                                      fill="#ffffff"
+                                      font-size="14px"
+                                      font-weight="bold"
+                                      transform="rotate({{ $startAngle + $sectorAngle / 2 }}, {{ $labelX }}, {{ $labelY }})">
+                                      {{ $isWinning ? 'GAGNÉ' : 'PERDU' }}
+                                </text>
+                            @endfor
+                            
+                            <!-- Centre de la roue -->
+                            <circle cx="{{ $centerX }}" cy="{{ $centerY }}" r="50" fill="#333333"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+            
+            <button class="spin-button" wire:click="spin" {{ $spinning ? 'disabled' : '' }}>
+                {{ $spinning ? 'La roue tourne...' : 'Tourner la roue' }}
+            </button>
         </div>
     </div>
-    
-    <!-- Ajout des éléments audio -->
-    <audio id="wheel-spinning-sound" preload="auto">
-        <source src="{{ asset('sounds/wheel-spinning.mp3') }}" type="audio/mpeg">
+    @endif
+
+    <!-- Sons -->
+    <audio id="spinSound" preload="auto">
+        <source src="{{ asset('sounds/wheel-spin.mp3') }}" type="audio/mpeg">
     </audio>
-    <audio id="win-sound" preload="auto">
+    <audio id="winSound" preload="auto">
         <source src="{{ asset('sounds/win.mp3') }}" type="audio/mpeg">
     </audio>
-    <audio id="lose-sound" preload="auto">
+    <audio id="loseSound" preload="auto">
         <source src="{{ asset('sounds/lose.mp3') }}" type="audio/mpeg">
     </audio>
-    
+
     <script>
-        // Animation de la roue et appel AJAX vers le contrôleur
-        function startSpin() {
-            console.log('Début de l\'animation');
+        document.addEventListener('livewire:initialized', () => {
+            const wheel = document.getElementById('wheel-inner');
+            const spinSound = document.getElementById('spinSound');
+            const winSound = document.getElementById('winSound');
+            const loseSound = document.getElementById('loseSound');
             
-            // Désactiver le bouton
-            const button = document.querySelector('.spin-button');
-            if (button) button.disabled = true;
+            console.log('Wheel component initialized');
             
-            // Jouer le son de la roue qui tourne
-            const spinningSound = document.getElementById('wheel-spinning-sound');
-            if (spinningSound) {
-                spinningSound.currentTime = 0;
-                spinningSound.play().catch(e => console.log('Erreur lecture audio:', e));
-            }
-            
-            // Animer la roue
-            const wheel = document.getElementById('wheel');
-            if (!wheel) {
-                console.error('Roue introuvable!');
-                return false;
-            }
-            
-            // Réinitialiser
-            wheel.style.transition = 'none';
-            wheel.style.transform = 'rotate(0deg)';
-            void wheel.offsetWidth;
-            
-            // Animation
-            const degrees = 1800 + Math.floor(Math.random() * 1800);
-            console.log('Rotation de ' + degrees + ' degrés');
-            wheel.style.transition = 'transform 6s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            wheel.style.transform = 'rotate(' + degrees + 'deg)';
-            
-            // Faire une requête AJAX pour obtenir le résultat après l'animation
-            setTimeout(function() {
-                // Créer un token CSRF pour la sécurité Laravel
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                console.log('Token CSRF:', csrfToken);
+            @this.on('startSpinWithSound', (data) => {
+                // S'assurer que l'angle est bien un nombre
+                const finalAngle = parseInt(data.angle, 10) || 0;
+                console.log('Spin triggered with angle:', finalAngle);
                 
-                const entryId = '{{ $entry->id ?? "" }}';
-                console.log('ID Entrée:', entryId);
+                // Jouer le son de rotation
+                spinSound.currentTime = 0;
+                spinSound.play();
                 
-                // Encodage des données en format formulaire (au lieu de JSON)
-                const formData = new FormData();
-                formData.append('entry_id', entryId);
-                formData.append('_token', csrfToken);
+                // Calculer la rotation totale (15 tours complets + angle final)
+                const totalRotation = 5400 + finalAngle; // 15 tours = 5400 degrés
+                console.log('Total rotation:', totalRotation);
                 
-                // Faire la requête
-                fetch('/wheel/spin', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                })
-                .then(response => {
-                    console.log('Statut de la réponse:', response.status);
-                    console.log('Headers:', [...response.headers.entries()]);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Résultat complet reçu:', data);
-                    if (data.success) {
-                        // Afficher le popup avec le résultat
-                        const resultModal = document.getElementById('resultModal');
-                        const resultTitle = document.getElementById('result-title');
-                        const resultMessage = document.getElementById('result-message');
-                        const resultContinue = document.getElementById('result-continue');
-                        
-                        if (data.result && data.result.status) {
-                            // Jouer le son approprié
-                            const soundElement = document.getElementById(data.result.status === 'win' ? 'win-sound' : 'lose-sound');
-                            if (soundElement) {
-                                soundElement.currentTime = 0;
-                                soundElement.play().catch(e => console.log('Erreur lecture audio:', e));
-                            }
-                            
-                            // Configurer le modal
-                            resultTitle.textContent = data.result.status === 'win' ? 'Félicitations !' : 'Pas de chance...';
-                            resultMessage.textContent = data.result.status === 'win' ? 
-                                'Vous avez gagné ! Consultez votre QR code pour récupérer votre lot.' : 
-                                'Vous n\'avez pas gagné cette fois-ci. Vous pourrez réessayer ultérieurement.';
-                            
-                            // Afficher le modal
-                            resultModal.style.display = 'flex';
-                            
-                            // Configurer le bouton continuer
-                            resultContinue.onclick = function() {
-                                resultModal.style.display = 'none';
-                                location.reload(); // Recharger la page pour afficher le résultat complet
-                            }
-                        } else {
-                            // Si on n'a pas de résultat, rechargement direct
-                            console.log('Succès, rechargement de la page...');
-                            location.reload();
-                        }
-                    } else {
-                        alert('Une erreur est survenue: ' + (data.message || 'Erreur inconnue'));
-                        // Réactiver le bouton
-                        if (button) button.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur complète:', error);
-                    alert('Une erreur est survenue lors de la communication avec le serveur. Veuillez réessayer.');
-                    // Réactiver le bouton
-                    if (button) button.disabled = false;
+                // Réinitialiser la rotation de la roue
+                $(wheel).css({
+                    'transition': 'none',
+                    'transform': 'rotate(0deg)'
                 });
-            }, 6000); // Attendre la fin de l'animation
-            
-            return false;
-        }
-        
-        // Initialiser le QR code avec qrcode-generator
-        document.addEventListener('DOMContentLoaded', function() {
-            const qrcodeContainer = document.getElementById('qrcode-livewire');
-            if (qrcodeContainer) {
-                // Vider le conteneur au cas où
-                qrcodeContainer.innerHTML = '';
                 
-                // Vérifier si la bibliothèque est chargée
-                if (typeof qrcode === 'function') {
-                    // Créer le QR code
-                    const qr = qrcode(0, 'L');
-                    qr.addData('{{ url('/qr/' . $qrCodeUrl) }}');
-                    qr.make();
+                // Forcer un reflow
+                wheel.offsetWidth;
+                
+                // Animer la roue avec jQuery
+                setTimeout(() => {
+                    $(wheel).css({
+                        'transition': 'transform 13s cubic-bezier(0.17, 0.67, 0.12, 0.99)', // 13 secondes
+                        'transform': 'rotate(' + totalRotation + 'deg)'
+                    });
+                }, 10);
+                
+                // Attendre la fin de l'animation
+                setTimeout(() => {
+                    // Arrêter le son de rotation
+                    spinSound.pause();
+                    spinSound.currentTime = 0;
                     
-                    // Ajouter l'image au conteneur avec une taille plus grande
-                    const qrImage = qr.createImgTag(10);
-                    qrcodeContainer.innerHTML = qrImage;
-                    console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
+                    // Jouer le son approprié (victoire ou défaite)
+                    const isWinning = finalAngle % 36 === 0;
+                    console.log('Is winning:', isWinning);
                     
-                    // Configurer le bouton de capture et téléchargement
-                    setupQrCodeCapture();
-                } else {
-                    // Charger la bibliothèque si elle n'est pas déjà chargée
-                    const script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
-                    script.onload = function() {
-                        const qr = qrcode(0, 'L');
-                        qr.addData('{{ url('/qr/' . $qrCodeUrl) }}');
-                        qr.make();
-                        const qrImage = qr.createImgTag(10);
-                        qrcodeContainer.innerHTML = qrImage;
-                        console.log('QR Code créé pour URL:', '{{ url('/qr/' . $qrCodeUrl) }}');
-                        
-                        // Configurer le bouton de capture et téléchargement
-                        setupQrCodeCapture();
-                    };
-                    document.head.appendChild(script);
-                }
-            }
+                    if (isWinning) {
+                        winSound.play();
+                    } else {
+                        loseSound.play();
+                    }
+                }, 13200); // 13 secondes + 200ms de marge
+            });
             
-            // Fermeture du modal de résultat
-            const closeModal = document.querySelector('.result-modal-close');
-            if (closeModal) {
-                closeModal.onclick = function() {
-                    document.getElementById('resultModal').style.display = 'none';
-                }
-            }
-            
-            // Fermer le modal si on clique en dehors
-            window.onclick = function(event) {
-                const modal = document.getElementById('resultModal');
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                }
-            }
+            @this.on('victory', () => {
+                setTimeout(launchConfetti, 13200); // 13 secondes + 200ms de marge
+            });
         });
         
-        // Fonction pour configurer la capture et le téléchargement du QR code
-        function setupQrCodeCapture() {
-            // Ajouter html2canvas pour la capture
-            if (typeof html2canvas !== 'function') {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-                document.head.appendChild(script);
-            }
-            
-            // Configurer le bouton de capture
-            const captureButton = document.getElementById('capture-qr');
-            const downloadLink = document.getElementById('download-qr');
-            
-            if (captureButton && downloadLink) {
-                captureButton.addEventListener('click', function() {
-                    const qrContainer = document.getElementById('qrcode-livewire');
-                    if (!qrContainer) return;
-                    
-                    // S'assurer que html2canvas est chargé
-                    if (typeof html2canvas === 'function') {
-                        html2canvas(qrContainer).then(canvas => {
-                            // Convertir en JPG
-                            const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                            
-                            // Mettre à jour le lien de téléchargement
-                            downloadLink.href = imgData;
-                            
-                            // Déclencher automatiquement le téléchargement
-                            downloadLink.click();
-                        });
-                    } else {
-                        alert('Veuillez patienter, chargement des ressources nécessaires...');
-                        setTimeout(() => {
-                            captureButton.click();
-                        }, 1000);
-                    }
+        function launchConfetti() {
+            const count = 200;
+            const defaults = {
+                origin: { y: 0.7 },
+                spread: 360,
+                ticks: 100,
+                gravity: 0,
+                decay: 0.94,
+                startVelocity: 30,
+                colors: ['#FFD700', '#FFA500', '#FF4081', '#E91E63'],
+                shapes: ['circle', 'square'],
+                scalar: 1.5,
+            };
+
+            function fire(particleRatio, opts) {
+                confetti({
+                    ...defaults,
+                    ...opts,
+                    particleCount: Math.floor(count * particleRatio),
                 });
             }
+
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
         }
     </script>
-    
+
     <style>
         .fortune-wheel-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 1rem;
-            max-width: 100%;
-            overflow: hidden;
-        }
-        
-        .wheel-wrapper {
-            position: relative;
-            width: 80vw;
-            max-width: 500px;
-            height: auto;
-            aspect-ratio: 1/1;
-            margin: 0 auto 2rem;
-        }
-        
-        .wheel {
-            width: 100%;
-            height: 100%;
-            transform-origin: center;
-            transition: transform 6s cubic-bezier(0.2, 0.8, 0.2, 1);
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .prize-name {
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-        }
-        
-        .wheel-marker {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 40px solid #e91e63;
-            z-index: 20;
-            filter: drop-shadow(0px 3px 3px rgba(0, 0, 0, 0.3));
-        }
-        
-        .result-container {
-            margin-top: 1rem;
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .result {
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        
-        .result.win {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .result.lose {
-            background-color: #F44336;
-            color: white;
-        }
-        
-        .result.error {
-            background-color: #FF9800;
-            color: white;
-        }
-        
-        .qr-code-container {
-            margin-top: 1rem;
-        }
-        
-        .qr-code {
-            max-width: 200px;
+            padding: 2rem;
+            max-width: 800px;
             margin: 0 auto;
         }
-        
-        .qr-code-text {
-            font-size: 1.2rem;
-            margin-top: 0.5rem;
+
+        .wheel-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
         }
-        
+
+        .wheel-outer {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .wheel {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .wheel svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #wheel-inner {
+            transform-origin: center center;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5));
+        }
+
         .spin-button {
-            font-size: 1.2rem;
-            padding: 0.8rem 1.5rem;
-            background-color: #2196F3;
-            border: none;
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4CAF50;
             color: white;
-            border-radius: 4px;
+            border: none;
+            border-radius: 25px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        
-        .spin-button:hover:not(:disabled) {
-            background-color: #0b7dda;
+
+        .spin-button:hover {
+            background-color: #45a049;
         }
-        
+
         .spin-button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
-        }
-        
-        /* Styles pour le modal de résultat */
-        .result-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .result-modal-content {
-            position: relative;
-            background-color: #fff;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: modalFadeIn 0.5s;
-        }
-        
-        @keyframes modalFadeIn {
-            from {opacity: 0; transform: translateY(-30px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-        
-        .result-modal-close {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #aaa;
-            cursor: pointer;
-        }
-        
-        .result-modal-body {
-            text-align: center;
-            padding: 20px 0;
-        }
-        
-        .result-modal-body h2 {
-            color: #2196F3;
-            margin-bottom: 15px;
-        }
-        
-        .qr-actions {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        /* Pour les boutons alignés */
-        .ml-2 {
-            margin-left: 8px;
-        }
-        
-        .mt-3 {
-            margin-top: 12px;
         }
     </style>
 </div>

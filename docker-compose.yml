@@ -16,7 +16,7 @@ services:
     networks:
       - rouedelafortune
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "user", "-ppassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -55,7 +55,7 @@ services:
     container_name: rouedelafortune-nginx
     restart: always
     ports:
-      - "8888:80"
+      - "0.0.0.0:8888:80"
     volumes:
       - ./:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d

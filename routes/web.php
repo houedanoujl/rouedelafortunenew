@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SpinController;
+use App\Http\Controllers\QrCodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,24 +23,29 @@ Route::get('/', [ParticipantController::class, 'showRegistrationForm'])->name('h
 // Traitement de l'inscription
 Route::post('/register', [ParticipantController::class, 'register'])->name('register');
 
-// Affichage de la roue
-Route::get('/wheel/{entry}', [ParticipantController::class, 'showWheel'])->name('wheel.show');
+// Routes pour la roue
+Route::get('/wheel/{entry}', [SpinController::class, 'show'])->name('wheel.show');
+Route::get('/spin/result/{entry}', [SpinController::class, 'result'])->name('spin.result');
 
-// Traitement du résultat de la roue
-Route::post('/wheel/result', [ParticipantController::class, 'processWheelResult'])->name('wheel.result');
-
-// Route AJAX pour le spin de la roue
-Route::post('/wheel/spin', [ParticipantController::class, 'spinWheel'])->name('wheel.spin');
+// Route pour le QR code
+Route::get('/qrcode/{code}', [QrCodeController::class, 'show'])->name('qrcode.result');
+Route::get('/qrcode/{code}/download/pdf', [QrCodeController::class, 'downloadPdf'])->name('qrcode.download.pdf');
+Route::get('/qrcode/{code}/download/png', [QrCodeController::class, 'downloadJpg'])->name('qrcode.download.png');
 
 // Affichage du résultat
 Route::get('/result/{entry}', [ParticipantController::class, 'showResult'])->name('result.show');
 
-// Routes pour le QR code
-Route::get('/qr/{code}', [ParticipantController::class, 'qrCodeResultPage'])->name('qrcode.result');
-Route::get('/api/check-qrcode/{code}', [ParticipantController::class, 'checkQrCode'])->name('qrcode.check');
-
 // Routes d'authentification pour l'administration (Filament)
-Route::get('/admin/login', [AuthController::class, 'showLoginForm'])->name('filament.admin.auth.login');
+Route::get('/admin/login', function () {
+    // Si l'utilisateur est déjà authentifié, rediriger vers le tableau de bord
+    if (auth()->check()) {
+        return redirect('/admin');
+    }
+    
+    // Sinon, afficher la page de connexion Filament
+    return view('filament.admin.auth.login');
+})->name('filament.admin.auth.login');
+
 Route::post('/admin/login', [AuthController::class, 'login'])->name('login');
 Route::post('/admin/logout', [AuthController::class, 'logout'])->name('filament.admin.auth.logout');
 

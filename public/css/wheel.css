@@ -1,10 +1,7 @@
-@import 'tailwindcss';
-
-/* Styles personnalisés */
 .wheel-container {
     position: relative;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
     text-align: center;
     padding: 20px;
@@ -13,6 +10,7 @@
 .wheel {
     width: 100%;
     margin-bottom: 30px;
+    transform-origin: center center;
     transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
 }
 

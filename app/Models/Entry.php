@@ -19,12 +19,8 @@ class Entry extends Model
     protected $fillable = [
         'participant_id',
         'contest_id',
-        'prize_id',
-        'result',
-        'played_at',
-        'qr_code',
-        'claimed',
-        'won_date',
+        'has_played',
+        'has_won'
     ];
 
     /**
@@ -33,9 +29,8 @@ class Entry extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'played_at' => 'datetime',
-        'claimed' => 'boolean',
-        'won_date' => 'datetime',
+        'has_played' => 'boolean',
+        'has_won' => 'boolean'
     ];
 
     /**
@@ -52,14 +47,6 @@ class Entry extends Model
     public function contest(): BelongsTo
     {
         return $this->belongsTo(Contest::class);
-    }
-
-    /**
-     * Obtenir le prix associé à cette participation.
-     */
-    public function prize(): BelongsTo
-    {
-        return $this->belongsTo(Prize::class);
     }
 
     /**

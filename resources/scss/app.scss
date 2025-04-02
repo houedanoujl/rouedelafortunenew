@@ -1,0 +1,71 @@
+// Importation des variables
+@import 'variables';
+
+// Styles globaux
+body {
+    font-family: $font-family-base;
+    font-size: $font-size-base;
+    line-height: $line-height-base;
+}
+
+// Classes utilitaires
+.container {
+    max-width: $container-max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-unit;
+}
+
+// Boutons
+.btn {
+    display: inline-block;
+    padding: $spacing-unit * 0.5 $spacing-unit;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &-primary {
+        background-color: $primary-color;
+        color: white;
+
+        &:hover {
+            background-color: darken($primary-color, 10%);
+        }
+    }
+
+    &-secondary {
+        background-color: $secondary-color;
+        color: white;
+
+        &:hover {
+            background-color: darken($secondary-color, 10%);
+        }
+    }
+}
+
+// Media queries responsive
+@media (min-width: $breakpoint-sm) {
+    .container {
+        padding: 0 $spacing-unit * 2;
+    }
+}
+
+@media (min-width: $breakpoint-md) {
+    .container {
+        padding: 0 $spacing-unit * 3;
+    }
+}
+
+// Animations
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}

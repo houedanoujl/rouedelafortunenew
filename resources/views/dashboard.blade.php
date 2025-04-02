@@ -40,10 +40,13 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <h1>Roue de la Fortune</h1>
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-light">Déconnexion</button>
-                </form>
+                <a href="{{ route('filament.admin.auth.logout') }}"
+                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                Déconnexion
+                </a>
+
+                <form id="logout-form" action="{{ route('filament.admin.auth.logout') }}" method="POST" style="display: none;">
+                    @csrf</form>
             </div>
         </div>
     </header>
@@ -61,7 +64,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
@@ -73,7 +76,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
@@ -86,7 +89,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card">
@@ -106,7 +109,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">

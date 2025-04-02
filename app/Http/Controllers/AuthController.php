@@ -28,7 +28,8 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return redirect()->intended('/dashboard');
+            // Rediriger vers le panneau d'administration Filament
+            return redirect('/admin');
         }
 
         return back()->withErrors([
@@ -46,6 +47,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/admin/login');
+        return redirect('/');
     }
 }

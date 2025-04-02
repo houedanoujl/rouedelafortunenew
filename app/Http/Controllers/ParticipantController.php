@@ -80,9 +80,8 @@ class ParticipantController extends Controller
         $entry = Entry::create([
             'participant_id' => $participant->id,
             'contest_id' => $request->contestId,
-            'qr_code' => 'QR-' . Str::random(8),
-            'played_at' => now(),
-            'result' => 'en attente',
+            'has_played' => false,
+            'has_won' => false
         ]);
         
         return redirect()->route('wheel.show', ['entry' => $entry->id]);
@@ -91,143 +90,29 @@ class ParticipantController extends Controller
     /**
      * Affiche la roue de la fortune
      */
-    public function showWheel($entryId)
+    public function showWheel(Entry $entry)
     {
-        try {
-            // Utiliser find() au lieu de findOrFail() pour gérer manuellement le cas où l'entrée n'existe pas
-            $entry = Entry::find($entryId);
-            
-            // Si l'entrée n'existe pas, rediriger vers la page d'accueil avec un message d'erreur
-            if (!$entry) {
-                return redirect()->route('home')->with('error', 'Participation introuvable. Veuillez vous inscrire à nouveau.');
-            }
-            
-            $contest = $entry->contest;
-            
-            // Si déjà joué, préparer les données de résultat
-            $result = null;
-            $qrCodeUrl = null;
-            
-            if ($entry->result !== 'en attente' || $entry->prize_id !== null) {
-                // Ne pas afficher le résultat, juste indiquer que la participation est terminée
-                $message = 'Votre participation est terminée. Scannez le QR code pour découvrir votre résultat!';
-                
-                $result = [
-                    'status' => 'completed',
-                    'message' => $message
-                ];
-                
-                if ($entry->qr_code) {
-                    $qrCodeUrl = $entry->qr_code;
-                }
-            }
-            
-            // Préparer les prix pour la roue
-            $distributions = PrizeDistribution::where('contest_id', $contest->id)
-                ->whereDate('start_date', '<=', now())
-                ->whereDate('end_date', '>=', now())
-                ->with('prize')
-                ->get();
-                
-            $prizes = [];
-            
-            // Vérifier si nous avons une configuration de roue sauvegardée
-            if ($entry->wheel_config && $entry->result !== 'en attente') {
-                // Utiliser la configuration sauvegardée si elle existe
-                $prizes = json_decode($entry->wheel_config, true);
-                
-                // Ajouter des informations sur le secteur gagnant si nécessaire
-                if ($entry->result === 'win' && $entry->prize_id) {
-                    foreach ($prizes as &$prize) {
-                        if ($prize['id'] == $entry->prize_id) {
-                            $prize['is_winning'] = true;
-                            break;
-                        }
-                    }
-                }
-            } else if ($entry->result !== 'en attente') {
-                // Si pas de configuration sauvegardée mais déjà joué, créer une roue générique
-                if ($entry->result === 'win' && $entry->prize_id) {
-                    // Pour les gagnants, on montre un secteur gagnant
-                    $winningSector = [
-                        'id' => $entry->prize_id,
-                        'name' => 'Gagné',
-                        'is_winning' => true
-                    ];
-                    
-                    // Ajouter 1 secteur gagnant et des secteurs perdants
-                    $prizes[] = $winningSector;
-                    // 9 secteurs perdants (pour un total de 10)
-                    for ($i = 0; $i < 9; $i++) {
-                        $prizes[] = [
-                            'id' => null,
-                            'name' => 'Pas de chance',
-                            'is_winning' => false
-                        ];
-                    }
-                } else {
-                    // Pour les perdants, on montre tous les secteurs perdants
-                    for ($i = 0; $i < 10; $i++) {
-                        $prizes[] = [
-                            'id' => null,
-                            'name' => 'Pas de chance',
-                            'is_winning' => false
-                        ];
-                    }
-                }
-            } else {
-                // Joueur n'a pas encore joué, on prépare les vrais secteurs
-                // Préparer les secteurs gagnants
-                $winningSectors = [];
-                foreach ($distributions as $distribution) {
-                    if ($distribution->prize && $distribution->prize->stock > 0 && $distribution->remaining > 0) {
-                        $winningSectors[] = [
-                            'id' => $distribution->prize->id,
-                            'name' => 'Gagné',
-                            'distribution_id' => $distribution->id,
-                            'probability' => $distribution->remaining / $distributions->sum('remaining'),
-                            'is_winning' => true
-                        ];
-                    }
-                }
-                
-                // Limiter à 5 secteurs gagnants
-                if (count($winningSectors) > 5) {
-                    $winningSectors = array_slice($winningSectors, 0, 5);
-                }
-                
-                // Si moins de 5 secteurs gagnants, on duplique
-                if (count($winningSectors) < 5 && count($winningSectors) > 0) {
-                    $existingCount = count($winningSectors);
-                    for ($i = count($winningSectors); $i < 5; $i++) {
-                        $index = $i % $existingCount;
-                        $winningSectors[] = $winningSectors[$index];
-                    }
-                }
-                
-                // Créer autant de secteurs perdants que de secteurs gagnants
-                $losingSectors = [];
-                $winningCount = count($winningSectors);
-                for ($i = 0; $i < $winningCount; $i++) {
-                    $losingSectors[] = [
-                        'id' => null,
-                        'name' => 'Pas de chance',
-                        'is_winning' => false
-                    ];
-                }
-                
-                // Alternance des secteurs gagnants et perdants
-                for ($i = 0; $i < $winningCount; $i++) {
-                    $prizes[] = $winningSectors[$i]; // Secteur gagnant
-                    $prizes[] = $losingSectors[$i];  // Secteur perdant
-                }
-            }
-            
-            return view('wheel', compact('entry', 'prizes', 'result', 'qrCodeUrl'));
-            
-        } catch (\Exception $e) {
-            return redirect()->route('home')->with('error', 'Une erreur est survenue: ' . $e->getMessage());
+        // Si l'entrée a déjà été jouée, rediriger vers la page de résultat
+        if ($entry->has_played) {
+            return redirect()->route('result.show', ['entry' => $entry->id]);
         }
+        
+        return view('wheel', ['entry' => $entry]);
+    }
+    
+    /**
+     * Affiche le résultat du spin
+     */
+    public function showResult(Entry $entry)
+    {
+        if (!$entry->has_played) {
+            return redirect()->route('wheel.show', ['entry' => $entry->id]);
+        }
+        
+        return view('result', [
+            'entry' => $entry,
+            'qrCode' => $entry->qrCode
+        ]);
     }
     
     /**
@@ -249,32 +134,16 @@ class ParticipantController extends Controller
         }
         
         // Marquer comme joué
-        $entry->played_at = now();
+        $entry->has_played = true;
         
         // Enregistrer le résultat
         if ($request->prize_id) {
-            $entry->prize_id = $request->prize_id;
+            $entry->has_won = true;
         }
         
         $entry->save();
         
         return redirect()->route('result.show', ['entry' => $entry->id]);
-    }
-    
-    /**
-     * Affiche le résultat
-     */
-    public function showResult($entry)
-    {
-        // Utiliser find() au lieu de findOrFail()
-        $entry = Entry::with(['participant', 'prize'])->find($entry);
-        
-        // Si l'entrée n'existe pas, rediriger avec un message d'erreur
-        if (!$entry) {
-            return redirect()->route('home')->with('error', 'Résultat introuvable. Veuillez vous inscrire à nouveau.');
-        }
-        
-        return view('result', ['entry' => $entry, 'entryId' => $entry->id]);
     }
     
     /**
@@ -308,13 +177,13 @@ class ParticipantController extends Controller
             }
             
             // Déterminer le message en fonction du résultat
-            $message = $entry->result === 'win' 
+            $message = $entry->has_won 
                 ? 'Félicitations ! Vous avez gagné : ' . ($entry->prize->name ?? 'un prix')
                 : 'Pas de chance cette fois-ci. Merci d\'avoir participé !';
                 
             return response()->json([
                 'success' => true,
-                'status' => $entry->result,
+                'status' => $entry->has_won ? 'win' : 'lose',
                 'message' => $message,
                 'prize' => $entry->prize ? $entry->prize->name : null,
                 'participant' => $entry->participant ? $entry->participant->first_name . ' ' . $entry->participant->last_name : 'Participant'
@@ -366,18 +235,10 @@ class ParticipantController extends Controller
             }
             
             // Vérifier si la roue a déjà été tournée pour cette entrée
-            if ($entry->prize_id !== null) {
+            if ($entry->has_played) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette roue a déjà été tournée. Vous ne pouvez pas jouer à nouveau.'
-                ]);
-            }
-            
-            // Vérifier si l'entrée a déjà été jouée
-            if ($entry->result !== 'en attente') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cette participation a déjà été jouée.'
                 ]);
             }
             
@@ -508,12 +369,9 @@ class ParticipantController extends Controller
                 }
                 
                 // Mettre à jour l'entrée
-                $entry->result = $hasWon ? 'win' : 'lose';
+                $entry->has_played = true;
+                $entry->has_won = $hasWon;
                 $entry->prize_id = $prizeId;
-                $entry->played_at = now();
-                
-                // Sauvegarder la configuration actuelle de la roue
-                $entry->wheel_config = json_encode($sectors);
                 
                 $entry->save();
                 
@@ -557,8 +415,8 @@ class ParticipantController extends Controller
                 return response()->json([
                     'success' => true,
                     'result' => [
-                        'status' => $entry->result,
-                        'message' => $entry->result === 'win' 
+                        'status' => $entry->has_won ? 'win' : 'lose',
+                        'message' => $entry->has_won 
                             ? 'Félicitations ! Vous avez gagné !' 
                             : 'Pas de chance cette fois-ci. Vous pourrez réessayer ultérieurement !',
                         'prize' => $selectedSector,

@@ -2,141 +2,83 @@
 
 namespace App\Livewire;
 
-use App\Models\Contest;
 use App\Models\Entry;
-use App\Models\Participant;
-use App\Models\Prize;
-use App\Models\PrizeDistribution;
-use App\Models\QrCode as QrCodeModel;
-use Illuminate\Support\Facades\DB;
+use App\Models\QrCode;
 use Livewire\Component;
 use Illuminate\Support\Str;
 
 class FortuneWheel extends Component
 {
-    public $entry;
-    public $availablePrizes = [];
-    public $distributions = [];
-    public $spinning = false;
-    public $result = null;
-    public $qrCodeUrl = null;
+    public Entry $entry;
+    public bool $spinning = false;
+    public bool $showWheel = true;
 
-    protected $listeners = ['spin' => 'spin'];
-
-    public function mount($entry, $prizes, $distributions)
+    public function mount(Entry $entry)
     {
         $this->entry = $entry;
-        $this->distributions = $distributions;
-        
-        // Vérifier si nous avons une configuration de roue sauvegardée
-        if ($entry->wheel_config) {
-            // Utiliser la configuration sauvegardée
-            $this->availablePrizes = json_decode($entry->wheel_config, true);
-            return;
-        }
-        
-        // Vérifier si tous les stocks de prix sont épuisés
-        $hasPrizesInStock = false;
-        foreach ($distributions as $distribution) {
-            if ($distribution->prize && $distribution->prize->stock > 0 && $distribution->remaining > 0) {
-                $hasPrizesInStock = true;
-                break;
-            }
-        }
-        
-        // Définir des probabilités de gagner (10% chance de gagner)
-        $chanceToWin = 0.10; // 10% de chance de gagner
-        
-        // Créer 20 secteurs au total: 10 gagnants, 10 perdants
-        $sectors = [];
-        
-        // Si aucun prix en stock, tous les secteurs sont perdants
-        if (!$hasPrizesInStock) {
-            // 20 secteurs perdants
-            for ($i = 0; $i < 20; $i++) {
-                $sectors[] = [
-                    'id' => null,
-                    'name' => 'Pas de chance',
-                    'type' => 'none',
-                    'value' => 0,
-                    'distribution_id' => null,
-                    'remaining' => 0,
-                    'probability' => 1/20, // Probabilité égale
-                    'is_winning' => false
-                ];
-            }
-        } else {
-            // Ajouter 10 secteurs gagnants (tous indiquent "Gagné" sans préciser le lot)
-            for ($i = 0; $i < 10; $i++) {
-                $sectors[] = [
-                    'id' => 'win', // Juste un marqueur, le vrai prix sera choisi aléatoirement
-                    'name' => 'Gagné',
-                    'type' => 'win',
-                    'value' => 0,
-                    'distribution_id' => null, // Sera déterminé si le joueur gagne
-                    'probability' => $chanceToWin / 10, // Chaque secteur gagnant a une probabilité égale
-                    'is_winning' => true
-                ];
-            }
-            
-            // Ajouter 10 secteurs perdants
-            for ($i = 0; $i < 10; $i++) {
-                $sectors[] = [
-                    'id' => null,
-                    'name' => 'Pas de chance',
-                    'type' => 'none',
-                    'value' => 0,
-                    'distribution_id' => null,
-                    'probability' => (1 - $chanceToWin) / 10, // Les secteurs perdants se partagent le reste de probabilité
-                    'is_winning' => false
-                ];
-            }
-        }
-        
-        // Mélanger les secteurs pour une disposition aléatoire sur la roue
-        shuffle($sectors);
-        
-        $this->availablePrizes = $sectors;
+        $this->showWheel = !$entry->has_played;
     }
 
     public function spin()
     {
-        // Si déjà en cours de rotation, ignorer
-        if ($this->spinning) {
+        if ($this->entry->has_played) {
             return;
         }
-        
-        // Marquer comme en rotation
+
         $this->spinning = true;
+
+        // Réduire les chances de gagner à 30% (au lieu de 50%)
+        $isWinning = rand(1, 10) <= 3;
         
-        // Réinitialiser les résultats
-        $this->result = null;
-        $this->qrCodeUrl = null;
+        // Nous avons 20 secteurs, donc chaque secteur fait 18 degrés (360/20)
+        $sectorAngle = 18;
         
-        // Déclencher l'événement pour l'animation côté client
-        $this->dispatch('spin', ['timestamp' => now()->timestamp]);
+        // Important: Nous voulons que le pointeur s'arrête au centre d'un secteur,
+        // pas à la jonction entre deux secteurs
         
-        // L'animation est gérée côté client et le résultat sera déterminé par la requête AJAX
+        if ($isWinning) {
+            // Pour les secteurs gagnants (secteurs pairs: 0, 2, 4, 6, 8, 10, 12, 14, 16, 18)
+            // Nous choisissons un secteur pair au hasard
+            $sectorIndex = rand(0, 9) * 2;
+            // Puis nous calculons l'angle qui correspond au centre de ce secteur
+            $finalAngle = ($sectorIndex * $sectorAngle) + ($sectorAngle / 2);
+        } else {
+            // Pour les secteurs perdants (secteurs impairs: 1, 3, 5, 7, 9, 11, 13, 15, 17, 19)
+            // Nous choisissons un secteur impair au hasard
+            $sectorIndex = (rand(0, 9) * 2) + 1;
+            // Puis nous calculons l'angle qui correspond au centre de ce secteur
+            $finalAngle = ($sectorIndex * $sectorAngle) + ($sectorAngle / 2);
+        }
+
+        // Mettre à jour l'entrée
+        $this->entry->has_played = true;
+        $this->entry->has_won = $isWinning;
+        $this->entry->save();
+
+        // Si gagné, créer un QR code
+        if ($isWinning) {
+            QrCode::create([
+                'entry_id' => $this->entry->id,
+                'code' => Str::random(10),
+            ]);
+        }
+
+        // Déclencher l'animation de la roue
+        // S'assurer que l'angle est bien un entier
+        $finalAngle = (int)$finalAngle;
+        $this->dispatch('startSpinWithSound', ['angle' => $finalAngle]);
         
-        // Fin de l'animation
-        $this->spinning = false;
-    }
-    
-    protected function determineResult()
-    {
-        // La détermination du résultat est maintenant gérée par le contrôleur via la requête AJAX
-        // Cette méthode reste pour la compatibilité et le debug éventuel
-        
-        $this->result = [
-            'status' => 'wait',
-            'message' => 'Veuillez attendre la fin de l\'animation...'
-        ];
+        // Si gagné, déclencher les confettis
+        if ($isWinning) {
+            $this->dispatch('victory');
+        }
+
+        // Rediriger après la fin de l'animation (13.5 secondes au lieu de 8.5)
+        $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 13500)");
     }
 
     public function render()
     {
-        return view('livewire.fortune-wheel', [
-            'prizes' => $this->availablePrizes
-        ]);
+        return view('livewire.fortune-wheel');
     }
 }

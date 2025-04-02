@@ -4,10 +4,22 @@ set -e
 # Fonction pour attendre que MySQL soit prêt
 wait_for_mysql() {
   echo "Attente de la disponibilité de MySQL..."
-  while ! mysql -h mysql -u user -ppassword -e "SELECT 1" >/dev/null 2>&1; do
-    sleep 1
+  
+  # Attendre que le service MySQL soit prêt en tentant de se connecter
+  # Cette méthode ne nécessite aucun outil supplémentaire
+  for i in {1..30}; do
+    if (echo > /dev/tcp/mysql/3306) >/dev/null 2>&1; then
+      echo "MySQL est accessible sur le port 3306 !"
+      # Attendre un peu plus pour que MySQL soit complètement initialisé
+      sleep 5
+      return 0
+    fi
+    echo "Tentative $i/30 - En attente de MySQL..."
+    sleep 3
   done
-  echo "MySQL est prêt !"
+  
+  echo "ERREUR: Impossible de se connecter à MySQL après 30 tentatives."
+  return 1
 }
 
 # Vérifier si nous sommes dans un répertoire vide ou presque
@@ -94,23 +106,8 @@ if [ ! -f "storage/app/migrations_run" ]; then
 fi
 
 # Créer l'utilisateur admin par défaut
-php artisan tinker --execute="
-    try {
-        \$user = \App\Models\User::where('email', 'houedanou@example.com')->first();
-        if (!\$user) {
-            \App\Models\User::create([
-                'name' => 'houedanou',
-                'email' => 'houedanou@example.com',
-                'password' => bcrypt('nouveaumdp123')
-            ]);
-            echo 'Utilisateur admin créé avec succès!';
-        } else {
-            echo 'L\'utilisateur admin existe déjà.';
-        }
-    } catch (\Exception \$e) {
-        echo 'Erreur lors de la création de l\'utilisateur admin: ' . \$e->getMessage();
-    }
-"
+echo "Création de l'utilisateur administrateur..."
+php create-admin-user.php
 
 # Définir les permissions correctes
 chown -R www-data:www-data storage bootstrap/cache
