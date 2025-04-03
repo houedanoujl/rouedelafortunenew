@@ -1,10 +1,22 @@
-// Couleurs
-$primary-color: #3490dc;
-$secondary-color: #6574cd;
-$success-color: #38c172;
-$danger-color: #e3342f;
-$warning-color: #f6993f;
-$info-color: #6cb2eb;
+// Palette de couleurs principale de la Roue de la Fortune
+// Couleurs primaires
+$primary-color: #e3201c; // Red CMYK - Couleur principale de la marque, boutons d'action primaires
+$secondary-color: #965d0b; // Golden Brown - Accents secondaires, en-têtes
+$tertiary-color: #544719; // Field Drab - Texte sur fond clair, éléments discrets
+
+// Couleurs d'accentuation
+$accent-light: #eb8885; // Light Coral - Mises en évidence légères, badges, notifications
+$accent-medium: #8c4948; // Cordovan - Contrastes moyens, boutons secondaires
+$accent-dark: #4c1711; // Black Bean - Texte important, pieds de page, ombres
+
+// Couleur de fond
+$background-color: #f6e7e4; // Lavender Blush - Fond de page principal, espaces vides
+
+// Equivalent fonctionnel des anciennes couleurs (maintenant basées sur la nouvelle palette)
+$success-color: #544719; // Field Drab comme équivalent success
+$danger-color: #e3201c; // Red CMYK pour les erreurs/dangers
+$warning-color: #965d0b; // Golden Brown pour avertissements
+$info-color: #8c4948; // Cordovan pour informations
 
 // Typographie
 $font-family-base: 'Nunito', sans-serif;

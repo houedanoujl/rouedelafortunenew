@@ -337,5 +337,19 @@ body.printing .link-button-container {
 .spinner-border {
     animation: pulse 2s infinite;
 }
+
+.qr-code-container.mt-4 {
+    margin:0 auto !important;
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+}
+.qr-code-container.mt-4 img {
+    width: 200px;
+    height: 200px;
+}
+button.btn.btn-primary.mt-3{
+    background:#dc3545 !important;
+}
 </style>
 @endsection

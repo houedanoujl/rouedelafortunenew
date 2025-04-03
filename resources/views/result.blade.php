@@ -28,7 +28,7 @@
                                     </a>
                                 </div>
                                 
-                                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#prizeModal">
+                                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#prizeModal" id="viewPrizeBtn">
                                     Voir mon lot
                                 </button>
                             @endif
@@ -72,6 +72,14 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Fix pour le problème du modal Bootstrap
+    const viewPrizeBtn = document.getElementById('viewPrizeBtn');
+    if (viewPrizeBtn) {
+        viewPrizeBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('prizeModal'));
+            modal.show();
+        });
+    }
     // Only launch confetti if we came from a win
     if(window.location.href.includes('spin.result')) {
         setTimeout(launchConfetti, 300);
