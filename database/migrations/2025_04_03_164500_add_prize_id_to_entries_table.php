@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('entries', function (Blueprint $table) {
-            $table->foreignId('prize_id')->nullable()->constrained();
-        });
+        // Vérifier si la colonne existe déjà
+        if (!Schema::hasColumn('entries', 'prize_id')) {
+            Schema::table('entries', function (Blueprint $table) {
+                $table->foreignId('prize_id')->nullable()->constrained();
+            });
+        }
     }
 
     /**
@@ -21,9 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('entries', function (Blueprint $table) {
-            $table->dropForeign(['prize_id']);
-            $table->dropColumn('prize_id');
-        });
+        // Ne rien faire en down puisque nous vérifions l'existence de la colonne en up
+        // Cela évite les erreurs lors des rollbacks si la colonne existait déjà
     }
 };
