@@ -16,9 +16,19 @@
                 </p>
             </div>
             
-            <a href="{{ route('register', ['contestId' => $contest->id]) }}" class="btn btn-primary btn-lg">
-                Participer maintenant
-            </a>
+            @if ($hasPlayedThisWeek)
+                <div class="alert alert-warning mb-4">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+                    <strong>Participation limitée !</strong> Vous avez déjà participé cette semaine.
+                    @if($daysRemaining > 0)
+                        <p class="mt-2 mb-0">Vous pourrez rejouer dans <strong>{{ $daysRemaining }}</strong> jour(s).</p>
+                    @endif
+                </div>
+            @else
+                <a href="{{ route('register', ['contestId' => $contest->id]) }}" class="btn btn-primary btn-lg">
+                    Participer maintenant
+                </a>
+            @endif
         @else
             <div class="alert alert-info">
                 Aucun concours n'est actuellement actif. Revenez bientôt !
@@ -142,5 +152,13 @@
         font-weight: bold;
         margin-bottom: 1rem;
     }
+    .card{
+    background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid !important;
+        border-image: linear-gradient(45deg, #ffd700, #ffa500) 1 !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+
+  }
 </style>
 @endsection

@@ -56,4 +56,12 @@ class Entry extends Model
     {
         return $this->hasOne(QrCode::class);
     }
+    
+    /**
+     * Obtenir le prix associé à cette participation.
+     */
+    public function prize(): BelongsTo
+    {
+        return $this->belongsTo(Prize::class);
+    }
 }

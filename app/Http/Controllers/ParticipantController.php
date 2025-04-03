@@ -16,8 +16,16 @@ class ParticipantController extends Controller
     /**
      * Affiche le formulaire d'inscription
      */
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
+        // Vérifier si l'utilisateur a déjà joué cette semaine
+        if ($request->cookie('played_this_week')) {
+            return view('already-played', [
+                'message' => 'Vous avez déjà participé cette semaine. Vous pourrez rejouer dans quelques jours.',
+                'days_remaining' => $this->getDaysRemaining($request->cookie('played_this_week'))
+            ]);
+        }
+        
         $activeContest = Contest::where('status', 'active')->first();
         
         if (!$activeContest) {
@@ -30,8 +38,25 @@ class ParticipantController extends Controller
     /**
      * Traite l'inscription d'un participant
      */
+    /**
+     * Calcule le nombre de jours restants avant de pouvoir rejouer
+     */
+    private function getDaysRemaining($cookieValue)
+    {
+        $playedDate = \DateTime::createFromFormat('Y-m-d', $cookieValue);
+        $now = new \DateTime();
+        $interval = $playedDate->diff($now);
+        
+        return max(0, 7 - $interval->days);
+    }
+    
     public function register(Request $request)
     {
+        // Vérifier si l'utilisateur a déjà joué cette semaine
+        if ($request->cookie('played_this_week')) {
+            return redirect()->route('home')->with('error', 'Vous avez déjà participé cette semaine.');
+        }
+        
         $request->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
@@ -109,9 +134,13 @@ class ParticipantController extends Controller
             return redirect()->route('wheel.show', ['entry' => $entry->id]);
         }
         
+        // Charger les relations pour s'assurer d'avoir accès au prix
+        $entry->load('prize');
+        
         return view('result', [
             'entry' => $entry,
-            'qrCode' => $entry->qrCode
+            'qrCode' => $entry->qrCode,
+            'prize' => $entry->prize // Passer le prix à la vue
         ]);
     }
     
@@ -120,6 +149,11 @@ class ParticipantController extends Controller
      */
     public function processWheelResult(Request $request)
     {
+        // Vérifier si l'utilisateur a déjà joué cette semaine
+        if ($request->cookie('played_this_week')) {
+            return redirect()->route('home')->with('error', 'Vous avez déjà participé cette semaine.');
+        }
+        
         $request->validate([
             'entry_id' => 'required|exists:entries,id',
             'prize_id' => 'nullable|exists:prizes,id'
@@ -139,11 +173,18 @@ class ParticipantController extends Controller
         // Enregistrer le résultat
         if ($request->prize_id) {
             $entry->has_won = true;
+            $entry->prize_id = $request->prize_id; // Associer explicitement le prix à l'entrée
         }
         
         $entry->save();
         
-        return redirect()->route('result.show', ['entry' => $entry->id]);
+        // Définir un cookie qui expire dans 7 jours
+        $cookieExpiry = 60 * 24 * 7; // 7 jours en minutes
+        $today = new \DateTime();
+        $cookieValue = $today->format('Y-m-d');
+        
+        return redirect()->route('result.show', ['entry' => $entry->id])
+               ->cookie('played_this_week', $cookieValue, $cookieExpiry);
     }
     
     /**

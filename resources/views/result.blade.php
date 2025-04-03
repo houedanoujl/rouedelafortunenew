@@ -28,7 +28,7 @@
                                     </a>
                                 </div>
                                 
-                                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#prizeModal" id="viewPrizeBtn">
+                                <button type="button" class="btn btn-primary mt-3" id="viewPrizeBtn">
                                     Voir mon lot
                                 </button>
                             @endif
@@ -44,7 +44,7 @@
     </div>
 </div>
 
-@if($entry->has_won && isset($prize))
+@if($entry->has_won)
 <!-- Modal -->
 <div class="modal fade" id="prizeModal" tabindex="-1" aria-labelledby="prizeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -54,10 +54,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <h4>🎁 {{ $prize->name }}</h4>
-                <p class="mt-3">{{ $prize->description }}</p>
-                @if($prize->image)
-                    <img src="{{ asset('storage/' . $prize->image) }}" alt="{{ $prize->name }}" class="img-fluid mt-3">
+                @if(isset($prize) && $prize)
+                    <h4>🎁 {{ $prize->name }}</h4>
+                    <p class="mt-3">{{ $prize->description }}</p>
+                    @if($prize->image)
+                        <img src="{{ asset('storage/' . $prize->image) }}" alt="{{ $prize->name }}" class="img-fluid mt-3">
+                    @endif
+                @else
+                    <h4>🎁 Félicitations !</h4>
+                    <p class="mt-3">Vous avez remporté un lot.</p>
                 @endif
             </div>
             <div class="modal-footer">
@@ -72,14 +77,17 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Fix pour le problème du modal Bootstrap
+    // Initialisation manuelle du modal pour éviter les conflits
     const viewPrizeBtn = document.getElementById('viewPrizeBtn');
+    
+    // Vérifier si le bouton existe avant d'ajouter l'écouteur d'événement
     if (viewPrizeBtn) {
         viewPrizeBtn.addEventListener('click', function() {
-            const modal = new bootstrap.Modal(document.getElementById('prizeModal'));
-            modal.show();
+            // Utiliser jQuery qui est plus stable pour manipuler les modals Bootstrap
+            $('#prizeModal').modal('show');
         });
     }
+
     // Only launch confetti if we came from a win
     if(window.location.href.includes('spin.result')) {
         setTimeout(launchConfetti, 300);
