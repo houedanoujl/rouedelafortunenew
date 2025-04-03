@@ -1,4 +1,7 @@
-# Roue de la Fortune - Application Laravel avec Docker
+# Roue de la Fortune - Application Laravel avec Docker pour le développement local
+
+[![Laravel Forge Site Deployment Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fforge.laravel.com%2Fsite-badges%2Fe7a7cd9a-eb18-4e14-a327-eeb466e28f30%3Fdate%3D1%26label%3D1%26commit%3D1&style=plastic)](https://forge.laravel.com/servers/888615/sites/2668195)
+
 
 Cette application Laravel "Roue de la Fortune" est configurée pour fonctionner avec Docker, ce qui facilite le déploiement et le développement.
 
