@@ -116,18 +116,6 @@ docker compose restart nginx
 
 Si vous rencontrez une erreur concernant le manifeste Vite, assurez-vous d'avoir bien exécuté les commandes pour compiler les assets frontend (étapes 8 et 9).
 
-## Identifiants par défaut
-
-### Interface d'administration
-- Nom d'utilisateur : houedanou
-- Mot de passe : nouveaumdp123
-
-### Base de données (via phpMyAdmin)
-- Nom d'utilisateur : user
-- Mot de passe : password
-- ou
-- Nom d'utilisateur : root
-- Mot de passe : root
 
 ## Commandes Docker utiles
 
