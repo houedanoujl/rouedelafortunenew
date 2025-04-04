@@ -69,10 +69,6 @@
     </div>
     
     <div class="how-it-works-section py-5 bg-light">
-        <div class="text-center mb-5">
-            <h2>Comment ça marche ?</h2>
-        </div>
-        
         <div class="row">
             <div class="col-md-3 mb-4">
                 <div class="step-card text-center">
@@ -107,10 +103,20 @@
 </div>
 
 <style>
+    :root {
+        --honolulu-blue: #0079B2ff;
+        --apple-green: #86B942ff;
+        --school-bus-yellow: #F7DB15ff;
+        --persian-red: #D03A2Cff;
+        --sea-green: #049055ff;
+        --light-gray: #f5f5f5;
+        --dark-gray: #333333;
+    }
+    
     .hero-section {
-        background-color: #f8f9fa;
+        background-color: var(--light-gray);
         padding: 3rem 0;
-        border-radius: 10px;
+        border-radius: 4px;
         margin-bottom: 2rem;
     }
     
@@ -119,25 +125,25 @@
         margin: 0 auto;
         background-color: #fff;
         padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
     }
     
     .features-section .card {
-        transition: transform 0.3s;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
     }
     
     .features-section .card:hover {
-        transform: translateY(-10px);
+        background-color: var(--light-gray);
     }
     
     .step-card {
         background: white;
         padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
         height: 100%;
     }
     
@@ -146,19 +152,33 @@
         width: 40px;
         height: 40px;
         line-height: 40px;
-        background-color: #007bff;
+        background-color: var(--honolulu-blue);
         color: white;
         border-radius: 50%;
         font-weight: bold;
         margin-bottom: 1rem;
     }
-    .card{
-    background: rgba(255, 255, 255, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 1px solid !important;
-        border-image: linear-gradient(45deg, #ffd700, #ffa500) 1 !important;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-
-  }
+    
+    .card {
+        background-color: #fff !important;
+        border: 1px solid #e0e0e0 !important;
+    }
+    
+    .text-primary {
+        color: var(--honolulu-blue) !important;
+    }
+    
+    .btn-primary {
+        background-color: var(--honolulu-blue);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: #006699;
+    }
+    
+    .bg-light {
+        background-color: var(--light-gray) !important;
+    }
 </style>
 @endsection

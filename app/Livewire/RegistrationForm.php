@@ -21,12 +21,17 @@ class RegistrationForm extends Component
     public $isBlocked = false;
     public $existingEntry = null; // Pour stocker une participation existante
     public $alreadyParticipated = false; // Flag pour indiquer si l'utilisateur a déjà participé
+    public $consentement = false; // Consentement pour le traitement des données personnelles
+    public $reglement = false; // Acceptation du règlement du jeu
+    public $modalContents = []; // Contenu des modales chargé depuis JSON
 
     protected $rules = [
         'firstName' => 'required|string|max:255',
         'lastName' => 'required|string|max:255',
         'phone' => 'required|string|max:50|unique:participants,phone',
         'email' => 'nullable|email|max:255',
+        'consentement' => 'required|accepted',
+        'reglement' => 'required|accepted',
     ];
 
     protected $messages = [
@@ -35,11 +40,21 @@ class RegistrationForm extends Component
         'phone.required' => 'Le numéro de téléphone est obligatoire.',
         'phone.unique' => 'Ce numéro de téléphone est déjà enregistré.',
         'email.email' => 'Veuillez entrer une adresse email valide.',
+        'consentement.required' => 'Vous devez accepter le traitement de vos données personnelles.',
+        'consentement.accepted' => 'Vous devez accepter le traitement de vos données personnelles.',
+        'reglement.required' => 'Vous devez accepter le règlement du jeu.',
+        'reglement.accepted' => 'Vous devez accepter le règlement du jeu.',
     ];
 
     public function mount($contestId = null)
     {
         $this->contestId = $contestId ?? Contest::where('status', 'active')->first()?->id;
+        
+        // Charger le contenu des modales depuis le fichier JSON
+        $jsonPath = resource_path('data/modals.json');
+        if (file_exists($jsonPath)) {
+            $this->modalContents = json_decode(file_get_contents($jsonPath), true);
+        }
         
         // Vérifier si le joueur est limité par un cookie
         $playedCookie = request()->cookie('played_fortune_wheel');

@@ -14,7 +14,7 @@
                         @if($entry->has_won)
                             vous avez gagné ! Scannez le QR code ci-dessous pour réclamer votre prix.
                             @if($qrCode)
-                                <div class="qr-code-container mt-4">
+                                <div class="qr-code-container mt-4 d-flex justify-content-center align-items-center">
                                     {!! QrCode::size(200)->generate(route('qrcode.result', ['code' => $qrCode->code])) !!}
                                 </div>
                                 <p class="mt-4">Code : {{ $qrCode->code }}</p>
