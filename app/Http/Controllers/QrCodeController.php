@@ -19,14 +19,25 @@ class QrCodeController extends Controller
             abort(404);
         }
 
-        // Récupérer le prix associé
-        $prize = Prize::where('stock', '>', 0)
-            ->inRandomOrder()
-            ->first();
+        // Utiliser le prix déjà associé à l'entrée ou en attribuer un nouveau si nécessaire
+        if ($entry->has_won && !$entry->prize_id) {
+            // Première visite: attribution d'un prix
+            $prize = Prize::where('stock', '>', 0)
+                ->inRandomOrder()
+                ->first();
 
-        if ($prize) {
-            $prize->stock--;
-            $prize->save();
+            if ($prize) {
+                // Enregistrer le prix dans l'entrée pour les visites futures
+                $entry->prize_id = $prize->id;
+                $entry->save();
+                
+                // Décrémenter le stock
+                $prize->stock--;
+                $prize->save();
+            }
+        } else {
+            // Récupérer le prix déjà attribué lors d'une visite précédente
+            $prize = $entry->prize;
         }
 
         return view('qrcode-result', [

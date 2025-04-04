@@ -24,18 +24,26 @@ class SpinController extends Controller
         }
 
         $qrCode = $entry->qrCode;
-        $prize = null;
 
-        if ($entry->has_won) {
-            // Sélectionner un prix aléatoire disponible
+        // Utiliser le prix déjà associé à l'entrée ou en attribuer un si c'est la première visite
+        if ($entry->has_won && !$entry->prize_id) {
+            // C'est la première visite : attribuer un prix aléatoire disponible
             $prize = Prize::where('stock', '>', 0)
                 ->inRandomOrder()
                 ->first();
             
             if ($prize) {
+                // Stocker le prize_id dans l'entrée pour les visites futures
+                $entry->prize_id = $prize->id;
+                $entry->save();
+                
+                // Décrémenter le stock
                 $prize->stock--;
                 $prize->save();
             }
+        } else {
+            // Utiliser le prix déjà associé à l'entrée
+            $prize = $entry->prize;
         }
 
         return view('result', compact('entry', 'qrCode', 'prize'));
