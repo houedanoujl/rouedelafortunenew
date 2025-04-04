@@ -14,7 +14,7 @@ return new class extends Migration
         // Vérifier si la colonne existe déjà
         if (!Schema::hasColumn('entries', 'prize_id')) {
             Schema::table('entries', function (Blueprint $table) {
-                $table->foreignId('prize_id')->nullable()->constrained();
+                $table->foreignId('prize_id')->nullable()->constrained()->nullOnDelete();
             });
         }
     }
