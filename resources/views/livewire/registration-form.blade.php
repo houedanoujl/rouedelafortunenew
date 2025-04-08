@@ -296,10 +296,22 @@
 
 <!-- Script de vérification d'âge -->
 <script>
+    // Au chargement de la page, vérifier si l'âge a déjà été vérifié
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vérifier si la vérification d'âge est déjà stockée dans localStorage
+        const ageVerified = localStorage.getItem('age_verified');
+        
+        if (ageVerified === 'true') {
+            // Si déjà vérifié, masquer le popup
+            document.getElementById('ageVerificationOverlay').classList.add('hidden');
+        }
+    });
+    
     // Fonction pour vérifier l'âge
     function verifyAge(isAdult) {
         if (isAdult) {
-            // Si l'utilisateur a plus de 18 ans, juste cacher le popup
+            // Si l'utilisateur a plus de 18 ans, sauvegarder dans localStorage et cacher le popup
+            localStorage.setItem('age_verified', 'true');
             document.getElementById('ageVerificationOverlay').classList.add('hidden');
         } else {
             // Si l'utilisateur a moins de 18 ans, rediriger vers Google
