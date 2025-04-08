@@ -1,4 +1,4 @@
-<div style="text-align: center; font-weight: normal;">
+<div style="center; font-weight: normal;">
 <!-- CSS pour le popup de vérification d'âge -->
 <style>
     /* Overlay qui couvre tout l'écran */
@@ -14,7 +14,7 @@
         align-items: center;
         z-index: 9999;
     }
-    
+
     /* Le popup lui-même */
     .age-verification-popup {
         background-color: white;
@@ -26,29 +26,29 @@
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         animation: popup-fade-in 0.5s ease-out;
     }
-    
+
     @keyframes popup-fade-in {
         from { opacity: 0; transform: scale(0.8); }
         to { opacity: 1; transform: scale(1); }
     }
-    
+
     .age-verification-popup h2 {
         color: var(--secondary-color);
         margin-bottom: 20px;
         font-size: 1.8rem;
     }
-    
+
     .age-verification-popup p {
         margin-bottom: 30px;
         font-size: 1.2rem;
     }
-    
+
     .age-verification-buttons {
         display: flex;
         justify-content: center;
         gap: 20px;
     }
-    
+
     .age-verification-buttons button {
         padding: 10px 30px;
         border: none;
@@ -58,27 +58,27 @@
         font-weight: bold;
         transition: all 0.2s;
     }
-    
+
     .btn-age-yes {
         background-color: var(--apple-green);
         color: white;
     }
-    
+
     .btn-age-no {
         background-color: var(--persian-red);
         color: white;
     }
-    
+
     .btn-age-yes:hover {
         background-color: var(--sea-green);
         transform: translateY(-2px);
     }
-    
+
     .btn-age-no:hover {
         background-color: #b02a1d;
         transform: translateY(-2px);
     }
-    
+
     .hidden {
         display: none !important;
     }
@@ -247,7 +247,7 @@
                         <input type="email" class="form-control" id="email" wire:model="email">
                         @error('email') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
-                    
+
                     <!-- Case à cocher pour le consentement individuel -->
                     <div class="form-group mt-3">
                         <div class="form-check">
@@ -258,7 +258,7 @@
                         </div>
                         @error('consentement') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
-                    
+
                     <!-- Case à cocher pour le règlement de la tombola -->
                     <div class="form-group mt-2">
                         <div class="form-check">
@@ -310,7 +310,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Modal pour le règlement de la tombola -->
     <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true" style="z-index: 1060;" data-bs-backdrop="false">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -339,7 +339,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Footer avec le nom du concours -->
     @if($contestName)
     <div class="contest-footer" style="margin-top: 20px; text-align: center; padding: 15px; background-color: rgba(255, 255, 255, 0.8); border-radius: 4px;">
@@ -353,58 +353,22 @@
 <!-- Script de vérification d'âge, participations et détection du mode privé -->
 <script>
     // Détection de la navigation privée et des cookies désactivés
-    (function detectPrivateMode() {
-        // Variables pour indiquer l'état de détection
-        let isPrivate = false;
-        let isCookieEnabled = navigator.cookieEnabled;
-
-        // Si les cookies sont désactivés, bloquer immédiatement
-        if (!isCookieEnabled) {
+    function detectPrivateMode() {
+        // Vérification simple des cookies
+        if (!navigator.cookieEnabled) {
             showPrivacyWarning();
             return;
         }
 
-        // Test de stockage pour détecter le mode privé
         try {
-            // Safari, Firefox, Chrome et autres navigateurs based sur WebKit et Gecko
-            const testKey = 'test_private_mode';
-            // Détection basée sur localStorage
-            localStorage.setItem(testKey, '1');
-            localStorage.removeItem(testKey);
-
-            // Détection spécifique pour les appareils iOS
-            if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-                // Test supplémentaire pour iOS
-                // Certains appareils iOS en mode ITP peuvent stocker des cookies mais les suppriment rapidement
-                const iOSTestCookie = '_ios_cookie_test';
-                document.cookie = `${iOSTestCookie}=1; path=/;`;
-                setTimeout(() => {
-                    if (!document.cookie.includes(iOSTestCookie)) {
-                        console.log('Détection de \'Intelligent Tracking Prevention\' sur iOS');
-                        showPrivacyWarning();
-                    }
-                }, 100);
-            }
-            
-            // Vérification de la taille limitée du localStorage (Safari en mode privé)
-            const storageSize = 5 * 1024 * 1024; // 5MB
-            const testData = '0'.repeat(storageSize);
-            try {
-                localStorage.setItem('test_storage_limit', testData);
-                localStorage.removeItem('test_storage_limit');
-            } catch (e) {
-                isPrivate = true;
-            }
+            // Test basique du localStorage
+            localStorage.setItem('test_storage', '1');
+            localStorage.removeItem('test_storage');
         } catch (e) {
-            // Exception lors de l'accès au localStorage (navigateur en mode privé)
-            isPrivate = true;
-        }
-
-        // Si en mode privé, afficher l'avertissement
-        if (isPrivate) {
+            // Le localStorage n'est pas disponible
             showPrivacyWarning();
         }
-    })();
+    }
 
     // Fonction pour afficher l'avertissement de navigation privée
     function showPrivacyWarning() {
@@ -417,13 +381,13 @@
         // Afficher l'avertissement
         document.getElementById('privacyWarningOverlay').classList.remove('hidden');
     }
-    
+
     // Script pour vérifier l'âge avant le chargement complet de la page
     (function() {
         // Vérifier si la vérification d'âge est déjà stockée dans localStorage
         try {
             const ageVerified = localStorage.getItem('age_verified');
-            
+
             // Si l'âge n'a pas encore été vérifié, afficher le popup
             if (ageVerified !== 'true') {
                 // Attendre un court instant pour permettre le rendu de la page
@@ -438,7 +402,7 @@
             }, 100);
         }
     })();
-    
+
     // Au chargement de la page, vérifier si l'utilisateur a déjà participé
     document.addEventListener('DOMContentLoaded', function() {
         // Vérifier si l'utilisateur a déjà participé à ce concours (vérification côté client)
@@ -448,25 +412,25 @@
             console.log('Erreur lors de la vérification de participation:', e);
         }
     });
-    
+
 @script
     // Écouter les événements envoyés par Livewire (syntaxe de Livewire v3)
     $wire.on('setup-participation-check', (params) => {
         let contestId = params.contestId;
         checkForExistingParticipation(contestId);
     });
-    
+
     // Écouter l'événement pour stocker la participation
     $wire.on('store-participation', (params) => {
         let key = params.key;
         let value = params.value;
         let contestId = params.contestId;
-        
+
         // Stocker dans localStorage
         localStorage.setItem(key, value);
         console.log(`Participation au concours ${contestId} enregistrée dans localStorage`);
     });
-    
+
     // Écouter l'événement de redirection en cas de participation existante
     $wire.on('redirect-already-played', (params) => {
         let url = params.url;
@@ -474,7 +438,7 @@
         window.location.href = url;
     });
 @endscript
-    
+
     /**
      * Vérifie si l'utilisateur a déjà participé au concours spécifié
      */
@@ -487,21 +451,21 @@
                     contestId = contestIdInput.value;
                 }
             }
-            
+
             if (!contestId) return; // Ne rien faire si aucun concours n'est spécifié
-            
+
             // Clé spécifique au concours
             const key = `contest_played_${contestId}`;
-            
+
             // Vérifier dans localStorage
             const hasPlayed = localStorage.getItem(key);
-            
+
             if (hasPlayed) {
                 console.log(`Participation détectée dans localStorage pour le concours ${contestId}`);
-                
+
                 // Redirect avec les paramètres appropriés
                 const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
-                
+
                 // Ajouter un petit délai pour permettre à Livewire de s'initialiser
                 setTimeout(() => {
                     window.location.href = redirectUrl;
@@ -513,7 +477,7 @@
             showPrivacyWarning();
         }
     }
-    
+
     // Fonction pour vérifier l'âge
     function verifyAge(isAdult) {
         if (isAdult) {
