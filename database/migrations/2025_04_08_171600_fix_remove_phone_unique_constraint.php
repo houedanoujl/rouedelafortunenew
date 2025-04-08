@@ -10,7 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up(): void                       
     {
         // Utiliser DB::statement pour supprimer la contrainte unique directement avec SQL brut
         // Cette approche est compatible avec Laravel 12
