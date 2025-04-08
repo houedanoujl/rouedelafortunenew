@@ -91,6 +91,11 @@ class EntryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // Ajouter le groupement par concours avec affichage en accordéon
+            ->groups([
+                'contest.name',
+            ])
+            ->defaultGroup('contest.name')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
@@ -174,7 +179,9 @@ class EntryResource extends Resource
                     
                 Tables\Filters\SelectFilter::make('contest_id')
                     ->label('Concours')
-                    ->relationship('contest', 'name'),
+                    ->relationship('contest', 'name')
+                    ->preload()
+                    ->searchable(),
                 
                 Tables\Filters\Filter::make('played_at')
                     ->form([

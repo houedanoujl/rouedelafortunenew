@@ -184,6 +184,13 @@
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Stocker dans localStorage qu'une participation a eu lieu (pour renforcer la limitation)
+    @if(session('localStorageKey'))
+    const localStorageKey = '{{ session("localStorageKey") }}';
+    localStorage.setItem(localStorageKey, 'played');
+    console.log('Participation enregistrée dans localStorage:', localStorageKey);
+    @endif
+    
     // Initialisation manuelle du modal pour éviter les conflits
     const viewPrizeBtn = document.getElementById('viewPrizeBtn');
     const qrCodeLink = document.querySelector('.qr-code-link');

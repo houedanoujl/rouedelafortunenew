@@ -58,6 +58,9 @@
                 <p><strong>Prénom :</strong> {{ $entry->participant->first_name }}</p>
                 <p><strong>Code unique :</strong> {{ $qrCode->code }}</p>
                 <p><strong>Date :</strong> {{ $entry->created_at->format('d/m/Y H:i') }}</p>
+                @if($prize)
+                <p><strong>Lot gagné :</strong> {{ $prize->name }}</p>
+                @endif
             </div>
 
             <div class="qrcode">

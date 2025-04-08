@@ -16,14 +16,22 @@
                 </p>
             </div>
             
-            @if ($hasPlayedThisWeek)
+            @if ($hasParticipated)
                 <div class="alert alert-warning mb-4">
                     <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
-                    <strong>Participation limitée !</strong> Vous avez déjà participé cette semaine.
-                    @if($daysRemaining > 0)
-                        <p class="mt-2 mb-0">Vous pourrez rejouer dans <strong>{{ $daysRemaining }}</strong> jour(s).</p>
-                    @endif
+                    <strong>Participation limitée !</strong> Vous avez déjà participé à ce concours.
+                    <p class="mt-2 mb-0">
+                        Une seule participation par concours est autorisée.
+                        @if($contest_end_date)
+                            <br>Ce concours se termine le <strong>{{ $contest_end_date }}</strong>.
+                        @endif
+                    </p>
                 </div>
+                
+                <!-- Bouton pour voir le dernier résultat (à implémenter dans une future mise à jour) -->
+                <button class="btn btn-outline-primary" id="check-last-participation" data-contest="{{ $contest_id }}">
+                    Voir mon dernier résultat
+                </button>
             @else
                 <a href="{{ route('register', ['contestId' => $contest->id]) }}" class="btn btn-primary btn-lg">
                     Participer maintenant

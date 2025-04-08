@@ -16,4 +16,22 @@ class EditPrizeDistribution extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+    
+    /**
+     * Rediriger vers la liste après sauvegarde
+     */
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+    
+    /**
+     * Assure la redirection même si getRedirectUrl n'est pas appelé
+     */
+    protected function afterSave(): void
+    {
+        parent::afterSave();
+        // Rediriger vers la liste après la sauvegarde
+        $this->redirect($this->getResource()::getUrl('index'));
+    }
 }

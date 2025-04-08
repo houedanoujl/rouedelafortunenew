@@ -2,6 +2,16 @@
 
 @section('content')
 <div class="container already-played-page">
+    <!-- Script pour stocker la clé en localStorage -->
+    @if(isset($localStorageKey))
+    <script>
+        // Stocker l'information dans localStorage pour renforcer la limitation
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.setItem('{{ $localStorageKey }}', 'played');
+            console.log('Participation enregistrée dans localStorage: {{ $localStorageKey }}');
+        });
+    </script>
+    @endif
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
@@ -25,9 +35,15 @@
                     </div>
                     
                     <div class="mt-4">
-                        <a href="{{ route('home') }}" class="btn btn-primary" style="background-color: var(--primary-red); border: none;">
-                            <i class="bi bi-house-door"></i> Retour à l'accueil 🏠
-                        </a>
+                        @if(isset($existing_entry) && $existing_entry)
+                            <a href="{{ route('result.show', ['entry' => $existing_entry->id]) }}" class="btn btn-primary" style="background-color: var(--success-green); border: none;">
+                                <i class="bi bi-ticket-perforated"></i> Voir ma participation 🎟️
+                            </a>
+                        @else
+                            <a href="{{ route('home') }}" class="btn btn-primary" style="background-color: var(--primary-red); border: none;">
+                                <i class="bi bi-house-door"></i> Retour à l'accueil 🏠
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>

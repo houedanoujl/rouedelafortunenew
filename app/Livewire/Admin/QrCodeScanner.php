@@ -4,9 +4,11 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use App\Models\QrCode;
+use App\Models\PrizeDistribution;
 use App\Services\InfobipService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
+use Filament\Notifications\Notification;
 
 class QrCodeScanner extends Component
 {
@@ -97,7 +99,22 @@ class QrCodeScanner extends Component
         if ($entry) {
             $entry->claimed = true;
             $entry->claimed_at = now();
+            
+            // Mettre à jour played_at et won_date si non définis
+            if (empty($entry->played_at)) {
+                $entry->played_at = now();
+            }
+            
+            if (empty($entry->won_date) && $entry->prize_id) {
+                $entry->won_date = now();
+            }
+            
             $entry->save();
+            
+            // Décrémenter le stock du prix si un prix est associé
+            if ($entry->prize_id && $entry->contest_id) {
+                $this->updatePrizeStock($entry->contest_id, $entry->prize_id);
+            }
             
             // Envoyer une notification WhatsApp au participant
             $participant = $entry->participant;
@@ -141,6 +158,40 @@ class QrCodeScanner extends Component
         
         // Émettre un événement pour réinitialiser le scanner de caméra
         $this->dispatch('scanComplete');
+    }
+    
+    /**
+     * Mettre à jour le stock de prix disponibles
+     */
+    protected function updatePrizeStock(int $contestId, int $prizeId): void
+    {
+        // Trouver la distribution de prix correspondante
+        $prizeDistribution = PrizeDistribution::where('contest_id', $contestId)
+            ->where('prize_id', $prizeId)
+            ->first();
+            
+        if ($prizeDistribution) {
+            // Décrémenter le stock
+            if ($prizeDistribution->decrementRemaining()) {
+                // Ajouter un message de succès à la réponse existante
+                $this->result .= ' - Stock mis à jour avec succès';
+                
+                // Notification visuelle pour l'administrateur
+                Notification::make()
+                    ->title('Stock mis à jour')
+                    ->success()
+                    ->send();
+            } else {
+                // Ajouter un avertissement à la réponse existante
+                $this->result .= ' - Attention: Stock épuisé!';
+                
+                // Notification visuelle pour l'administrateur
+                Notification::make()
+                    ->title('Attention: Stock épuisé!')
+                    ->warning()
+                    ->send();
+            }
+        }
     }
     
     public function render()

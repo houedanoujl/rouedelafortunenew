@@ -62,6 +62,7 @@ class QrCodeController extends Controller
         $pdf = PDF::loadView('qrcodes.pdf', [
             'qrCode' => $qrCode,
             'entry' => $entry,
+            'prize' => $entry->prize,
             'qrcodeImage' => $qrcodeImage
         ]);
         

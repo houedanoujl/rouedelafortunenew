@@ -8,15 +8,21 @@ use Illuminate\Http\Request;
 class HomeController extends Controller
 {
     /**
-     * Calcule le nombre de jours restants avant de pouvoir rejouer
+     * Vérifie si l'utilisateur a participé à un concours spécifique
+     * 
+     * @param Request $request
+     * @param int $contestId
+     * @return bool
      */
-    private function getDaysRemaining($cookieValue)
+    private function hasParticipatedInContest(Request $request, $contestId)
     {
-        $playedDate = \DateTime::createFromFormat('Y-m-d', $cookieValue);
-        $now = new \DateTime();
-        $interval = $playedDate->diff($now);
+        // Vérifier via cookie
+        $cookieName = 'contest_played_' . $contestId;
         
-        return max(0, 7 - $interval->days);
+        // Vérifier via session
+        $sessionKey = 'contest_played_' . $contestId;
+        
+        return $request->cookie($cookieName) !== null || \Session::has($sessionKey);
     }
     
     /**
@@ -46,14 +52,16 @@ class HomeController extends Controller
             ]);
         }
         
-        // Fallback pour la vérification des cookies (approche précédente)
-        $hasPlayedThisWeek = $request->cookie('played_this_week') ? true : false;
-        $daysRemaining = $hasPlayedThisWeek ? $this->getDaysRemaining($request->cookie('played_this_week')) : 0;
+        // Vérifier si l'utilisateur a déjà participé au concours actif
+        $hasParticipated = $activeContest ? $this->hasParticipatedInContest($request, $activeContest->id) : false;
         
         return view('home', [
             'contest' => $activeContest,
-            'hasPlayedThisWeek' => $hasPlayedThisWeek,
-            'daysRemaining' => $daysRemaining
+            'hasParticipated' => $hasParticipated,
+            'contest_id' => $activeContest ? $activeContest->id : null,
+            'contest_name' => $activeContest ? $activeContest->name : 'ce concours',
+            'contest_end_date' => $activeContest && $activeContest->end_date ? 
+                (new \DateTime($activeContest->end_date))->format('d/m/Y') : null
         ]);
     }
     
