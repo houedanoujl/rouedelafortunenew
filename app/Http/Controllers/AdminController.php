@@ -94,6 +94,12 @@ class AdminController extends Controller
         $qrCode->scanned_by = Auth::id();
         $qrCode->save();
         
+        // Mettre à jour le statut "réclamé" dans Entry
+        $entry = $qrCode->entry;
+        $entry->claimed = true;
+        $entry->claimed_at = now();
+        $entry->save();
+        
         return response()->json([
             'status' => 'success',
             'message' => 'Code QR valide',

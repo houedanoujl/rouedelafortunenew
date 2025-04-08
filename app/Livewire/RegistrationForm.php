@@ -126,10 +126,32 @@ class RegistrationForm extends Component
         $this->validate();
 
         try {
-            // Vérifier si le participant existe déjà avec ce numéro de téléphone
-            $participant = Participant::where('phone', $this->phone)->first();
+            // Vérifier si un participant existe déjà avec ce numéro de téléphone ou email
+            $participantByPhone = Participant::where('phone', $this->phone)->first();
+            $participantByEmail = !empty($this->email) ? Participant::where('email', $this->email)->first() : null;
+            $participant = $participantByPhone ?? $participantByEmail;
             
-            if (!$participant) {
+            // Vérifier immédiatement si le participant existe déjà et a participé à ce concours
+            if ($participant) {
+                $existingEntry = Entry::where('participant_id', $participant->id)
+                    ->where('contest_id', $this->contestId)
+                    ->first();
+                    
+                if ($existingEntry) {
+                    $this->existingEntry = $existingEntry;
+                    $this->alreadyParticipated = true;
+                    session()->flash('info', 'Vous avez déjà participé à ce concours. Une seule participation par concours est autorisée.');
+                    return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
+                }
+                
+                // Mettre à jour les informations du participant existant
+                $participant->update([
+                    'first_name' => $this->firstName,
+                    'last_name' => $this->lastName,
+                    'phone' => $this->phone,
+                    'email' => $this->email,
+                ]);
+            } else {
                 // Créer un nouveau participant
                 $participant = Participant::create([
                     'first_name' => $this->firstName,
@@ -137,27 +159,21 @@ class RegistrationForm extends Component
                     'phone' => $this->phone,
                     'email' => $this->email,
                 ]);
-            } else {
-                // Mettre à jour les informations du participant existant
-                $participant->update([
-                    'first_name' => $this->firstName,
-                    'last_name' => $this->lastName,
-                    'email' => $this->email,
-                ]);
             }
             
             $this->participantId = $participant->id;
             $this->registered = true;
             
-            // Vérifier si le participant a déjà participé à ce concours
-            $existingEntry = Entry::where('participant_id', $participant->id)
+            // Double vérification - si un autre appareil/navigateur a créé une participation entre-temps
+            $lastSecondCheck = Entry::where('participant_id', $participant->id)
                 ->where('contest_id', $this->contestId)
                 ->first();
                 
-            if ($existingEntry) {
-                $this->existingEntry = $existingEntry;
+            if ($lastSecondCheck) {
+                $this->existingEntry = $lastSecondCheck;
                 $this->alreadyParticipated = true;
-                return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
+                session()->flash('info', 'Une participation a déjà été enregistrée pour ce concours.');
+                return redirect()->route('wheel.show', ['entry' => $lastSecondCheck->id]);
             }
             
             // Créer une nouvelle participation

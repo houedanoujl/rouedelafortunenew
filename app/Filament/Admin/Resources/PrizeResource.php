@@ -23,15 +23,109 @@ class PrizeResource extends Resource
     {
         return $form
             ->schema([
-                //
-            ]);
+                Forms\Components\Section::make('Informations générales')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nom')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Description')
+                            ->rows(3)
+                            ->maxLength(1000),
+                        Forms\Components\Select::make('type')
+                            ->label('Type')
+                            ->options([
+                                'physical' => 'Physique',
+                                'virtual' => 'Virtuel',
+                                'voucher' => 'Bon d\'achat',
+                                'service' => 'Service',
+                            ])
+                            ->required(),
+                        Forms\Components\TextInput::make('value')
+                            ->label('Valeur (€)')
+                            ->numeric()
+                            ->prefix('€')
+                            ->inputMode('decimal'),
+                    ])->columnSpan(['lg' => 2]),
+                
+                Forms\Components\Section::make('Stocks')
+                    ->schema([
+                        Forms\Components\TextInput::make('stock')
+                            ->label('Stock Total')
+                            ->numeric()
+                            ->required()
+                            ->default(0)
+                            ->minValue(0)
+                            ->step(1),
+                        Forms\Components\Placeholder::make('available')
+                            ->label('Disponibles (distributions)')
+                            ->content(function (Prize $record) {
+                                if ($record->exists) {
+                                    $remaining = $record->prizeDistributions()->sum('remaining');
+                                    return $remaining . ' sur ' . $record->prizeDistributions()->sum('quantity');
+                                }
+                                return '0 (nouveau prix)';
+                            }),
+                    ])->columnSpan(['lg' => 1]),
+
+                Forms\Components\Section::make('Média')
+                    ->schema([
+                        Forms\Components\FileUpload::make('image')
+                            ->label('Image')
+                            ->image()
+                            ->directory('prizes')
+                            ->maxSize(2048)
+                            ->columnSpanFull(),
+                    ])->columnSpan(['lg' => 1]),
+            ])
+            ->columns(3);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Description')
+                    ->limit(50)
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('value')
+                    ->label('Valeur')
+                    ->money('EUR')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('prizeDistributions')
+                    ->label('Disponibles')
+                    ->getStateUsing(function (Prize $record) {
+                        return $record->prizeDistributions()->sum('remaining');
+                    })
+                    ->badge()
+                    ->color('success'),
+                Tables\Columns\TextColumn::make('stock')
+                    ->label('Stock Total')
+                    ->sortable()
+                    ->badge(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Créé le')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Modifié le')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

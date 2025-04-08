@@ -18,11 +18,36 @@ class ParticipantController extends Controller
      */
     public function showRegistrationForm(Request $request)
     {
-        // Vérifier si l'utilisateur a déjà joué cette semaine
-        if ($request->cookie('played_this_week')) {
+        // Récupérer le concours actif
+        $activeContest = Contest::where('status', 'active')->first();
+        
+        if (!$activeContest) {
+            return view('no-contest');
+        }
+        
+        // Vérifier si l'utilisateur a déjà participé à ce concours
+        $cookieName = 'contest_played_' . $activeContest->id;
+        $hasPlayed = $request->cookie($cookieName) || \Session::get($cookieName);
+        
+        // Vérifier aussi si une entrée existe déjà pour l'utilisateur dans ce concours
+        // (vérification supplémentaire basée sur les cookies existants pour les utilisateurs reconnus)
+        $userIdentifier = $request->cookie('user_identifier');
+        if ($userIdentifier && Entry::where('participant_id', $userIdentifier)
+                                    ->where('contest_id', $activeContest->id)
+                                    ->exists()) {
+            $hasPlayed = true;
+        }
+        
+        if ($hasPlayed) {
+            // Synchroniser le cookie et la session
+            if (!$request->cookie($cookieName) && \Session::has($cookieName)) {
+                \Cookie::queue(cookie($cookieName, 'played', 43200, '/')); // 30 jours par défaut
+            }
+            
             return view('already-played', [
-                'message' => 'Vous avez déjà participé cette semaine. Vous pourrez rejouer dans quelques jours.',
-                'days_remaining' => $this->getDaysRemaining($request->cookie('played_this_week'))
+                'message' => 'Vous avez déjà participé à ce concours.',
+                'contest_name' => $activeContest->name,
+                'contest_end_date' => $activeContest->end_date ? (new \DateTime($activeContest->end_date))->format('d/m/Y') : null
             ]);
         }
         
@@ -149,9 +174,29 @@ class ParticipantController extends Controller
      */
     public function processWheelResult(Request $request)
     {
-        // Vérifier si l'utilisateur a déjà joué cette semaine
-        if ($request->cookie('played_this_week')) {
-            return redirect()->route('home')->with('error', 'Vous avez déjà participé cette semaine.');
+        $request->validate([
+            'entry_id' => 'required|exists:entries,id',
+            'prize_id' => 'nullable|exists:prizes,id'
+        ]);
+        
+        // Utiliser find() au lieu de findOrFail()
+        $entry = Entry::find($request->entry_id);
+        
+        // Si l'entrée n'existe pas, rediriger avec un message d'erreur
+        if (!$entry) {
+            return redirect()->route('home')->with('error', 'Participation introuvable. Veuillez vous inscrire à nouveau.');
+        }
+        
+        // Vérifier si l'utilisateur a déjà participé à ce concours
+        $cookieName = 'contest_played_' . $entry->contest_id;
+        $hasPlayed = $request->cookie($cookieName) || \Session::get($cookieName);
+        
+        if ($hasPlayed) {
+            $contest = Contest::find($entry->contest_id);
+            return redirect()->route('home')->with([
+                'error' => 'Vous avez déjà participé à ce concours.',
+                'contest_name' => $contest ? $contest->name : 'ce concours'
+            ]);
         }
         
         $request->validate([
@@ -178,13 +223,45 @@ class ParticipantController extends Controller
         
         $entry->save();
         
-        // Définir un cookie qui expire dans 7 jours
+        // Créer un cookie qui expire dans 7 jours (avec toutes les options explicites)
         $cookieExpiry = 60 * 24 * 7; // 7 jours en minutes
         $today = new \DateTime();
         $cookieValue = $today->format('Y-m-d');
         
-        return redirect()->route('result.show', ['entry' => $entry->id])
-               ->cookie('played_this_week', $cookieValue, $cookieExpiry);
+        // Récupérer l'ID du concours
+        $contest = Contest::find($request->contestId);  
+        if (!$contest) {
+            $contest = Contest::where('status', 'active')->first();
+        }
+        
+        // Créer un cookie pour ce concours spécifique (valable pendant toute la durée du concours)
+        $contestId = $contest ? $contest->id : 'default';
+        $cookieName = 'contest_played_' . $contestId;
+        
+        // Définir l'expiration du cookie pour correspondre à la fin du concours ou 30 jours par défaut
+        $contestEndDate = $contest && $contest->end_date ? new \DateTime($contest->end_date) : (new \DateTime())->modify('+30 days');
+        $now = new \DateTime();
+        $minutesUntilEnd = max(1, round(($contestEndDate->getTimestamp() - $now->getTimestamp()) / 60));
+        
+        // Créer un cookie avec tous les paramètres explicites pour maximiser la compatibilité
+        $cookie = cookie(
+            $cookieName,                // nom spécifique au concours
+            'played',                   // valeur simple
+            $minutesUntilEnd,          // durée de vie en minutes
+            '/',                        // chemin
+            null,                       // domaine (null = domaine actuel)
+            false,                      // secure (https uniquement)
+            false,                      // httpOnly (non accessible par JavaScript)
+            false,                      // raw
+            'lax'                       // sameSite (lax = moins restrictif)
+        );
+        
+        // Stocker aussi en session comme backup
+        \Session::put($cookieName, 'played');
+        \Session::save();
+        
+        // Redéfinir manuellement le cookie dans la réponse
+        return redirect()->route('result.show', ['entry' => $entry->id])->withCookie($cookie);
     }
     
     /**

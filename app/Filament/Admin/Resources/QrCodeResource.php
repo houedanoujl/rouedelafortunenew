@@ -62,23 +62,40 @@ class QrCodeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Code QR')
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Code QR copié !'),
                     
                 Tables\Columns\ViewColumn::make('qr_code_image')
                     ->label('QR Code')
                     ->view('filament.tables.columns.qr-code'),
-                    
-                Tables\Columns\TextColumn::make('entry.id')
-                    ->label('Participation ID')
-                    ->sortable(),
-                    
+                
                 Tables\Columns\TextColumn::make('entry.participant.first_name')
                     ->label('Prénom')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                     
                 Tables\Columns\TextColumn::make('entry.participant.last_name')
                     ->label('Nom')
+                    ->searchable()
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('entry.participant.phone')
+                    ->label('Téléphone')
                     ->searchable(),
+                    
+                Tables\Columns\TextColumn::make('entry.prize.name')
+                    ->label('Lot gagné')
+                    ->description(fn (QrCode $record): ?string => $record->entry?->prize?->description)
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('success'),
+                    
+                Tables\Columns\TextColumn::make('entry.prize.value')
+                    ->label('Valeur')
+                    ->money('EUR')
+                    ->sortable(),
                     
                 Tables\Columns\IconColumn::make('scanned')
                     ->label('Scanné')
@@ -86,20 +103,19 @@ class QrCodeResource extends Resource
                     
                 Tables\Columns\TextColumn::make('scanned_at')
                     ->label('Scanné le')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('entry.contest.name')
+                    ->label('Concours')
+                    ->badge()
+                    ->color('primary')
+                    ->searchable(),
                     
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Créé le')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                    
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Mis à jour le')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('scanned')
@@ -108,6 +124,18 @@ class QrCodeResource extends Resource
                         true => 'Scanné',
                         false => 'Non scanné',
                     ]),
+                    
+                Tables\Filters\SelectFilter::make('entry.contest_id')
+                    ->label('Concours')
+                    ->relationship('entry.contest', 'name')
+                    ->searchable()
+                    ->preload(),
+                    
+                Tables\Filters\SelectFilter::make('entry.prize_id')
+                    ->label('Lot gagné')
+                    ->relationship('entry.prize', 'name')
+                    ->searchable()
+                    ->preload(),
                 
                 Tables\Filters\Filter::make('created_at')
                     ->form([
@@ -125,6 +153,30 @@ class QrCodeResource extends Resource
                             ->when(
                                 $data['created_until'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    }),
+                    
+                Tables\Filters\Filter::make('prize_value')
+                    ->label('Valeur du lot')
+                    ->form([
+                        Forms\Components\TextInput::make('min_value')
+                            ->label('Valeur minimale')
+                            ->numeric()
+                            ->prefix('€'),
+                        Forms\Components\TextInput::make('max_value')
+                            ->label('Valeur maximale')
+                            ->numeric()
+                            ->prefix('€'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['min_value'],
+                                fn (Builder $query, $value): Builder => $query->whereHas('entry.prize', fn ($q) => $q->where('value', '>=', $value))
+                            )
+                            ->when(
+                                $data['max_value'],
+                                fn (Builder $query, $value): Builder => $query->whereHas('entry.prize', fn ($q) => $q->where('value', '<=', $value))
                             );
                     }),
             ])

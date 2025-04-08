@@ -20,7 +20,10 @@ class Entry extends Model
         'participant_id',
         'contest_id',
         'has_played',
-        'has_won'
+        'has_won',
+        'claimed',
+        'claimed_at',
+        'prize_id'
     ];
 
     /**
@@ -30,7 +33,9 @@ class Entry extends Model
      */
     protected $casts = [
         'has_played' => 'boolean',
-        'has_won' => 'boolean'
+        'has_won' => 'boolean',
+        'claimed' => 'boolean',
+        'claimed_at' => 'datetime'
     ];
 
     /**

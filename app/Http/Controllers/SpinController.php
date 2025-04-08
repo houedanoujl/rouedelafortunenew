@@ -14,6 +14,11 @@ class SpinController extends Controller
             abort(404);
         }
 
+        // Si l'entrée a déjà été jouée, rediriger directement vers la page de résultat
+        if ($entry->has_played) {
+            return redirect()->route('spin.result', ['entry' => $entry->id]);
+        }
+
         return view('wheel', compact('entry'));
     }
 

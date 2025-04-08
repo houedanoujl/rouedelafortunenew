@@ -1,9 +1,9 @@
-# Roue de la Fortune - Application Laravel avec Docker pour le développement local
+# Roue de la Fortune - Application 70 ans Dinor avec Docker pour le développement local
 
-[![Laravel Forge Site Deployment Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fforge.laravel.com%2Fsite-badges%2Fe7a7cd9a-eb18-4e14-a327-eeb466e28f30%3Fdate%3D1%26label%3D1%26commit%3D1&style=plastic)](https://forge.laravel.com/servers/888615/sites/2668195)
+[![Site Deployment Status](https://img.shields.io/badge/70%20ans%20Dinor-Déployé-success)](https://github.com/jhouedanou/rouedelafortune)
 
 
-Cette application Laravel "Roue de la Fortune" est configurée pour fonctionner avec Docker, ce qui facilite le déploiement et le développement.
+Cette application "Roue de la Fortune" pour les 70 ans de Dinor est configurée pour fonctionner avec Docker, ce qui facilite le déploiement et le développement.
 
 ## Prérequis
 
@@ -32,7 +32,7 @@ Cette application Laravel "Roue de la Fortune" est configurée pour fonctionner 
    docker compose exec app composer install
    ```
 
-5. Générez la clé d'application Laravel :
+5. Générez la clé d'application :
    ```bash
    docker compose exec app php artisan key:generate
    ```

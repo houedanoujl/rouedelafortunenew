@@ -38,6 +38,12 @@
             font-family: 'EB Garamond', serif;
             position: relative;
             min-height: 100vh;
+            text-align: center;
+            font-weight: normal;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #000000;
+            letter-spacing: 0.02em;
         }
         
         .min-h-screen {
@@ -87,9 +93,11 @@
         
         h1, h2, h3, h4, h5, h6 {
             font-family: 'EB Garamond', serif;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            color: var(--dark-gray);
+            font-weight: normal;
+            letter-spacing: 0.05em;
+            color: #000000;
+            text-align: center;
+            margin-bottom: 1rem;
         }
         
         h1 {
@@ -124,7 +132,7 @@
             transition: all 0.3s ease;
             border-radius: 0.25rem;
             text-transform: uppercase;
-            font-weight: 600;
+            font-weight: normal;
             color: var(--dark-gray);
         }
         
@@ -156,6 +164,7 @@
             border-bottom: 2px solid var(--persian-red);
             padding: 0.6rem 0;
             position: relative;
+            display:none;
         }
         
         .navbar-brand img {
@@ -166,9 +175,10 @@
         .nav-link {
             color: var(--dark-gray);
             font-size: 1.1rem;
-            font-weight: 500;
+            font-weight: normal;
             padding: 0.5rem 1rem;
             transition: all 0.3s ease;
+            text-align: center;
         }
         
         .nav-link:hover, .nav-link.active {
@@ -177,16 +187,17 @@
         
         /* Style des cartes flat */
         .card {
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 0.25rem;
             overflow: hidden;
             position: relative;
             padding: 0;
             margin-bottom: 1.5rem;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .card::before {
@@ -200,14 +211,44 @@
             z-index: 1;
         }
         
-        /* Suppression des card-header en les rendant invisibles */
+        .card-body {
+            padding: 1.8rem;
+        }
+        
+        p {
+            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+        
+        .lead {
+            font-size: 1.4rem;
+            line-height: 1.9;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert {
+            font-size: 1.2rem;
+            line-height: 1.7;
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Style pour les card-header */
         .card-header {
+            padding: 1.2rem;
+            background-color: var(--primary-red);
+            color: white;
+            border-bottom: none;
             display: none;
         }
         
-        /* Card header modifié */
+        /* Style spécifique pour les card-headers avec bg-primary */
         .card-header.bg-primary {
-            display: none;
+            background-color: var(--honolulu-blue) !important;
         }
         
         .card-body {
@@ -220,16 +261,38 @@
             border-top: 1px solid #e0e0e0;
         }
     </style>
+
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen">
         <header class="py-2">
             <div class="container">
-                <div class="d-flex justify-content-center align-items-center">
-                    <a href="{{ route('home') }}" class="navbar-brand">
-                        <img src="/assets/images/logo.jpg" alt="Roue de la Fortune Logo">
-                    </a>
-                </div>
+                <nav class="navbar navbar-expand-lg navbar-light">
+                    <div class="container-fluid">
+                        <a href="{{ route('home') }}" class="navbar-brand">
+                            <img src="/assets/images/logo.jpg" alt="Roue de la Fortune Logo" class="img-fluid hide hidden">
+                            <span class="ms-2">Roue de la Fortune</span>
+                        </a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav ms-auto">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ Route::currentRouteName() == 'home' ? 'active' : '' }}" href="{{ route('home') }}">
+                                        <i class="bi bi-house-door"></i> Accueil
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/admin" target="_blank">
+                                        <i class="bi bi-shield-lock"></i> Administration
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
             </div>
         </header>
         <main>

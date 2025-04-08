@@ -9,11 +9,11 @@
                     <h2 class="mb-0">🎉 Félicitations !</h2>
                 </div>
                 <div class="card-body text-center">
-                    <h3 class="mb-4">Voici votre lot</h3>
+                    <h3 class="mb-4">✨ Voici votre lot incroyable ✨</h3>
                     
                     @if($prize)
                         <div class="prize-details">
-                            <h4 class="mb-3">🎁 {{ $prize->name }}</h4>
+                            <h4 class="mb-3" style="color: var(--primary-red);">🎁 {{ $prize->name }} 🎉</h4>
                             <p class="lead">{{ $prize->description }}</p>
                             
                             @if($prize->image)
@@ -29,16 +29,19 @@
                     @endif
                     
                     <div class="mt-4">
-                        <p class="text-muted">
-                            Participant : {{ $entry->participant->first_name }} {{ $entry->participant->last_name }}
+                        <p class="lead">
+                            🌟 Bravo à : <span style="font-weight: normal; color: var(--primary-red);">{{ $entry->participant->first_name }} {{ $entry->participant->last_name }}</span> 🌟
                         </p>
                         <p class="text-muted">
-                            Code : {{ $qrCode->code }}
+                            🔑 Code unique : {{ $qrCode->code }}
+                        </p>
+                        <p class="text-success mt-3">
+                            👍 Votre lot est prêt à être récupéré !
                         </p>
                     </div>
                     
-                    <a href="{{ route('home') }}" class="btn btn-primary mt-4">
-                        Retour à l'accueil
+                    <a href="{{ route('home') }}" class="btn btn-primary mt-4" style="background-color: var(--primary-red); border: none;">
+                        🏠 Retour à l'accueil
                     </a>
                 </div>
             </div>
@@ -50,14 +53,15 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const count = 200;
+    const count = 300; // Plus de confettis
     const defaults = {
         origin: { y: 0.7 },
         spread: 360,
-        ticks: 100,
-        gravity: 0.5,
-        decay: 0.94,
-        startVelocity: 30
+        ticks: 120, // Dure plus longtemps
+        gravity: 0.4, // Chute plus lente
+        decay: 0.92, // Décélère plus lentement
+        startVelocity: 35, // Plus rapide
+        colors: ['#D03A2C', '#F7DB15', '#28a745', '#0079B2', '#ff9500'] // Couleurs personnalisées
     };
 
     function fire(particleRatio, opts) {
@@ -96,5 +100,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+/* Définition des variables de couleur */
+:root {
+    --primary-red: #D03A2C;
+    --success-green: #28a745;
+    --text-highlight: #D03A2C;
+}
+</style>
 @endif
 @endsection

@@ -27,8 +27,26 @@ class HomeController extends Controller
         $activeContest = Contest::where('status', 'active')
             ->orderBy('start_date', 'desc')
             ->first();
+          
+        // Gérer le cas où l'utilisateur a déjà participé (détecté via localStorage)
+        $alreadyPlayed = $request->query('already_played') === 'true';
+        $contestId = $request->query('contest_id');
+        
+        // Prioriser la détection via LocalStorage (paramètres d'URL)
+        if ($alreadyPlayed && $contestId) {
+            // Récupérer le concours concerné
+            $playedContest = $contestId ? Contest::find($contestId) : null;
             
-        // Vérifier si l'utilisateur a déjà joué cette semaine
+            // Afficher la page indiquant que l'utilisateur a déjà participé
+            return view('already-played', [
+                'message' => 'Vous avez déjà participé à ce concours.',
+                'contest_name' => $playedContest ? $playedContest->name : 'ce concours',
+                'contest_end_date' => $playedContest && $playedContest->end_date ? 
+                    (new \DateTime($playedContest->end_date))->format('d/m/Y') : null
+            ]);
+        }
+        
+        // Fallback pour la vérification des cookies (approche précédente)
         $hasPlayedThisWeek = $request->cookie('played_this_week') ? true : false;
         $daysRemaining = $hasPlayedThisWeek ? $this->getDaysRemaining($request->cookie('played_this_week')) : 0;
         

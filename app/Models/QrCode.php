@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
 class QrCode extends Model
 {
@@ -39,5 +40,13 @@ class QrCode extends Model
     public function entry(): BelongsTo
     {
         return $this->belongsTo(Entry::class);
+    }
+
+    /**
+     * Obtenir l'utilisateur qui a scanné ce QR code.
+     */
+    public function scannedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'scanned_by');
     }
 }
