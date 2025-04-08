@@ -30,12 +30,49 @@ class QrCodeScanner extends Component
         // Reset previous results
         $this->reset(['result', 'status', 'scannedQrCode']);
         
-        // Find QR code in the database
-        $qrCode = QrCode::where('code', $this->code)->first();
+        // Nettoyer le code scanné
+        $cleanCode = trim($this->code);
+        
+        // Ajouter le préfixe DNR70- s'il est manquant
+        if (!str_starts_with(strtoupper($cleanCode), 'DNR70-')) {
+            $cleanCode = 'DNR70-' . $cleanCode;
+        }
+        
+        // Convertir en majuscules pour correspondre au format de stockage
+        $cleanCode = strtoupper($cleanCode);
+        
+        // Journaliser la recherche pour débogage
+        \Illuminate\Support\Facades\Log::info('Searching for QR code', [
+            'original' => $this->code,
+            'cleaned' => $cleanCode
+        ]);
+        
+        // Recherche avec plusieurs approches pour améliorer les chances de correspondance
+        $qrCode = QrCode::where('code', $cleanCode)
+                         ->orWhere('code', 'LIKE', '%' . substr($cleanCode, -8) . '%') // Recherche le suffixe uniquement
+                         ->first();
+        
+        // Si toujours introuvable, essayer une approche plus large
+        if (!$qrCode) {
+            // Retirer le préfixe éventuel et rechercher uniquement la partie unique
+            $codeParts = explode('-', $cleanCode);
+            $uniquePart = end($codeParts);
+            
+            if (strlen($uniquePart) >= 5) { // Seulement si on a une partie suffisamment longue
+                $qrCode = QrCode::where('code', 'LIKE', '%' . $uniquePart . '%')->first();
+            }
+        }
         
         if (!$qrCode) {
+            // Lister quelques codes récents pour voir ce qui est dans la base
+            $recentCodes = QrCode::latest()->take(5)->pluck('code')->toArray();
+            
             $this->status = 'error';
             $this->result = 'QR code invalide ou inexistant';
+            \Illuminate\Support\Facades\Log::warning('QR code not found', [
+                'search_term' => $cleanCode,
+                'recent_codes' => $recentCodes
+            ]);
             session()->flash('error', 'QR code invalide ou inexistant');
             return;
         }

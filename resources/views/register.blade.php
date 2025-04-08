@@ -12,8 +12,7 @@
                     <p class="lead mb-4">
                         🔥 Tentez votre chance et remportez des cadeaux incroyables ! 🎉<br>
                         Remplissez le formulaire ci-dessous pour participer à la <span style="font-weight: normal; color: var(--primary-red);">Roue de la Fortune</span>. 🎰<br>
-                        La chance vous attend ! 🍀
-                    </p>
+                                            </p>
                     
                     <!-- <h3>Test Component:</h3>
                     @livewire('test-component')

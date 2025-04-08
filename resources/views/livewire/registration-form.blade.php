@@ -1,4 +1,101 @@
 <div style="text-align: center; font-weight: normal;">
+<!-- CSS pour le popup de vérification d'âge -->
+<style>
+    /* Overlay qui couvre tout l'écran */
+    .age-verification-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    /* Le popup lui-même */
+    .age-verification-popup {
+        background-color: white;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        animation: popup-fade-in 0.5s ease-out;
+    }
+    
+    @keyframes popup-fade-in {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .age-verification-popup h2 {
+        color: var(--secondary-color);
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+    }
+    
+    .age-verification-popup p {
+        margin-bottom: 30px;
+        font-size: 1.2rem;
+    }
+    
+    .age-verification-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    
+    .age-verification-buttons button {
+        padding: 10px 30px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+    
+    .btn-age-yes {
+        background-color: var(--apple-green);
+        color: white;
+    }
+    
+    .btn-age-no {
+        background-color: var(--persian-red);
+        color: white;
+    }
+    
+    .btn-age-yes:hover {
+        background-color: var(--sea-green);
+        transform: translateY(-2px);
+    }
+    
+    .btn-age-no:hover {
+        background-color: #b02a1d;
+        transform: translateY(-2px);
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+</style>
+
+<!-- Popup de vérification d'âge -->
+<div id="ageVerificationOverlay" class="age-verification-overlay">
+    <div class="age-verification-popup">
+        <h2>Vérification de l'âge</h2>
+        <p>Êtes vous agé d'au moins 18 ans ?</p>
+        <div class="age-verification-buttons">
+            <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
+            <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
+        </div>
+    </div>
+</div>
+
 <style>
     /* Styles pour améliorer la lisibilité */
     .form-group {
@@ -59,10 +156,16 @@
                 </div>
             @endif
 
+            @if (session()->has('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             @if ($isBlocked)
                 <div class="alert alert-warning">
-                    <h4><i class="fas fa-exclamation-triangle"></i> ⌛ Participation limitée 🕓</h4>
-                    <p>💬 Vous avez déjà participé et vous n'avez pas gagné de prix cette fois-ci.</p>
+                    <h4><i class="fas fa-exclamation-triangle"></i> 🚫 Limite de participations atteinte 🚫</h4>
+                    <p>😥 Vous avez déjà participé récemment et avez atteint le nombre maximum de tentatives autorisées.</p>
                     <p>📅 Pas d'inquiétude ! Vous pourrez retenter votre chance à partir du: <span style="color: var(--primary-red);">{{ $limitedUntil }}</span></p>
                     <p>🔔 Nous vous attendons avec impatience pour votre prochaine tentative ! 🍀</p>
                 </div>
@@ -70,10 +173,9 @@
                 <div class="alert alert-info">
                     <h4><i class="fas fa-info-circle"></i> 📝 Vous avez déjà participé 🎟️</h4>
                     <p>📱 Nous avons détecté que vous avez déjà participé à ce concours avec ce numéro de téléphone ou cette adresse email.</p>
-                    <p>🔔 Pour garantir l'équité du jeu, vous ne pouvez participer qu'une seule fois par semaine. 🌟</p>
-                    <p>🎉 Bonne nouvelle : vous pouvez revoir votre participation ci-dessous !</p>
+                    <p>🎲 Vous pouvez consulter votre participation existante ci-dessous :</p>
                     <div class="mt-3">
-                        <a href="{{ route('wheel.show', ['entry' => $existingEntry->id]) }}" class="btn btn-primary">
+                        <a href="{{ route('result.show', ['entry' => $existingEntry->id]) }}" class="btn btn-primary">
                             🏆 Voir ma participation 🔎
                         </a>
                     </div>
@@ -117,8 +219,8 @@
                     <!-- Case à cocher pour le règlement de la tombola -->
                     <div class="form-group mt-2">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rulesCheckbox" wire:model="reglement" required>
-                            <label class="form-check-label" for="rulesCheckbox">
+                            <input class="form-check-input" type="checkbox" id="reglementCheckbox" wire:model="reglement" required>
+                            <label class="form-check-label" for="reglementCheckbox">
                                 J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal" style="color: red;">règlement de la tombola</a>
                             </label>
                         </div>
@@ -129,9 +231,9 @@
                             <span wire:loading wire:target="register">
                                 <i class="fas fa-spinner fa-spin"></i>
                             </span>
-                            🎰 {{ __('registration.submit') }} 🎁
+                            S'inscrire 🎲
                         </button>
-                        <p class="mt-2 text-muted">🍀 La chance vous attend ! 🍀</p>
+                        <p class="mt-2 text-muted"></p>
                     </div>
                 </form>
             @endif
@@ -174,10 +276,10 @@
                     @if(!empty($modalContents['rules']['content']))
                         @foreach($modalContents['rules']['content'] as $item)
                             @if(isset($item['subtitle']))
-                                <h4>{{ $item['subtitle'] }}</h4>
+                                <h6 class="mt-4 mb-2">{{ $item['subtitle'] }}</h6>
                             @endif
-                            @if(isset($item['text']))
-                                <p>{{ $item['text'] }}</p>
+                            @if(isset($item['paragraph']))
+                                <p>{{ $item['paragraph'] }}</p>
                             @endif
                         @endforeach
                     @else
@@ -191,3 +293,17 @@
         </div>
     </div>
 </div>
+
+<!-- Script de vérification d'âge -->
+<script>
+    // Fonction pour vérifier l'âge
+    function verifyAge(isAdult) {
+        if (isAdult) {
+            // Si l'utilisateur a plus de 18 ans, juste cacher le popup
+            document.getElementById('ageVerificationOverlay').classList.add('hidden');
+        } else {
+            // Si l'utilisateur a moins de 18 ans, rediriger vers Google
+            window.location.href = 'https://www.google.com';
+        }
+    }
+</script>

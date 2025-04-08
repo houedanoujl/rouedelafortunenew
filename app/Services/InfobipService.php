@@ -13,8 +13,12 @@ class InfobipService
     
     public function __construct()
     {
-        $this->apiKey = env('INFOBIP_API_KEY', '45e5a50be38de8dbf745b9ff6791f530-657a08ac-44ee-4572-bcb5-81aaefc35696');
-        $this->fromNumber = env('INFOBIP_FROM_NUMBER', '447860099299');
+        $this->apiKey = env('INFOBIP_API_KEY');
+        $this->fromNumber = env('INFOBIP_FROM_NUMBER');
+        
+        if (!$this->apiKey || !$this->fromNumber) {
+            throw new \Exception('Les variables d\'environnement INFOBIP_API_KEY et INFOBIP_FROM_NUMBER doivent être définies dans le fichier .env');
+        }
         $this->client = new Client([
             'base_uri' => 'https://api.infobip.com/',
             'headers' => [
