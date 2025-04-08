@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use App\Models\QrCode;
+use App\Services\InfobipService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
 
@@ -60,13 +61,35 @@ class QrCodeScanner extends Component
             $entry->claimed = true;
             $entry->claimed_at = now();
             $entry->save();
+            
+            // Envoyer une notification WhatsApp au participant
+            $participant = $entry->participant;
+            if ($participant && $participant->phone) {
+                try {
+                    $infobipService = new InfobipService();
+                    $infobipService->sendWhatsAppNotification(
+                        $participant->phone,
+                        $participant->first_name . ' ' . $participant->last_name,
+                        $qrCode->code
+                    );
+                    // Ajout d'un message indiquant l'envoi de la notification
+                    $this->result = 'QR code validé avec succès et notification WhatsApp envoyée';
+                } catch (\Exception $e) {
+                    // Continuer même si l'envoi échoue, mais enregistrer l'erreur
+                    \Illuminate\Support\Facades\Log::error('Erreur d\'envoi WhatsApp: ' . $e->getMessage());
+                    $this->result = 'QR code validé avec succès mais erreur lors de l\'envoi de la notification';
+                }
+            } else {
+                $this->result = 'QR code validé avec succès (pas de numéro de téléphone disponible pour notification)';
+            }
+        } else {
+            $this->result = 'QR code validé avec succès';
         }
         
         $this->status = 'success';
-        $this->result = 'QR code validé avec succès';
         $this->scannedQrCode = $qrCode;
         
-        session()->flash('success', 'QR code validé avec succès');
+        session()->flash('success', $this->result);
         
         // Émettre un événement pour réinitialiser le scanner après un scan réussi
         $this->dispatch('scanComplete');

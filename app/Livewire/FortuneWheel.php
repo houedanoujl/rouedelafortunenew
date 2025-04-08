@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Entry;
 use App\Models\QrCode;
+use App\Services\InfobipService;
 use Livewire\Component;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class FortuneWheel extends Component
@@ -55,12 +57,54 @@ class FortuneWheel extends Component
         $this->entry->has_won = $isWinning;
         $this->entry->save();
 
-        // Si gagné, créer un QR code
+        // Si gagné, créer un QR code et envoyer une notification WhatsApp
         if ($isWinning) {
-            QrCode::create([
+            // Générer un code QR plus lisible et mémorisable
+            $qrCode = 'DNR70-' . strtoupper(substr(md5($this->entry->id . time()), 0, 8));
+            
+            // Créer l'enregistrement QR code
+            $qrCodeModel = QrCode::create([
                 'entry_id' => $this->entry->id,
-                'code' => Str::random(10),
+                'code' => $qrCode,
             ]);
+            
+            // Récupérer le participant pour obtenir son numéro de téléphone
+            $participant = $this->entry->participant;
+            
+            // Envoyer une notification WhatsApp si un numéro de téléphone est disponible
+            if ($participant && $participant->phone) {
+                try {
+                    // Créer une instance du service Infobip
+                    $infobipService = new InfobipService();
+                    
+                    // Envoyer la notification WhatsApp
+                    $infobipService->sendWhatsAppNotification(
+                        $participant->phone, 
+                        $participant->first_name . ' ' . $participant->last_name,
+                        $qrCode
+                    );
+                    
+                    // Journaliser le succès
+                    Log::info('Notification WhatsApp envoyée avec succès', [
+                        'participant_id' => $participant->id,
+                        'phone' => $participant->phone,
+                        'qr_code' => $qrCode
+                    ]);
+                } catch (\Exception $e) {
+                    // Journaliser l'erreur mais continuer le processus
+                    Log::error('Erreur lors de l\'envoi de la notification WhatsApp', [
+                        'error' => $e->getMessage(),
+                        'participant_id' => $participant->id,
+                        'phone' => $participant->phone,
+                        'qr_code' => $qrCode
+                    ]);
+                }
+            } else {
+                Log::warning('Impossible d\'envoyer une notification WhatsApp : numéro de téléphone manquant', [
+                    'entry_id' => $this->entry->id,
+                    'participant_id' => $participant ? $participant->id : null
+                ]);
+            }
         }
 
         // Déclencher l'animation de la roue
