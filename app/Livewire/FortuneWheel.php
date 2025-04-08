@@ -68,6 +68,28 @@ class FortuneWheel extends Component
                 'code' => $qrCode,
             ]);
             
+            // Décrémenter le stock dans la distribution de prix active
+            $contest = $this->entry->contest;
+            if ($contest) {
+                // Chercher une distribution de prix active pour ce concours
+                $prizeDistribution = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
+                    ->where('start_date', '<=', now())
+                    ->where('end_date', '>=', now())
+                    ->where('remaining', '>', 0)
+                    ->first();
+                
+                // Décrémenter le stock restant
+                if ($prizeDistribution) {
+                    $prizeDistribution->decrementRemaining();
+                    
+                    // Journaliser la mise à jour du stock
+                    \Illuminate\Support\Facades\Log::info('Stock décrémenté pour la distribution', [
+                        'prize_distribution_id' => $prizeDistribution->id,
+                        'remaining' => $prizeDistribution->remaining,
+                    ]);
+                }
+            }
+            
             // Récupérer le participant pour obtenir son numéro de téléphone
             $participant = $this->entry->participant;
             

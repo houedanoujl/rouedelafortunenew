@@ -56,12 +56,9 @@ class PrizeDistributionResource extends Resource
                     ->label('Quantité restante')
                     ->helperText('Laissez vide pour initialiser avec la quantité totale')
                     ->numeric(),
-            ])
-            ->afterStateHydrated(function (Forms\Get $get, Forms\Set $set) {
-                if (is_null($get('remaining'))) {
-                    $set('remaining', $get('quantity'));
-                }
-            });
+            ]);
+        
+        return $form;
     }
 
     public static function table(Table $table): Table

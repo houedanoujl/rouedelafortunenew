@@ -9,6 +9,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PrizeDistribution extends Model
 {
     use HasFactory;
+    
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::creating(function ($prizeDistribution) {
+            // Initialiser la quantité restante avec la quantité totale si non spécifiée
+            if (is_null($prizeDistribution->remaining)) {
+                $prizeDistribution->remaining = $prizeDistribution->quantity;
+            }
+        });
+    }
 
     /**
      * Les attributs qui sont mass assignable.
@@ -50,5 +65,21 @@ class PrizeDistribution extends Model
     public function prize(): BelongsTo
     {
         return $this->belongsTo(Prize::class);
+    }
+    
+    /**
+     * Décrémenter la quantité restante d'une unité
+     * 
+     * @return bool True si le stock a pu être décrémenté, false si le stock est déjà à 0
+     */
+    public function decrementRemaining(): bool
+    {
+        if ($this->remaining > 0) {
+            $this->remaining--;
+            $this->save();
+            return true;
+        }
+        
+        return false;
     }
 }
