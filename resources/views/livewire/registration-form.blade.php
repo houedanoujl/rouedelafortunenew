@@ -84,8 +84,6 @@
     }
 </style>
 
-<!-- Les popups sont déplacés en dehors du conteneur principal pour un affichage correct -->
-
 <style>
     /* Styles pour améliorer la lisibilité */
     .form-group {
@@ -135,7 +133,37 @@
         padding: 0.8rem 1.5rem;
     }
 </style>
-    <div class="card" style="border: 1px solid #e0e0e0; border-radius: 4px; box-shadow: none;">
+
+<!-- Modal d'avertissement pour navigation privée / cookies désactivés -->
+<div id="privacyWarningOverlay" class="age-verification-overlay hidden">
+    <div class="age-verification-popup">
+        <h2><i class="bi bi-shield-exclamation"></i> Cookies désactivés</h2>
+        <p>Il semble que vous naviguiez en mode privé ou que les cookies soient désactivés sur votre appareil.</p>
+        <p>Pour participer à notre concours, veuillez :</p>
+        <ul style="text-align: left; margin: 20px auto; max-width: 80%;">
+            <li>Utiliser le mode de navigation normal</li>
+            <li>Activer les cookies dans les paramètres de votre navigateur</li>
+            <li>Désactiver le mode "Prévention du suivi intelligent" (utilisateurs iOS)</li>
+        </ul>
+        <div class="age-verification-buttons">
+            <button class="btn-age-yes" onclick="window.location.reload()">J'ai activé les cookies</button>
+        </div>
+    </div>
+</div>
+
+<!-- Popup de vérification d'âge - caché par défaut -->
+<div id="ageVerificationOverlay" class="age-verification-overlay hidden">
+    <div class="age-verification-popup">
+        <h2>Vérification de l'âge</h2>
+        <p>Êtes vous agé d'au moins 18 ans ?</p>
+        <div class="age-verification-buttons">
+            <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
+            <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
+        </div>
+    </div>
+</div>
+
+    <div class="card" style="border: 1px solid #e0e0e0; height:100vh; border-radius: 4px; box-shadow: none;">
         <div class="card-header" style="background-color: var(--honolulu-blue); color: white;">
             <h2>📝 Inscription 🎟️</h2>
         </div>
@@ -320,35 +348,6 @@
         </p>
     </div>
     @endif
-</div>
-
-<!-- Modal d'avertissement pour navigation privée / cookies désactivés -->
-<div id="privacyWarningOverlay" class="age-verification-overlay hidden">
-    <div class="age-verification-popup">
-        <h2><i class="bi bi-shield-exclamation"></i> Cookies désactivés</h2>
-        <p>Il semble que vous naviguiez en mode privé ou que les cookies soient désactivés sur votre appareil.</p>
-        <p>Pour participer à notre concours, veuillez :</p>
-        <ul style="text-align: left; margin: 20px auto; max-width: 80%;">
-            <li>Utiliser le mode de navigation normal</li>
-            <li>Activer les cookies dans les paramètres de votre navigateur</li>
-            <li>Désactiver le mode "Prévention du suivi intelligent" (utilisateurs iOS)</li>
-        </ul>
-        <div class="age-verification-buttons">
-            <button class="btn-age-yes" onclick="window.location.reload()">J'ai activé les cookies</button>
-        </div>
-    </div>
-</div>
-
-<!-- Popup de vérification d'âge - caché par défaut -->
-<div id="ageVerificationOverlay" class="age-verification-overlay hidden">
-    <div class="age-verification-popup">
-        <h2>Vérification de l'âge</h2>
-        <p>Êtes vous agé d'au moins 18 ans ?</p>
-        <div class="age-verification-buttons">
-            <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
-            <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
-        </div>
-    </div>
 </div>
 
 <!-- Script de vérification d'âge, participations et détection du mode privé -->

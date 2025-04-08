@@ -1,6 +1,6 @@
 <div class="registration-form-wrapper">
     <!-- Main Card -->
-    <div class="card mb-4" style="border: 1px solid #e0e0e0; border-radius: 4px; box-shadow: none;">
+    <div class="card mb-4" style="border: 1px solid #e0e0e0; height:100vh; border-radius: 4px; box-shadow: none;">
         <div class="card-header" style="background-color: var(--honolulu-blue); color: white;">
             <h2>Inscription</h2>
         </div>

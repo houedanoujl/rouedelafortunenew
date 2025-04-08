@@ -13,7 +13,7 @@
     </script>
     @endif
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header" style="background-color: var(--primary-red); color: white;">
                     <h1 class="text-center">⏰ Limite de participation ⏰</h1>

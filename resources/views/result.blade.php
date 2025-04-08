@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header bg-{{ $entry->has_won ? 'success' : 'danger' }} text-white">
                     <h2 class="mb-0">{{ $entry->has_won ? '🎉 Félicitations ! 🎉' : '😔 Pas de chance... 😔' }}</h2>

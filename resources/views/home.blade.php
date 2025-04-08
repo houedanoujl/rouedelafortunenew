@@ -134,13 +134,13 @@
         background-color: #fff;
         padding: 1.5rem;
         border-radius: 4px;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #e0e0e0; height:100vh;
     }
     
     .features-section .card {
         transition: all 0.2s;
         border-radius: 4px;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #e0e0e0; height:100vh;
     }
     
     .features-section .card:hover {
@@ -151,7 +151,7 @@
         background: white;
         padding: 1.5rem;
         border-radius: 4px;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #e0e0e0; height:100vh;
         height: 100%;
     }
     

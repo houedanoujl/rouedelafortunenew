@@ -7,7 +7,7 @@
     </div>
     
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
                     <h5>Scannez un code QR pour valider un prix</h5>

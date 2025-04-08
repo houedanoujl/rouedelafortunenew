@@ -40,7 +40,7 @@
             padding: 20px 15px;
             background-color: #fff;
             border-radius: 0.25rem;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e0e0e0; height:100vh;
             position: relative;
             overflow: hidden;
         }
@@ -127,7 +127,7 @@
         /* Suppression de l'effet de brillance pour un design plat */
         
         .form-control {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e0e0e0; height:100vh;
             border-radius: 0.25rem;
             padding: 0.7rem 1rem;
             font-size: 1.1rem;
