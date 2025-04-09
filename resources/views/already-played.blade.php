@@ -40,7 +40,7 @@
                                 <i class="bi bi-ticket-perforated"></i> Voir ma participation 🎟️
                             </a>
                         @else
-                            <a href="{{ route('home') }}" class="btn btn-primary" style="background-color: var(--primary-red); border: none;">
+                            <a href="{{ route('home') }}" class="hide hidden btn btn-primary" style="background-color: var(--primary-red); border: none;">
                                 <i class="bi bi-house-door"></i> Retour à l'accueil 🏠
                             </a>
                         @endif
