@@ -137,16 +137,16 @@
 <!-- Modal d'avertissement pour navigation privée / cookies désactivés -->
 <div id="privacyWarningOverlay" class="age-verification-overlay hidden">
     <div class="age-verification-popup">
-        <h2><i class="bi bi-shield-exclamation"></i> Cookies désactivés</h2>
-        <p>Il semble que vous naviguiez en mode privé ou que les cookies soient désactivés sur votre appareil.</p>
+        <h2><i class="bi bi-shield-exclamation"></i> Navigation privée détectée</h2>
+        <p>Pour des raisons de sécurité et pour garantir une expérience optimale, ce formulaire n'est pas accessible en navigation privée.</p>
         <p>Pour participer à notre concours, veuillez :</p>
         <ul style="text-align: left; margin: 20px auto; max-width: 80%;">
-            <li>Utiliser le mode de navigation normal</li>
-            <li>Activer les cookies dans les paramètres de votre navigateur</li>
-            <li>Désactiver le mode "Prévention du suivi intelligent" (utilisateurs iOS)</li>
+            <li>Utiliser le mode de navigation normal (non privé)</li>
+            <li>Vous assurer que les cookies sont activés dans les paramètres de votre navigateur</li>
+            <li>Désactiver le mode "Prévention du suivi intelligent" si vous utilisez un appareil iOS</li>
         </ul>
         <div class="age-verification-buttons">
-            <button class="btn-age-yes" onclick="window.location.reload()">J'ai activé les cookies</button>
+            <button class="btn-age-yes" onclick="window.location.reload()">J'ai changé de mode de navigation</button>
         </div>
     </div>
 </div>
@@ -354,90 +354,122 @@
 <script>
     // Détection de la navigation privée et des cookies désactivés
     function detectPrivateMode() {
-        // Vérification simple des cookies
-        if (!navigator.cookieEnabled) {
-            showPrivacyWarning();
-            return;
-        }
+        return new Promise(function(resolve) {
+            const YES = true;
+            const NO = false;
+            const UNKNOWN = null;
 
-        try {
-            // Test basique du localStorage
-            localStorage.setItem('test_storage', '1');
-            localStorage.removeItem('test_storage');
-        } catch (e) {
-            // Le localStorage n'est pas disponible
-            showPrivacyWarning();
-        }
+            // Pour Firefox
+            if (navigator.userAgent.includes('Firefox')) {
+                try {
+                    indexedDB.open('test').onupgradeneeded = function() {
+                        resolve(NO); // Indexé DB fonctionne => pas en privé
+                    };
+                    setTimeout(function() {
+                        resolve(YES); // Timeout => probablement en privé
+                    }, 500);
+                } catch (e) {
+                    resolve(UNKNOWN);
+                }
+                return;
+            }
+
+            // Pour Safari
+            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+                try {
+                    window.openDatabase(null, null, null, null);
+                    try {
+                        // Tentative de stocker 100MB en localStorage (Safari en privé limite à 50MB)
+                        localStorage.setItem('test', new Array(100000000).join('1'));
+                        localStorage.removeItem('test');
+                        resolve(NO); // Si ça fonctionne => pas en privé
+                    } catch (e) {
+                        resolve(YES); // Si ça échoue => probablement en privé
+                    }
+                } catch (e) {
+                    resolve(UNKNOWN);
+                }
+                return;
+            }
+
+            // Pour Chrome et autres
+            if ('storage' in navigator && 'estimate' in navigator.storage) {
+                navigator.storage.estimate().then(function(estimate) {
+                    // En navigation privée Chrome, la quota est généralement limité à 120MB
+                    if (estimate.quota < 120000000) {
+                        resolve(YES);
+                    } else {
+                        resolve(NO);
+                    }
+                });
+                return;
+            }
+
+            // Méthode de secours - test simple
+            try {
+                localStorage.setItem('test_private', '1');
+                localStorage.removeItem('test_private');
+                if (!navigator.cookieEnabled) {
+                    resolve(YES);
+                } else {
+                    resolve(NO);
+                }
+            } catch (e) {
+                resolve(YES);
+            }
+        });
     }
+
+    // Au chargement de la page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vérifier le mode de navigation
+        detectPrivateMode().then(function(isPrivate) {
+            if (isPrivate) {
+                // En navigation privée, masquer le formulaire et afficher l'avertissement
+                showPrivacyWarning();
+
+                // Loguer pour débogage
+                console.log("Navigation privée détectée, accès au formulaire bloqué");
+            } else {
+                // En navigation normale, vérifier la participation
+                try {
+                    checkForExistingParticipation();
+                } catch (e) {
+                    console.log('Erreur lors de la vérification de participation:', e);
+                }
+
+                // Vérifier l'âge si nécessaire
+                try {
+                    const ageVerified = localStorage.getItem('age_verified');
+                    if (ageVerified !== 'true') {
+                        setTimeout(function() {
+                            document.getElementById('ageVerificationOverlay').classList.remove('hidden');
+                        }, 100);
+                    }
+                } catch (e) {
+                    console.log('Erreur lors de la vérification d'âge:', e);
+                }
+            }
+        });
+    });
 
     // Fonction pour afficher l'avertissement de navigation privée
     function showPrivacyWarning() {
-        // Masquer le formulaire
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => {
-            form.style.display = 'none';
+        // Masquer tout le contenu principal
+        const mainContent = document.querySelector('.card');
+        if (mainContent) {
+            mainContent.style.display = 'none';
+        }
+
+        // Masquer les modales et autres éléments
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
         });
 
         // Afficher l'avertissement
         document.getElementById('privacyWarningOverlay').classList.remove('hidden');
     }
-
-    // Script pour vérifier l'âge avant le chargement complet de la page
-    (function() {
-        // Vérifier si la vérification d'âge est déjà stockée dans localStorage
-        try {
-            const ageVerified = localStorage.getItem('age_verified');
-
-            // Si l'âge n'a pas encore été vérifié, afficher le popup
-            if (ageVerified !== 'true') {
-                // Attendre un court instant pour permettre le rendu de la page
-                setTimeout(function() {
-                    document.getElementById('ageVerificationOverlay').classList.remove('hidden');
-                }, 100);
-            }
-        } catch (e) {
-            // En cas d'erreur d'accès à localStorage, afficher quand même la vérification d'âge
-            setTimeout(function() {
-                document.getElementById('ageVerificationOverlay').classList.remove('hidden');
-            }, 100);
-        }
-    })();
-
-    // Au chargement de la page, vérifier si l'utilisateur a déjà participé
-    document.addEventListener('DOMContentLoaded', function() {
-        // Vérifier si l'utilisateur a déjà participé à ce concours (vérification côté client)
-        try {
-            checkForExistingParticipation();
-        } catch (e) {
-            console.log('Erreur lors de la vérification de participation:', e);
-        }
-    });
-
-@script
-    // Écouter les événements envoyés par Livewire (syntaxe de Livewire v3)
-    $wire.on('setup-participation-check', (params) => {
-        let contestId = params.contestId;
-        checkForExistingParticipation(contestId);
-    });
-
-    // Écouter l'événement pour stocker la participation
-    $wire.on('store-participation', (params) => {
-        let key = params.key;
-        let value = params.value;
-        let contestId = params.contestId;
-
-        // Stocker dans localStorage
-        localStorage.setItem(key, value);
-        console.log(`Participation au concours ${contestId} enregistrée dans localStorage`);
-    });
-
-    // Écouter l'événement de redirection en cas de participation existante
-    $wire.on('redirect-already-played', (params) => {
-        let url = params.url;
-        console.log(`Redirection vers: ${url}`);
-        window.location.href = url;
-    });
-@endscript
 
     /**
      * Vérifie si l'utilisateur a déjà participé au concours spécifié
