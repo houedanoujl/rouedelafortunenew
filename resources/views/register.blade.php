@@ -4,7 +4,7 @@
 <div class="register-container d-flex justify-content-center align-items-center">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            <div class="card" style="border: 1px solid #e0e0e0; height:100vh; border-radius: 4px; box-shadow: none;">
+            <div class="card" style="border: 1px solid #e0e0e0; min-height:100vh; border-radius: 4px; box-shadow: none;">
                 <div class="card-header text-white" style="background-color: var(--honolulu-blue);">
                     <h2 class="mb-0">📝 Inscription au concours 🎁</h2>
                 </div>
