@@ -5,7 +5,7 @@
   /* Couleur primaire - la plus vive */
   --primary-color: #e3201cff;  /* Red CMYK - couleur principale la plus vive */
   --secondary-color: #eb8885ff; /* Light Coral - version plus claire de la couleur primaire */
-  
+
   /* Couleurs de support */
   --red-cmyk: #e3201cff;
   --golden-brown: #965d0bff;
@@ -14,7 +14,7 @@
   --cordovan: #8c4948ff;
   --black-bean: #4c1711ff;
   --lavender-blush: #f6e7e4ff;
-  
+
   /* Ajout de variantes transparentes pour les effets */
   --golden-glow: rgba(150, 93, 11, 0.15);
   --red-glow: rgba(227, 32, 28, 0.15);
@@ -173,12 +173,12 @@ h1::after {
     .wheel-container {
         padding: 10px;
     }
-    
+
     .pointer {
         top: -25px;
         font-size: 30px;
     }
-    
+
     .spin-button {
         padding: 12px 30px;
         font-size: 18px;

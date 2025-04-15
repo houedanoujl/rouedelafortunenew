@@ -1,0 +1,51 @@
+// Styles pour le modal de règlement avec accordéon
+.reglement {
+    &-item {
+        margin-bottom: 5px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    
+    &-header {
+        padding: 10px 15px;
+        background-color: #f8f9fa;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        &:hover {
+            background-color: #e9ecef;
+        }
+        
+        &.active .toggle-icon::after {
+            content: '▲';
+        }
+    }
+    
+    &-content {
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+        display: none;
+        
+        &.active {
+            display: block;
+        }
+    }
+}
+
+.toggle-icon::after {
+    content: '▼';
+    font-size: 12px;
+}
+
+// Style spécifique pour la modal
+#reglementModal {
+    z-index: 1060;
+    
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+}

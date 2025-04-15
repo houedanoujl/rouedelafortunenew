@@ -225,17 +225,17 @@
                     <!-- Champ caché pour l'ID du concours - utilisé par le système de limitation de participation -->
                     <input type="hidden" name="contestId" value="{{ $contestId }}" id="contestId">
                     <div class="form-group">
-                        <label for="firstName">{{ __('registration.fields.firstName.label') }}</label>
+                        <label for="firstName">{{ __('registration.fields.firstName.label') }} <span style="color: red;">*</span></label>
                         <input type="text" class="form-control" id="firstName" wire:model="firstName" required>
                         @error('firstName') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-group">
-                        <label for="lastName">{{ __('registration.fields.lastName.label') }}</label>
+                        <label for="lastName">{{ __('registration.fields.lastName.label') }} <span style="color: red;">*</span></label>
                         <input type="text" class="form-control" id="lastName" wire:model="lastName" required>
                         @error('lastName') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-group">
-                        <label for="phone">{{ __('registration.fields.phone.label') }}</label>
+                        <label for="phone">{{ __('registration.fields.phone.label') }} <span style="color: red;">*</span></label>
                         <input type="tel" class="form-control {{ $isExistingParticipant ? 'bg-light' : '' }}" id="phone" wire:model="phone" {{ $isExistingParticipant ? 'readonly' : '' }} required>
                         @if (!$isExistingParticipant)
                             <small class="form-text text-muted">Si vous avez déjà participé, saisissez votre numéro pour retrouver vos informations.</small>
@@ -253,7 +253,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="consentCheckbox" wire:model="consentement" required>
                             <label class="form-check-label" for="consentCheckbox">
-                                J'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#consentModal" style="color: red;">recueil de consentement individuel</a>
+                                J'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#consentModal" style="color: red;">recueil de consentement individuel</a> <span style="color: red;">*</span>
                             </label>
                         </div>
                         @error('consentement') <span class="text-danger">{{ $message }}</span> @enderror
@@ -311,34 +311,7 @@
         </div>
     </div>
 
-    <!-- Modal pour le règlement de la tombola -->
-    <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true" style="z-index: 1060;" data-bs-backdrop="false">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="reglementModalLabel">{{ $modalContents['rules']['title'] ?? 'Règlement de la tombola' }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto; text-align: center; font-weight: normal;">
-                    @if(!empty($modalContents['rules']['content']))
-                        @foreach($modalContents['rules']['content'] as $item)
-                            @if(isset($item['subtitle']))
-                                <h6 class="mt-4 mb-2">{{ $item['subtitle'] }}</h6>
-                            @endif
-                            @if(isset($item['paragraph']))
-                                <p>{{ $item['paragraph'] }}</p>
-                            @endif
-                        @endforeach
-                    @else
-                        <p>Contenu du règlement non disponible.</p>
-                    @endif
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $modalContents['rules']['buttonText'] ?? 'Fermer' }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('partials.rules-modal')
 
     <!-- Footer avec le nom du concours -->
     @if($contestName)
