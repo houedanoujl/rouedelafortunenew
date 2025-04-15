@@ -23,7 +23,7 @@
                     <p class="mt-2 mb-0">
                         Une seule participation par concours est autorisée.
                         @if($contest_end_date)
-                            <br>Ce concours se termine le <strong>{{ $contest_end_date }}</strong>.
+                            <!--<br>Ce concours se termine le <strong>{{ $contest_end_date }}</strong>.-->
                         @endif
                     </p>
                 </div>

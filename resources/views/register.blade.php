@@ -32,5 +32,18 @@
     --success-green: #28a745;
     --text-highlight: #D03A2C;
 }
+.modal.show .modal-dialog{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+    .modal-backdrop.show{
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
 </style>
+
+<!-- Inclure la vérification d'âge uniquement sur la page d'inscription -->
+@include('partials.age-verification')
 @endsection

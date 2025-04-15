@@ -8,6 +8,7 @@ use App\Services\InfobipService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class FortuneWheel extends Component
 {
@@ -15,12 +16,22 @@ class FortuneWheel extends Component
     public bool $spinning = false;
     public bool $showWheel = true;
 
+    // Constantes pour la roue 
+    const SECTORS_COUNT = 10; // Nombre total de secteurs
+    const SECTOR_ANGLE = 36;  // Angle de chaque secteur (360 / SECTORS_COUNT)
+    
+    /**
+     * Initialisation du composant avec l'entrée
+     */
     public function mount(Entry $entry)
     {
         $this->entry = $entry;
         $this->showWheel = !$entry->has_played;
     }
 
+    /**
+     * Fait tourner la roue et traite le résultat
+     */
     public function spin()
     {
         if ($this->entry->has_played) {
@@ -29,118 +40,227 @@ class FortuneWheel extends Component
 
         $this->spinning = true;
 
-        // Réduire les chances de gagner à 30% (au lieu de 50%)
+        // Réduire les chances de gagner à 30% (3 sur 10)
         $isWinning = rand(1, 10) <= 3;
         
-        // Nous avons 20 secteurs, donc chaque secteur fait 18 degrés (360/20)
-        $sectorAngle = 18;
+        // Déterminer le secteur et l'angle final en fonction du résultat souhaité
+        $sectorInfo = $this->determineSector($isWinning);
+        $finalAngle = $sectorInfo['angle'];
+        $sectorIndex = $sectorInfo['index'];
+        $sectorId = $sectorInfo['id'];
         
-        // Important: Nous voulons que le pointeur s'arrête au centre d'un secteur,
-        // pas à la jonction entre deux secteurs
+        // Est-ce un secteur gagnant ? (Les secteurs pairs sont gagnants)
+        $isResultWinning = $sectorIndex % 2 === 0;
         
-        if ($isWinning) {
-            // Pour les secteurs gagnants (secteurs pairs: 0, 2, 4, 6, 8, 10, 12, 14, 16, 18)
-            // Nous choisissons un secteur pair au hasard
-            $sectorIndex = rand(0, 9) * 2;
-            // Puis nous calculons l'angle qui correspond au centre de ce secteur
-            $finalAngle = ($sectorIndex * $sectorAngle) + ($sectorAngle / 2);
-        } else {
-            // Pour les secteurs perdants (secteurs impairs: 1, 3, 5, 7, 9, 11, 13, 15, 17, 19)
-            // Nous choisissons un secteur impair au hasard
-            $sectorIndex = (rand(0, 9) * 2) + 1;
-            // Puis nous calculons l'angle qui correspond au centre de ce secteur
-            $finalAngle = ($sectorIndex * $sectorAngle) + ($sectorAngle / 2);
-        }
-
-        // Mettre à jour l'entrée
+        // Journaliser les informations du secteur et de l'angle
+        Log::info('Informations du secteur sélectionné', [
+            'angle' => $finalAngle,
+            'secteur_index' => $sectorIndex,
+            'secteur_id' => $sectorId,
+            'est_gagnant' => $isResultWinning ? 'oui' : 'non',
+            'classe' => $isResultWinning ? 'secteur-gagne' : 'secteur-perdu'
+        ]);
+        
+        // Utiliser le résultat déterminé par le secteur, pas par le tirage au sort
         $this->entry->has_played = true;
-        $this->entry->has_won = $isWinning;
+        $this->entry->has_won = $isResultWinning;
         $this->entry->save();
-
+        
+        // Enregistrer le résultat dans l'historique JSON
+        $this->saveSpinHistory($finalAngle, $isResultWinning, $sectorId, $this->entry);
+        
         // Si gagné, créer un QR code et envoyer une notification WhatsApp
-        if ($isWinning) {
-            // Générer un code QR plus lisible et mémorisable
-            $qrCode = 'DNR70-' . strtoupper(substr(md5($this->entry->id . time()), 0, 8));
-            
-            // Créer l'enregistrement QR code
-            $qrCodeModel = QrCode::create([
-                'entry_id' => $this->entry->id,
-                'code' => $qrCode,
-            ]);
-            
-            // Décrémenter le stock dans la distribution de prix active
-            $contest = $this->entry->contest;
-            if ($contest) {
-                // Chercher une distribution de prix active pour ce concours
-                $prizeDistribution = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
-                    ->where('start_date', '<=', now())
-                    ->where('end_date', '>=', now())
-                    ->where('remaining', '>', 0)
-                    ->first();
-                
-                // Décrémenter le stock restant
-                if ($prizeDistribution) {
-                    $prizeDistribution->decrementRemaining();
-                    
-                    // Journaliser la mise à jour du stock
-                    \Illuminate\Support\Facades\Log::info('Stock décrémenté pour la distribution', [
-                        'prize_distribution_id' => $prizeDistribution->id,
-                        'remaining' => $prizeDistribution->remaining,
-                    ]);
-                }
-            }
-            
-            // Récupérer le participant pour obtenir son numéro de téléphone
-            $participant = $this->entry->participant;
-            
-            // Envoyer une notification WhatsApp si un numéro de téléphone est disponible
-            if ($participant && $participant->phone) {
-                try {
-                    // Créer une instance du service Infobip
-                    $infobipService = new InfobipService();
-                    
-                    // Envoyer la notification WhatsApp
-                    $infobipService->sendWhatsAppNotification(
-                        $participant->phone, 
-                        $participant->first_name . ' ' . $participant->last_name,
-                        $qrCode
-                    );
-                    
-                    // Journaliser le succès
-                    Log::info('Notification WhatsApp envoyée avec succès', [
-                        'participant_id' => $participant->id,
-                        'phone' => $participant->phone,
-                        'qr_code' => $qrCode
-                    ]);
-                } catch (\Exception $e) {
-                    // Journaliser l'erreur mais continuer le processus
-                    Log::error('Erreur lors de l\'envoi de la notification WhatsApp', [
-                        'error' => $e->getMessage(),
-                        'participant_id' => $participant->id,
-                        'phone' => $participant->phone,
-                        'qr_code' => $qrCode
-                    ]);
-                }
-            } else {
-                Log::warning('Impossible d\'envoyer une notification WhatsApp : numéro de téléphone manquant', [
-                    'entry_id' => $this->entry->id,
-                    'participant_id' => $participant ? $participant->id : null
-                ]);
-            }
+        if ($isResultWinning) {
+            $this->handleWinning();
         }
 
         // Déclencher l'animation de la roue
-        // S'assurer que l'angle est bien un entier
-        $finalAngle = (int)$finalAngle;
-        $this->dispatch('startSpinWithSound', ['angle' => $finalAngle]);
+        $this->dispatch('startSpinWithSound', [
+            'angle' => $finalAngle,
+            'isWinning' => $isResultWinning ? 1 : 0,
+            'sectorId' => $sectorId,
+            'sectorIndex' => $sectorIndex
+        ]);
         
         // Si gagné, déclencher les confettis
-        if ($isWinning) {
+        if ($isResultWinning) {
             $this->dispatch('victory');
         }
 
-        // Rediriger après la fin de l'animation (13.5 secondes au lieu de 8.5)
+        // Rediriger après la fin de l'animation
         $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 13500)");
+    }
+    
+    /**
+     * Détermine le secteur et l'angle final en fonction du résultat souhaité
+     * 
+     * @param bool $isWinning
+     * @return array
+     */
+    private function determineSector(bool $isWinning): array
+    {
+        // Indices des secteurs disponibles
+        $possibleIndices = [];
+        
+        // Pour la roue de WinWheel.js, nous voulons des secteurs complets
+        for ($i = 0; $i < self::SECTORS_COUNT; $i++) {
+            // Vérifier si le secteur correspond au résultat souhaité (gagnant ou perdant)
+            // Les secteurs pairs (0, 2, 4, 6, 8) sont gagnants, les impairs sont perdants
+            $isSectorWinning = $i % 2 === 0;
+            
+            if ($isSectorWinning === $isWinning) {
+                $possibleIndices[] = $i;
+            }
+        }
+        
+        // Choisir un secteur au hasard parmi ceux qui correspondent au résultat souhaité
+        $randomIndex = array_rand($possibleIndices);
+        $sectorIndex = $possibleIndices[$randomIndex];
+        
+        // Calculer l'angle central du secteur (pour WinWheel.js)
+        // Chaque secteur fait 36 degrés (360 / 10 secteurs)
+        // L'angle est calculé à partir du haut (0 degré)
+        $sectorAngle = $sectorIndex * self::SECTOR_ANGLE;
+        
+        // Pour WinWheel.js, nous voulons l'angle central du secteur
+        $finalAngle = $sectorAngle + (self::SECTOR_ANGLE / 2);
+        
+        return [
+            'index' => $sectorIndex,
+            'id' => 'secteur-' . $sectorIndex,
+            'angle' => $finalAngle,
+            'isWinning' => $isWinning
+        ];
+    }
+    
+    /**
+     * Gère la logique lorsque le joueur gagne
+     */
+    private function handleWinning()
+    {
+        // Générer un code QR plus lisible et mémorisable
+        $qrCode = 'DNR70-' . strtoupper(substr(md5($this->entry->id . time()), 0, 8));
+        
+        // Créer l'enregistrement QR code
+        $qrCodeModel = QrCode::create([
+            'entry_id' => $this->entry->id,
+            'code' => $qrCode,
+        ]);
+        
+        // Décrémenter le stock dans la distribution de prix active
+        $contest = $this->entry->contest;
+        if ($contest) {
+            // Chercher une distribution de prix active pour ce concours
+            $prizeDistribution = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->where('remaining', '>', 0)
+                ->first();
+            
+            // Décrémenter le stock restant
+            if ($prizeDistribution) {
+                $prizeDistribution->decrementRemaining();
+                
+                // Journaliser la mise à jour du stock
+                Log::info('Stock décrémenté pour la distribution', [
+                    'prize_distribution_id' => $prizeDistribution->id,
+                    'remaining' => $prizeDistribution->remaining,
+                ]);
+            }
+        }
+        
+        // Récupérer le participant pour obtenir son numéro de téléphone
+        $participant = $this->entry->participant;
+        
+        // Envoyer une notification WhatsApp si un numéro de téléphone est disponible
+        if ($participant && $participant->phone) {
+            try {
+                // Créer une instance du service Infobip
+                $infobipService = new InfobipService();
+                
+                // Envoyer la notification WhatsApp
+                $infobipService->sendWhatsAppNotification(
+                    $participant->phone, 
+                    $participant->first_name . ' ' . $participant->last_name,
+                    $qrCode
+                );
+                
+                // Journaliser le succès
+                Log::info('Notification WhatsApp envoyée avec succès', [
+                    'participant_id' => $participant->id,
+                    'phone' => $participant->phone,
+                    'qr_code' => $qrCode
+                ]);
+            } catch (\Exception $e) {
+                // Journaliser l'erreur mais continuer le processus
+                Log::error('Erreur lors de l\'envoi de la notification WhatsApp', [
+                    'error' => $e->getMessage(),
+                    'participant_id' => $participant->id,
+                    'phone' => $participant->phone,
+                    'qr_code' => $qrCode
+                ]);
+            }
+        } else {
+            Log::warning('Impossible d\'envoyer une notification WhatsApp : numéro de téléphone manquant', [
+                'entry_id' => $this->entry->id,
+                'participant_id' => $participant ? $participant->id : null
+            ]);
+        }
+    }
+
+    /**
+     * Enregistre le résultat du spin dans un fichier JSON historique
+     */
+    protected function saveSpinHistory(int $finalAngle, bool $isWinning, string $sectorId, Entry $entry)
+    {
+        try {
+            // Chemin du fichier d'historique à la racine du projet
+            $historyFile = base_path('spin_history.json');
+            
+            // Données à enregistrer
+            $spinData = [
+                'timestamp' => Carbon::now()->toIso8601String(),
+                'entry_id' => $entry->id,
+                'participant' => $entry->participant ? [
+                    'id' => $entry->participant->id,
+                    'name' => $entry->participant->first_name . ' ' . $entry->participant->last_name,
+                    'email' => $entry->participant->email
+                ] : null,
+                'contest_id' => $entry->contest_id,
+                'angle' => $finalAngle,
+                'sector_id' => $sectorId,
+                'sector_class' => $isWinning ? 'secteur-gagne' : 'secteur-perdu',
+                'result' => $isWinning ? 'win' : 'lose',
+                'has_won_in_db' => $entry->has_won
+            ];
+            
+            // Créer ou charger le fichier existant
+            $history = [];
+            if (file_exists($historyFile)) {
+                $historyContent = file_get_contents($historyFile);
+                $history = json_decode($historyContent, true) ?: [];
+            }
+            
+            // Ajouter l'enregistrement actuel
+            $history[] = $spinData;
+            
+            // Sauvegarder le fichier mis à jour
+            file_put_contents($historyFile, json_encode($history, JSON_PRETTY_PRINT));
+            
+            Log::info('Historique de spin enregistré à la racine du projet', [
+                'entry_id' => $entry->id,
+                'angle' => $finalAngle,
+                'sector_id' => $sectorId,
+                'result' => $isWinning ? 'win' : 'lose',
+                'file_path' => $historyFile
+            ]);
+        } catch (\Exception $e) {
+            // En cas d'erreur, on log mais on ne bloque pas le processus
+            Log::error('Erreur lors de l\'enregistrement de l\'historique de spin', [
+                'error' => $e->getMessage(),
+                'entry_id' => $entry->id
+            ]);
+        }
     }
 
     public function render()

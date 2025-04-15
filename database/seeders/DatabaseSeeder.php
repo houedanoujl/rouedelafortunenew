@@ -33,11 +33,11 @@ class DatabaseSeeder extends Seeder
         if (Contest::count() === 0) {
             // Créer un concours
             $contest = Contest::create([
-                'name' => 'Grand Jeu de Printemps',
+                'name' => 'Grand Jeu Dinor 70 ans',
                 'start_date' => now(),
                 'end_date' => now()->addMonths(1),
                 'status' => 'active',
-                'description' => 'Participez à notre grand jeu de printemps et tentez de gagner des lots exceptionnels !',
+                'description' => 'Participez à notre Grand Jeu Dinor 70 ans et tentez de gagner des lots exceptionnels !',
             ]);
 
             // Création de prix

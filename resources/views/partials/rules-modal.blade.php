@@ -1,10 +1,13 @@
 <!-- Modal pour le règlement de la tombola (version accordéon personnalisé) -->
 <style>
     /* Styles spécifiques pour corriger l'overlay et l'accordéon */
+]
+
     .modal-backdrop {
     display: none !important;
     opacity: 0 !important;
     }
+    
     #reglementModal {
         z-index: 2100 !important;
     }
@@ -88,6 +91,7 @@
         background-color: #f8f9fa;
         font-weight: bold;
     }
+ 
 </style>
 
 <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true">

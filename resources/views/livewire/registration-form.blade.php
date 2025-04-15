@@ -1,88 +1,4 @@
 <div style="center; font-weight: normal;">
-<!-- CSS pour le popup de vérification d'âge -->
-<style>
-    /* Overlay qui couvre tout l'écran */
-    .age-verification-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    /* Le popup lui-même */
-    .age-verification-popup {
-        background-color: white;
-        border-radius: 10px;
-        width: 90%;
-        max-width: 500px;
-        padding: 30px;
-        text-align: center;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        animation: popup-fade-in 0.5s ease-out;
-    }
-
-    @keyframes popup-fade-in {
-        from { opacity: 0; transform: scale(0.8); }
-        to { opacity: 1; transform: scale(1); }
-    }
-
-    .age-verification-popup h2 {
-        color: var(--secondary-color);
-        margin-bottom: 20px;
-        font-size: 1.8rem;
-    }
-
-    .age-verification-popup p {
-        margin-bottom: 30px;
-        font-size: 1.2rem;
-    }
-
-    .age-verification-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-    }
-
-    .age-verification-buttons button {
-        padding: 10px 30px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1.1rem;
-        font-weight: bold;
-        transition: all 0.2s;
-    }
-
-    .btn-age-yes {
-        background-color: var(--apple-green);
-        color: white;
-    }
-
-    .btn-age-no {
-        background-color: var(--persian-red);
-        color: white;
-    }
-
-    .btn-age-yes:hover {
-        background-color: var(--sea-green);
-        transform: translateY(-2px);
-    }
-
-    .btn-age-no:hover {
-        background-color: #b02a1d;
-        transform: translateY(-2px);
-    }
-
-    .hidden {
-        display: none !important;
-    }
-</style>
 
 <style>
     /* Styles pour améliorer la lisibilité */
@@ -147,18 +63,6 @@
         </ul>
         <div class="age-verification-buttons">
             <button class="btn-age-yes" onclick="window.location.reload()">J'ai changé de mode de navigation</button>
-        </div>
-    </div>
-</div>
-
-<!-- Popup de vérification d'âge - caché par défaut -->
-<div id="ageVerificationOverlay" class="age-verification-overlay hidden">
-    <div class="age-verification-popup">
-        <h2>Vérification de l'âge</h2>
-        <p>Êtes vous agé d'au moins 18 ans ?</p>
-        <div class="age-verification-buttons">
-            <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
-            <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
         </div>
     </div>
 </div>
@@ -410,18 +314,6 @@
                 } catch (e) {
                     console.log('Erreur lors de la vérification de participation:', e);
                 }
-
-                // Vérifier l'âge si nécessaire
-                try {
-                    const ageVerified = localStorage.getItem('age_verified');
-                    if (ageVerified !== 'true') {
-                        setTimeout(function() {
-                            document.getElementById('ageVerificationOverlay').classList.remove('hidden');
-                        }, 100);
-                    }
-                } catch (e) {
-                    console.log('Erreur lors de la vérification d'âge:', e);
-                }
             }
         });
     });
@@ -480,18 +372,6 @@
             console.error('Erreur lors de la vérification de participation:', e);
             // Si une erreur se produit lors de l'accès au localStorage, cela peut indiquer le mode privé
             showPrivacyWarning();
-        }
-    }
-
-    // Fonction pour vérifier l'âge
-    function verifyAge(isAdult) {
-        if (isAdult) {
-            // Si l'utilisateur a plus de 18 ans, sauvegarder dans localStorage et cacher le popup
-            localStorage.setItem('age_verified', 'true');
-            document.getElementById('ageVerificationOverlay').classList.add('hidden');
-        } else {
-            // Si l'utilisateur a moins de 18 ans, rediriger vers Google
-            window.location.href = 'https://www.google.com';
         }
     }
 </script>

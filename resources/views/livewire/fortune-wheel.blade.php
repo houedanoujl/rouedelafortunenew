@@ -2,8 +2,11 @@
     @if($showWheel)
     <div class="fortune-wheel-container">
         <div class="wheel-container">
-            <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-            <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+            <!-- Les bibliothèques dans le bon ordre -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+            <script src="{{ asset('js/Winwheel.min.js') }}"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
             
             <!-- Pointeur amélioré avec une meilleure position -->
             <div class="wheel-pointer">
@@ -14,90 +17,9 @@
             </div>
             
             <div class="wheel-outer">
-                <div id="wheel" class="wheel">
-                    <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
-                        <defs>
-                            <!-- Couleurs plates selon la palette demandée -->
-                            <linearGradient id="winGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:#F7DB15;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#F7DB15;stop-opacity:1" />
-                            </linearGradient>
-                            <linearGradient id="loseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:#D03A2C;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#D03A2C;stop-opacity:1" />
-                            </linearGradient>
-                            <!-- Suppression des motifs matelassés et ombres pour un design plat -->
-                        </defs>
-
-                        <g id="wheel-inner">
-                            @php
-                                $sectors = 20;
-                                $sectorAngle = 360 / $sectors;
-                                $centerX = 250;
-                                $centerY = 250;
-                                $radius = 200;
-                                $textRadius = 160;
-                                $labelRadius = 145;
-                            @endphp
-                            
-                            @for ($i = 0; $i < $sectors; $i++)
-                                @php
-                                    $startAngle = $i * $sectorAngle;
-                                    $endAngle = ($i + 1) * $sectorAngle;
-                                    $isWinning = $i % 2 === 0;
-                                    
-                                    // Convertir les angles en radians pour les calculs
-                                    $startRad = deg2rad($startAngle);
-                                    $endRad = deg2rad($endAngle);
-                                    $midRad = deg2rad($startAngle + $sectorAngle / 2);
-                                    
-                                    // Calculer les points pour le tracé du secteur
-                                    $x1 = $centerX + cos($startRad) * $radius;
-                                    $y1 = $centerY + sin($startRad) * $radius;
-                                    $x2 = $centerX + cos($endRad) * $radius;
-                                    $y2 = $centerY + sin($endRad) * $radius;
-                                    
-                                    // Position du texte et des labels
-                                    $textX = $centerX + cos($midRad) * $textRadius;
-                                    $textY = $centerY + sin($midRad) * $textRadius;
-                                    $labelX = $centerX + cos($midRad) * $labelRadius;
-                                    $labelY = $centerY + sin($midRad) * $labelRadius;
-                                @endphp
-                                
-                                <!-- Secteur avec design plat -->
-                                <path d="M {{ $centerX }} {{ $centerY }} L {{ $x1 }} {{ $y1 }} A {{ $radius }} {{ $radius }} 0 0 1 {{ $x2 }} {{ $y2 }} Z" 
-                                      fill="url(#{{ $isWinning ? 'winGradient' : 'loseGradient' }})"
-                                      stroke="#ffffff"
-                                      stroke-width="1" />
-                                
-                                <!-- Emoji (🎁 ou ❌) -->
-                                <text x="{{ $textX }}" y="{{ $textY }}"
-                                      text-anchor="middle"
-                                      dominant-baseline="middle"
-                                      fill="#ffffff"
-                                      font-size="24px"
-                                      transform="rotate({{ $startAngle + $sectorAngle / 2 }}, {{ $textX }}, {{ $textY }})">
-
-                                </text>
-                                
-                                <!-- Texte (GAGNÉ ou PERDU) -->
-                                <text x="{{ $labelX }}" y="{{ $labelY }}"
-                                      text-anchor="middle"
-                                      dominant-baseline="middle"
-                                      fill="#ffffff"
-                                      font-size="14px"
-                                      font-weight="bold"
-                                      transform="rotate({{ $startAngle + $sectorAngle / 2 }}, {{ $labelX }}, {{ $labelY }})">
-                                      {{ $isWinning ? 'GAGNÉ' : 'PERDU' }}
-                                </text>
-                            @endfor
-                            
-                            <!-- Centre de la roue avec le logo -->
-                            <circle cx="{{ $centerX }}" cy="{{ $centerY }}" r="50" fill="white"/>
-                            <image href="/assets/images/rlogo.svg" x="{{ $centerX - 40 }}" y="{{ $centerY - 40 }}" height="80" width="80" preserveAspectRatio="xMidYMid meet" />
-                        </g>
-                    </svg>
-                </div>
+                <canvas id="canvas" width="500" height="500">
+                    Canvas not supported, please use another browser.
+                </canvas>
             </div>
             
             <button class="spin-button" wire:click="spin" {{ $spinning ? 'disabled' : '' }}>
@@ -119,94 +41,137 @@
     </audio>
 
     <script>
-        document.addEventListener('livewire:initialized', () => {
-            const wheel = document.getElementById('wheel-inner');
-            const spinSound = document.getElementById('spinSound');
-            const winSound = document.getElementById('winSound');
-            const loseSound = document.getElementById('loseSound');
+        let theWheel;
+        let isInitialized = false;
+        
+        // Créer la roue avec ses segments
+        function createWheel() {
+            if (isInitialized) return;
             
-            console.log('Wheel component initialized');
-            
-            @this.on('startSpinWithSound', (data) => {
-                // S'assurer que l'angle est bien un nombre
-                const finalAngle = parseInt(data.angle, 10) || 0;
-                console.log('Spin triggered with angle:', finalAngle);
-                
-                // Jouer le son de rotation
-                spinSound.currentTime = 0;
-                spinSound.play();
-                
-                // Calculer la rotation totale (15 tours complets + angle final)
-                const totalRotation = 5400 + finalAngle; // 15 tours = 5400 degrés
-                console.log('Total rotation:', totalRotation);
-                
-                // Réinitialiser la rotation de la roue
-                $(wheel).css({
-                    'transition': 'none',
-                    'transform': 'rotate(0deg)'
+            // Segments de la roue (5 gagnants, 5 perdants)
+            const segments = [];
+            for (let i = 0; i < 10; i++) {
+                const isWinning = i % 2 === 0;
+                segments.push({
+                    'id': 'secteur-' + i,
+                    'text': isWinning ? 'GAGNÉ' : 'PERDU',
+                    'fillStyle': isWinning ? '#F7DB15' : '#D03A2C',
+                    'textFillStyle': '#000000', // Texte en noir
+                    'textFontSize': 16,
+                    'textFontFamily': 'Arial',
+                    'textFontWeight': 'bold',
+                    'strokeStyle': '#FFFFFF',
+                    'textOrientation': 'horizontal', // Texte horizontal
+                    'textDirection': 'normal', // Direction normale
+                    'textMargin': 30, // Augmenter la marge pour meilleur positionnement
+                    'textAlignment': 'center', // Alignement au centre
+                    'rotateAngle': i % 2 === 0 ? 90 : 270, // Rotation à 90 degrés
+                    'class': isWinning ? 'secteur-gagne' : 'secteur-perdu'
                 });
-                
-                // Forcer un reflow
-                wheel.offsetWidth;
-                
-                // Animer la roue avec jQuery
-                setTimeout(() => {
-                    $(wheel).css({
-                        'transition': 'transform 13s cubic-bezier(0.17, 0.67, 0.12, 0.99)', // 13 secondes
-                        'transform': 'rotate(' + totalRotation + 'deg)'
-                    });
-                }, 10);
-                
-                // Attendre la fin de l'animation
-                setTimeout(() => {
-                    // Arrêter le son de rotation
-                    spinSound.pause();
-                    spinSound.currentTime = 0;
-                    
-                    // Jouer le son approprié (victoire ou défaite)
-                    const isWinning = finalAngle % 36 === 0;
-                    console.log('Is winning:', isWinning);
-                    
-                    if (isWinning) {
-                        winSound.play();
-                    } else {
-                        loseSound.play();
-                    }
-                }, 13200); // 13 secondes + 200ms de marge
+            }
+            
+            // Configuration de la roue
+            theWheel = new Winwheel({
+                'canvasId': 'canvas',
+                'numSegments': 10,
+                'segments': segments,
+                'outerRadius': 212,
+                'centerX': 250,
+                'centerY': 250,
+                'textAlignment': 'center',
+                'lineWidth': 1,
+                'drawText': true,
+                'centerImage': '/assets/images/rlogo.svg', // Logo au centre
+                'imageOverlay': true,
+                'animation': {
+                    'type': 'spinToStop',
+                    'duration': 10,
+                    'spins': 8,
+                    'callbackFinished': 'spinComplete()'
+                }
             });
             
-            @this.on('victory', () => {
-                setTimeout(launchConfetti, 13200); // 13 secondes + 200ms de marge
+            // Charger l'image du centre
+            let loadedImg = new Image();
+            loadedImg.src = '/assets/images/rlogo.svg';
+            loadedImg.onload = function() {
+                theWheel.wheelImage = loadedImg;
+                theWheel.draw();
+            };
+            
+            isInitialized = true;
+            console.log('Roue initialisée avec succès');
+        }
+        
+        // Initialiser la roue dès le chargement
+        window.addEventListener('DOMContentLoaded', createWheel);
+        
+        // Callback de fin de rotation
+        window.spinComplete = function() {
+            const winningSegment = theWheel.getIndicatedSegment();
+            console.log('Roue arrêtée sur:', winningSegment.text);
+            
+            const isWinning = winningSegment.class === 'secteur-gagne';
+            if (isWinning) {
+                document.getElementById('winSound').play();
+                launchConfetti();
+            } else {
+                document.getElementById('loseSound').play();
+            }
+            
+            // Redirection après la fin de l'animation
+            setTimeout(() => {
+                window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
+            }, 3000);
+        };
+        
+        // Écouter les événements Livewire
+        document.addEventListener('livewire:initialized', () => {
+            // Réagir à l'événement de rotation de Livewire
+            @this.on('startSpinWithSound', (data) => {
+                if (!isInitialized) {
+                    createWheel();
+                }
+                
+                document.getElementById('spinSound').play();
+                
+                // Calculer l'angle et démarrer l'animation
+                const finalAngle = data.angle;
+                const stopPosition = finalAngle;
+                
+                console.log('Démarrage de la rotation - Angle:', finalAngle);
+                
+                // Mettre à jour l'animation et démarrer
+                theWheel.animation.stopAngle = stopPosition;
+                theWheel.startAnimation();
             });
         });
         
+        // Fonction pour les confettis
         function launchConfetti() {
-            const count = 200;
-            const defaults = {
-                origin: { y: 0.7 },
-                spread: 360,
-                ticks: 100,
-                gravity: 0,
-                decay: 0.94,
-                startVelocity: 30,
-                colors: ['#F7DB15', '#D03A2C', '#ffffff', '#e6cc00', '#b73224'],
-                shapes: ['circle', 'square'],
-                scalar: 1.5,
+            var count = 200;
+            var defaults = {
+                origin: { y: 0.7 }
             };
 
             function fire(particleRatio, opts) {
-                confetti({
-                    ...defaults,
-                    ...opts,
-                    particleCount: Math.floor(count * particleRatio),
-                });
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
             }
 
-            fire(0.25, { spread: 26, startVelocity: 55 });
-            fire(0.2, { spread: 60 });
-            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-            fire(0.1, { spread: 120, startVelocity: 45 });
+            fire(0.25, {
+                spread: 26,
+                startVelocity: 55,
+            });
+            fire(0.2, {
+                spread: 60,
+            });
+            fire(0.35, {
+                spread: 100,
+                decay: 0.91,
+                scalar: 0.8,
+            });
         }
     </script>
 
@@ -249,8 +214,6 @@
             background-color: var(--persian-red);
             z-index: 2;
         }
-        
-        /* Suppression du motif de fond pour un design plat */
 
         .wheel-container {
             position: relative;
@@ -260,8 +223,6 @@
             text-align: center;
             padding: 1.5rem;
         }
-        
-        /* Suppression du motif de fond pour un design plat */
 
         .wheel-outer {
             position: relative;
@@ -273,22 +234,12 @@
             border: 1px solid rgba(224, 224, 224, 0.3);
         }
 
-        .wheel {
+        #canvas {
             width: 100%;
             height: auto;
             display: block;
-        }
-        
-        /* Suppression de l'animation respiratoire pour un design plat */
-
-        .wheel svg {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        #wheel-inner {
-            transform-origin: center center;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .wheel-pointer {
@@ -298,8 +249,6 @@
             transform: translateX(-50%);
             z-index: 10;
         }
-        
-        /* Suppression de l'animation de rebond pour un design plat */
 
         .spin-button {
             margin-top: 30px;
@@ -317,15 +266,11 @@
             letter-spacing: 0.1em;
             font-weight: 600;
         }
-        
-        /* Suppression de l'animation pulse pour un design plat */
 
         .spin-button:hover {
             background-color: #e6cc00;
             opacity: 0.9;
         }
-        
-        /* Suppression de l'effet de brillance pour un design plat */
 
         .spin-button:disabled {
             background-color: #cccccc;

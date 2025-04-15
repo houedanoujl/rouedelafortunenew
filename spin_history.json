@@ -1,0 +1,260 @@
+[
+    {
+        "timestamp": "2025-04-15T18:46:11+00:00",
+        "entry_id": 70,
+        "participant": {
+            "id": 66,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanluc@houed64anou.com"
+        },
+        "contest_id": 1,
+        "angle": 252,
+        "sector": {
+            "result": "lose",
+            "label": "PERDU",
+            "color": "#DC3545"
+        },
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T18:47:40+00:00",
+        "entry_id": 71,
+        "participant": {
+            "id": 67,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanuiopluc@houedanou.com"
+        },
+        "contest_id": 1,
+        "angle": 252,
+        "sector": {
+            "result": "lose",
+            "label": "PERDU",
+            "color": "#DC3545"
+        },
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T18:48:17+00:00",
+        "entry_id": 72,
+        "participant": {
+            "id": 68,
+            "name": "Jean Luc Houedanou",
+            "email": "iupujeanluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 252,
+        "sector": {
+            "result": "lose",
+            "label": "PERDU",
+            "color": "#DC3545"
+        },
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T18:48:55+00:00",
+        "entry_id": 73,
+        "participant": {
+            "id": 69,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanliupuc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 108,
+        "sector": {
+            "result": "lose",
+            "label": "PERDU",
+            "color": "#DC3545"
+        },
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T18:49:30+00:00",
+        "entry_id": 74,
+        "participant": {
+            "id": 70,
+            "name": "Jean Luc Houedanou",
+            "email": "jeaniupiuoluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 144,
+        "sector": {
+            "result": "win",
+            "label": "GAGN\u00c9",
+            "color": "#28a745"
+        },
+        "result": "win",
+        "has_won_in_db": true
+    },
+    {
+        "timestamp": "2025-04-15T18:55:56+00:00",
+        "entry_id": 75,
+        "participant": {
+            "id": 71,
+            "name": "Jean Luc Houedanou",
+            "email": "jsdfseanluc@houedanou.com"
+        },
+        "contest_id": 1,
+        "angle": 216,
+        "sector": {
+            "result": "win",
+            "label": "GAGN\u00c9",
+            "color": "#28a745"
+        },
+        "result": "win",
+        "has_won_in_db": true
+    },
+    {
+        "timestamp": "2025-04-15T19:04:54+00:00",
+        "entry_id": 76,
+        "participant": {
+            "id": 72,
+            "name": "Jean Luc Houedanou",
+            "email": "jsqdeanluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 18,
+        "sector_id": "secteur-0",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true
+    },
+    {
+        "timestamp": "2025-04-15T19:21:17+00:00",
+        "entry_id": 77,
+        "participant": {
+            "id": 73,
+            "name": "Jean Luc Houedanou",
+            "email": "jedqsanluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 270,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T19:23:07+00:00",
+        "entry_id": 78,
+        "participant": {
+            "id": 74,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanlucqds@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 342,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T19:27:56+00:00",
+        "entry_id": 79,
+        "participant": {
+            "id": 75,
+            "name": "Jean Luc Houedanou",
+            "email": "jean646465luc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 54,
+        "sector_id": "secteur-1",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T19:34:15+00:00",
+        "entry_id": 80,
+        "participant": {
+            "id": 76,
+            "name": "Jean Luc Houedanou",
+            "email": "4546jeanluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 270,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T19:36:47+00:00",
+        "entry_id": 81,
+        "participant": {
+            "id": 77,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanl4564uc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 270,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T19:43:21+00:00",
+        "entry_id": 82,
+        "participant": {
+            "id": 78,
+            "name": "Jean Luc Houedanou",
+            "email": "jeansgluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 126,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T19:45:25+00:00",
+        "entry_id": 83,
+        "participant": {
+            "id": 79,
+            "name": "Jean Luc Houedanou",
+            "email": "jea75nluc@bigfiveabidjan.com"
+        },
+        "contest_id": 1,
+        "angle": 54,
+        "sector_id": "secteur-1",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-15T20:00:14+00:00",
+        "entry_id": 85,
+        "participant": {
+            "id": 81,
+            "name": "efq sdq",
+            "email": "SQddq@GMAIL.COM"
+        },
+        "contest_id": 1,
+        "angle": 234,
+        "sector_id": "secteur-6",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true
+    },
+    {
+        "timestamp": "2025-04-15T20:05:16+00:00",
+        "entry_id": 86,
+        "participant": {
+            "id": 82,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jh465ouedanou@gmail.com"
+        },
+        "contest_id": 1,
+        "angle": 90,
+        "sector_id": "secteur-2",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true
+    }
+]
