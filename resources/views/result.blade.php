@@ -1,17 +1,32 @@
 @extends('layouts.app')
 
 @section('content')
+<?php
+// Récupérer le résultat depuis la session (beaucoup plus sécurisé qu'un paramètre URL)
+$sessionKey = 'spin_result_' . $entry->id;
+$displayedResult = session($sessionKey, null);
+$actualResultIsWin = $entry->has_won;
+
+// Si le résultat en session est présent, l'utiliser; sinon utiliser le résultat de la base de données
+$showWinResult = $displayedResult === 'win' ? true : ($displayedResult === 'lose' ? false : $actualResultIsWin);
+
+// Si nous avons utilisé la session, nous pouvons la supprimer pour éviter toute confusion future
+if ($displayedResult !== null) {
+    session()->forget($sessionKey);
+}
+?>
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header bg-{{ $entry->has_won ? 'success' : 'danger' }} text-white">
-                    <h2 class="mb-0">{{ $entry->has_won ? '🎉 Félicitations ! 🎉' : '😔 Pas de chance... 😔' }}</h2>
+                <div class="card-header bg-{{ $showWinResult ? 'success' : 'danger' }} text-white">
+                    <h2 class="mb-0">{{ $showWinResult ? '🎉 Félicitations ! 🎉' : '😔 Pas de chance... 😔' }}</h2>
                 </div>
                 <div class="card-body text-center">
                     <p class="lead mb-4">
                         <span style="font-weight: normal; color: var(--primary-red);">{{ $entry->participant->first_name }} {{ $entry->participant->last_name }}</span>,
-                        @if($entry->has_won)
+                        @if($showWinResult)
                             vous avez gagné ! 🎁 <br>
                             Scannez le QR code ci-dessous pour réclamer votre prix.
                             @if($qrCode)
@@ -49,7 +64,7 @@
     </div>
 </div>
 
-@if($entry->has_won)
+@if($showWinResult)
 <!-- Modal -->
 <div class="modal fade" id="prizeModal" tabindex="-1" aria-labelledby="prizeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -68,6 +83,7 @@
                 @else
                     <h4>🎁 Félicitations !</h4>
                     <p class="mt-3">Vous avez remporté un lot.</p>
+                    <img src="{{ asset('img/prize_placeholder.jpg') }}" alt="Lot mystère" class="img-fluid mt-3">
                 @endif
             </div>
             <div class="modal-footer">
@@ -78,7 +94,7 @@
 </div>
 @endif
 
-@if($entry->has_won)
+@if($showWinResult)
 <style>
     /* Définition des variables de couleur */
     :root {
@@ -187,8 +203,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Stocker dans localStorage qu'une participation a eu lieu (pour renforcer la limitation)
     @if(session('localStorageKey'))
     const localStorageKey = '{{ session("localStorageKey") }}';
-    localStorage.setItem(localStorageKey, 'played');
-    console.log('Participation enregistrée dans localStorage:', localStorageKey);
+    // Vérifier si l'utilisateur est l'utilisateur spécial
+    const isSpecialUser = {{ isset($entry->participant) && $entry->participant->email === 'noob@saibot.com' ? 'true' : 'false' }};
+    
+    // Ne pas stocker dans localStorage pour l'utilisateur spécial
+    if (!isSpecialUser) {
+        localStorage.setItem(localStorageKey, 'played');
+        console.log('Participation enregistrée dans localStorage:', localStorageKey);
+    } else {
+        console.log('Utilisateur spécial détecté, pas de stockage dans localStorage');
+    }
     @endif
     
     // Initialisation manuelle du modal pour éviter les conflits

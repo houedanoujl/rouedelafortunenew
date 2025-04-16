@@ -50,6 +50,9 @@
     }
 </style>
 
+<!-- masque de saisie-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+
 <!-- Modal d'avertissement pour navigation privée / cookies désactivés -->
 <div id="privacyWarningOverlay" class="age-verification-overlay hidden">
     <div class="age-verification-popup">
@@ -139,13 +142,13 @@
                         @error('lastName') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-group">
-                        <label for="phone">{{ __('registration.fields.phone.label') }} <span style="color: red;">*</span></label>
-                        <input type="tel" class="form-control {{ $isExistingParticipant ? 'bg-light' : '' }}" id="phone" wire:model="phone" {{ $isExistingParticipant ? 'readonly' : '' }} required>
-                        @if (!$isExistingParticipant)
-                            <small class="form-text text-muted">Si vous avez déjà participé, saisissez votre numéro pour retrouver vos informations.</small>
-                        @endif
-                        @error('phone') <span class="text-danger">{{ $message }}</span> @enderror
-                    </div>
+                            <label for="phone">{{ __('registration.fields.phone.label') }} <span style="color: red;">*</span></label>
+                            <input type="tel" class="form-control phone-mask {{ $isExistingParticipant ? 'bg-light' : '' }}" id="phone" wire:model.lazy="phone" {{ $isExistingParticipant ? 'readonly' : '' }} required placeholder="__ __ __ __ __" maxlength="10">
+                            @if (!$isExistingParticipant)
+                                <small class="form-text text-muted">Si vous avez déjà participé, saisissez votre numéro pour retrouver vos informations.</small>
+                            @endif
+                            @error('phone') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
                     <div class="form-group">
                         <label for="email">{{ __('registration.fields.email.label') }}</label>
                         <input type="email" class="form-control" id="email" wire:model="email">
@@ -374,4 +377,37 @@
             showPrivacyWarning();
         }
     }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser le masque lorsque la page est chargée
+        initPhoneMask();
+
+        // Réinitialiser le masque après les mises à jour Livewire
+        document.addEventListener('livewire:load', function() {
+            Livewire.hook('message.processed', (message, component) => {
+                initPhoneMask();
+            });
+        });
+
+        function initPhoneMask() {
+            Inputmask({
+                mask: "99 99 99 99 99",
+                placeholder: "__ __ __ __ __",
+                clearMaskOnLostFocus: false
+            }).mask(document.querySelectorAll(".phone-mask:not([readonly])"));
+        }
+    });
+
+    // Gérer la synchronisation entre Inputmask et Livewire
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('phone-mask')) {
+            // Déclencher l'événement de mise à jour Livewire
+            // après que l'utilisateur a fini de taper
+            setTimeout(() => {
+                const event = new Event('input', { bubbles: true });
+                e.target.dispatchEvent(event);
+            }, 100);
+        }
+    });
 </script>

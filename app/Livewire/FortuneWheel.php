@@ -34,7 +34,21 @@ class FortuneWheel extends Component
      */
     public function spin()
     {
-        if ($this->entry->has_played) {
+        // Vérifier si c'est un utilisateur de test autorisé à rejouer
+        $isTestUser = false;
+        
+        if ($this->entry->participant && $this->entry->participant->email === 'noob@saibot.com') {
+            $isTestUser = true;
+            // Réinitialiser l'entrée pour permettre de rejouer
+            if ($this->entry->has_played) {
+                // On ne retourne pas, on continue l'exécution
+                Log::info('Utilisateur test autorisé à rejouer', [
+                    'email' => $this->entry->participant->email,
+                    'entry_id' => $this->entry->id
+                ]);
+            }
+        } else if ($this->entry->has_played) {
+            // Pour tous les autres utilisateurs, on ne peut pas rejouer
             return;
         }
 
@@ -102,7 +116,7 @@ class FortuneWheel extends Component
         // Indices des secteurs disponibles
         $possibleIndices = [];
         
-        // Pour la roue de WinWheel.js, nous voulons des secteurs complets
+        // Pour la roue, nous voulons des secteurs complets
         for ($i = 0; $i < self::SECTORS_COUNT; $i++) {
             // Vérifier si le secteur correspond au résultat souhaité (gagnant ou perdant)
             // Les secteurs pairs (0, 2, 4, 6, 8) sont gagnants, les impairs sont perdants
@@ -117,13 +131,28 @@ class FortuneWheel extends Component
         $randomIndex = array_rand($possibleIndices);
         $sectorIndex = $possibleIndices[$randomIndex];
         
-        // Calculer l'angle central du secteur (pour WinWheel.js)
+        // Calculer l'angle du secteur
         // Chaque secteur fait 36 degrés (360 / 10 secteurs)
-        // L'angle est calculé à partir du haut (0 degré)
         $sectorAngle = $sectorIndex * self::SECTOR_ANGLE;
         
-        // Pour WinWheel.js, nous voulons l'angle central du secteur
-        $finalAngle = $sectorAngle + (self::SECTOR_ANGLE / 2);
+        // Générer un angle aléatoire au sein du secteur choisi
+        // Pour s'assurer que la roue s'arrête bien au milieu du secteur
+        $minSectorAngle = $sectorAngle;
+        $maxSectorAngle = $sectorAngle + self::SECTOR_ANGLE - 1;
+        $preciseSectorAngle = rand($minSectorAngle, $maxSectorAngle);
+        
+        // Ajouter plusieurs tours complets (entre 3 et 5 tours) pour une animation plus réaliste
+        $numSpins = rand(3, 5); 
+        $finalAngle = ($numSpins * 360) + (360 - $preciseSectorAngle);
+        
+        Log::info('Angle final calculé', [
+            'secteur' => $sectorIndex,
+            'est_gagnant' => $isWinning ? 'oui' : 'non',
+            'angle_secteur' => $sectorAngle,
+            'angle_précis' => $preciseSectorAngle,
+            'angle_final' => $finalAngle,
+            'tours' => $numSpins
+        ]);
         
         return [
             'index' => $sectorIndex,

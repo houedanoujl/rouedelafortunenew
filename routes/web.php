@@ -5,6 +5,7 @@ use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SpinController;
 use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\SpinResultController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,9 @@ Route::get('/spin/result/{entry}', [SpinController::class, 'result'])->name('spi
 Route::get('/qrcode/{code}', [QrCodeController::class, 'show'])->name('qrcode.result');
 Route::get('/qrcode/{code}/download/pdf', [QrCodeController::class, 'downloadPdf'])->name('qrcode.download.pdf');
 Route::get('/qrcode/{code}/download/png', [QrCodeController::class, 'downloadJpg'])->name('qrcode.download.png');
+
+// Route pour enregistrer le résultat réel du spin (AJAX)
+Route::post('/spin/record-result', [SpinResultController::class, 'recordResult'])->name('spin.record-result');
 
 // Affichage du résultat
 Route::get('/result/{entry}', [ParticipantController::class, 'showResult'])->name('result.show');

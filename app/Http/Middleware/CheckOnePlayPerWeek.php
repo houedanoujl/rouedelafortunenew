@@ -18,6 +18,48 @@ class CheckOnePlayPerWeek
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Vérifier si l'utilisateur est noob@saibot.com (compte de test)
+        $specialTestEmail = 'noob@saibot.com';
+        
+        // Récupérer l'utilisateur connecté ou le participant
+        $isTestUser = false;
+        
+        // Vérifier l'utilisateur connecté
+        if (auth()->check() && auth()->user()->email === $specialTestEmail) {
+            $isTestUser = true;
+        }
+        
+        // Si un formulaire d'inscription a été soumis, vérifier l'email
+        if ($request->has('email') && $request->email === $specialTestEmail) {
+            $isTestUser = true;
+        }
+        
+        // Vérifier via un participant existant dans la session
+        if ($request->session()->has('participant_id')) {
+            $participant = \App\Models\Participant::find($request->session()->get('participant_id'));
+            if ($participant && $participant->email === $specialTestEmail) {
+                $isTestUser = true;
+            }
+        }
+        
+        // Si c'est l'utilisateur de test, autoriser sans vérification et sans cookies
+        if ($isTestUser) {
+            // Ne rien stocker pour l'utilisateur spécial, juste passer au middleware suivant
+            $response = $next($request);
+            
+            // S'assurer qu'aucun cookie n'est mis dans la réponse pour cet utilisateur
+            if ($response->headers->has('Set-Cookie')) {
+                // Supprimer tous les cookies de la réponse
+                $cookieNames = ['played_this_week', 'laravel_session', 'XSRF-TOKEN'];
+                foreach ($cookieNames as $cookieName) {
+                    $response->headers->removeCookie($cookieName);
+                }
+            }
+            
+            return $response;
+        }
+        
+        // Pour les autres utilisateurs, appliquer la restriction normale
         $cookieName = 'played_this_week';
         
         // Si le cookie existe, calculer les jours restants

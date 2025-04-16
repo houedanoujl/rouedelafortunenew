@@ -1,0 +1,10 @@
+// Remplacez la section de chargement d'image par:
+// Charger l'image du centre
+let loadedImg = new Image();
+loadedImg.src = '/votrenouvelleimagependant.png'; // Vérifiez ce chemin
+loadedImg.onload = function() {
+    // Utilisez centerImage au lieu de wheelImage
+    theWheel.centerImage = loadedImg;
+    theWheel.draw();
+    console.log('Image chargée avec succès', loadedImg.width, loadedImg.height); // Ajoutez cette ligne
+};
