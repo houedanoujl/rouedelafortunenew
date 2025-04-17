@@ -7,6 +7,49 @@
 
     <title>{{ config('app.name', 'Roue de la Fortune') }}</title>
 
+    @if(session('is_test_account'))
+    <script>
+        // Version simplifiée et sécurisée de l'intercepteur de cookies pour mode test
+        (function() {
+            console.log('🛡️ MODE TEST: Nettoyage des cookies activé');
+            
+            // Liste des cookies à supprimer
+            const cookiesToDelete = ['70_ans_dinor_session', 'contest_played_1'];
+            
+            // Fonction pour supprimer un cookie sur tous les chemins possibles
+            function deleteCookie(name) {
+                const paths = ['/', '/spin', '/register', '/result', '/home', ''];
+                
+                // Pour chaque chemin, essayer toutes les combinaisons possibles
+                paths.forEach(path => {
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}`;
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${window.location.hostname}`;
+                });
+                
+                console.log(`Cookie ${name} supprimé pour le mode test`);
+            }
+            
+            // Supprimer les cookies immédiatement au chargement
+            cookiesToDelete.forEach(cookieName => {
+                deleteCookie(cookieName);
+            });
+            
+            // Vérifier périodiquement (toutes les 5 secondes) si les cookies sont recréés
+            setInterval(() => {
+                cookiesToDelete.forEach(cookieName => {
+                    // Vérifier si le cookie existe avant de tenter de le supprimer
+                    if (document.cookie.split(';').some(item => item.trim().startsWith(cookieName + '='))) {
+                        deleteCookie(cookieName);
+                    }
+                });
+            }, 5000);
+            
+            // Supprimer aussi du localStorage
+            localStorage.removeItem('contest_played_1');
+        })();
+    </script>
+    @endif
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,6 +309,198 @@
 </head>
 <body class="font-sans antialiased">
 
+    <!-- Bannière de mode test pour les employés de Big Five et Sania -->
+    @if(session('is_test_account'))
+    <div class="test-mode-banner">
+        <strong>MODE TEST ACTIVÉ</strong> pour les employés de SIFCA &{{ session('test_account_company') }} - 
+        Les restrictions de jeu hebdomadaires sont désactivées . Aucun lot attribué dans ce mode ne sera envoyé ou remis.
+        <button onclick="clearStorageAndRedirect()" class="test-mode-button">Retour à l'accueil</button>
+    </div>
+    <script>
+        // Journaliser tous les cookies au chargement de la page
+        console.log('COOKIES AU DÉMARRAGE:', document.cookie);
+        
+        function clearStorageAndRedirect() {
+            // Afficher une fenêtre de confirmation
+            if (!confirm("Êtes-vous sûr de vouloir nettoyer toutes les données et retourner à l'accueil ?")) {
+                console.log('Opération annulée par l\'utilisateur');
+                return; // Sortir de la fonction si l'utilisateur annule
+            }
+
+            console.log('====== DÉBUT DU NETTOYAGE ======');
+            console.log('Cookies actuels:', document.cookie);
+            console.log('LocalStorage actuel:', Object.keys(localStorage));
+            
+            // Supprimer les éléments du localStorage - méthode 1
+            try {
+                console.log('Tentative de suppression du localStorage contest_played_1');
+                localStorage.removeItem('contest_played_1');
+                console.log('Tentative de suppression du localStorage played_this_week');
+                localStorage.removeItem('played_this_week');
+                
+                // Tentative de nettoyer complètement le localStorage
+                console.log('Tentative de nettoyage complet du localStorage');
+                localStorage.clear();
+                console.log('LocalStorage nettoyé avec succès');
+            } catch (e) {
+                console.error('Erreur lors du nettoyage du localStorage:', e);
+            }
+            
+            // Supprimer tous les cookies - méthode plus robuste
+            try {
+                console.log('Tentative de suppression des cookies');
+                const cookies = document.cookie.split(';');
+                console.log('Nombre de cookies trouvés:', cookies.length);
+                
+                // CIBLAGE SPÉCIFIQUE des cookies problématiques
+                console.log('SUPPRESSION SPÉCIFIQUE des cookies problématiques');
+                
+                // Supprimer 70_ans_dinor_session avec toutes les combinaisons possibles
+                console.log('Tentative de suppression du cookie 70_ans_dinor_session');
+                document.cookie = '70_ans_dinor_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                document.cookie = '70_ans_dinor_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + window.location.hostname;
+                document.cookie = '70_ans_dinor_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/spin';
+                document.cookie = '70_ans_dinor_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/result';
+                document.cookie = '70_ans_dinor_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+                
+                // Supprimer contest_played_1 avec toutes les combinaisons possibles
+                console.log('Tentative de suppression du cookie contest_played_1');
+                document.cookie = 'contest_played_1=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                document.cookie = 'contest_played_1=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + window.location.hostname;
+                document.cookie = 'contest_played_1=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/spin';
+                document.cookie = 'contest_played_1=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/result';
+                document.cookie = 'contest_played_1=; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+                
+                // Méthode 1: Suppression classique
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i];
+                    const eqPos = cookie.indexOf('=');
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                    console.log('Suppression du cookie:', name);
+                    
+                    // Supprimer avec différentes combinaisons de path et domain
+                    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + window.location.hostname;
+                    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + window.location.hostname;
+                    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+                }
+                
+                // Méthode 2: Suppression de cookies spécifiques connus dans l'application
+                document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                document.cookie = 'laravel_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                document.cookie = 'contest_played_1=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                
+                // Vérifier s'il reste des cookies
+                if (document.cookie) {
+                    console.warn('Des cookies existent toujours après suppression:', document.cookie);
+                    console.log('DÉTAIL DES COOKIES RESTANTS:');
+                    document.cookie.split(';').forEach(function(cookie) {
+                        console.log('  - ' + cookie.trim());
+                    });
+                    
+                    // Méthode 3: Dernière tentative avec une approche plus agressive
+                    const remainingCookies = document.cookie.split(';');
+                    for (let i = 0; i < remainingCookies.length; i++) {
+                        const cookie = remainingCookies[i];
+                        const eqPos = cookie.indexOf('=');
+                        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                        
+                        // Essayer des combinaisons supplémentaires
+                        const domains = [window.location.hostname, '.' + window.location.hostname, ''];
+                        const paths = ['/', '', '/home', '/spin', '/register', '/result'];
+                        
+                        domains.forEach(domain => {
+                            paths.forEach(path => {
+                                const expireString = '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                                const cookieString = domain ? 
+                                    `${name}${expireString}; path=${path}; domain=${domain}` : 
+                                    `${name}${expireString}; path=${path}`;
+                                document.cookie = cookieString;
+                            });
+                        });
+                    }
+                }
+                
+                // Vérification finale - ajouter un délai pour voir si les cookies sont vraiment supprimés
+                setTimeout(function() {
+                    console.log('VÉRIFICATION FINALE DES COOKIES (après délai):', document.cookie);
+                    if (document.cookie) {
+                        console.error('ÉCHEC: Des cookies existent toujours après toutes les tentatives de nettoyage');
+                        console.log('LISTE DES COOKIES RESTANTS:');
+                        document.cookie.split(';').forEach(function(cookie) {
+                            if (cookie.trim()) {
+                                console.log('  → ' + cookie.trim());
+                            }
+                        });
+                    } else {
+                        console.log('SUCCÈS: Tous les cookies ont été supprimés');
+                    }
+                }, 500);
+                
+                console.log('Cookies nettoyés avec succès');
+            } catch (e) {
+                console.error('Erreur lors du nettoyage des cookies:', e);
+            }
+            
+            // Vérification finale
+            console.log('Vérification après nettoyage:');
+            console.log('Cookies restants:', document.cookie);
+            console.log('LocalStorage restant:', Object.keys(localStorage));
+            console.log('====== FIN DU NETTOYAGE ======');
+            
+            // Définir un indicateur dans sessionStorage (qui sera conservé pendant la navigation)
+            // Ce flag indiquera à la page d'accueil de ne pas recréer le localStorage
+            try {
+                sessionStorage.setItem('prevent_localstorage_recreation', 'true');
+                console.log('Flag de prévention défini dans sessionStorage');
+            } catch (e) {
+                console.error('Impossible de définir le flag dans sessionStorage:', e);
+            }
+            
+            // Attendre un peu avant de rediriger pour s'assurer que tout est nettoyé
+            console.log('Délai avant redirection...');
+            setTimeout(function() {
+                console.log('Redirection vers le nettoyeur de cookies côté serveur...');
+                // Utiliser la route serveur pour supprimer les cookies de manière fiable
+                window.location.href = '{{ route('clear.cookies') }}';
+            }, 2000); // Augmenter le délai à 2 secondes pour avoir le temps de voir les logs
+        }
+    </script>
+    <style>
+        .test-mode-banner {
+            background-color: #FF9800;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-size: 16px;
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .test-mode-button {
+            display: inline-block;
+            background-color: white;
+            color: #FF9800;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            margin-left: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .test-mode-button:hover {
+            background-color: #f1f1f1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .min-h-screen {
+            min-height: calc(100vh - 40px); /* Ajuster pour la hauteur de la bannière */
+        }
+    </style>
+    @endif
+
     <div class="min-h-screen">
         <header class="py-2">
             <div class="container">
@@ -311,7 +546,43 @@
     
     @livewireScripts
     @stack('scripts')
-    
+
+    @if(session('cookie_cleanup') || session('cookies_being_cleared'))
+    <script>
+        // Stocker dans sessionStorage que nous avons effectué un nettoyage
+        // Cette valeur sera conservée uniquement pour cette session de navigation
+        sessionStorage.setItem('cookies_cleared_recently', 'true');
+        
+        // Fonction qui empêche la création des cookies problématiques
+        (function() {
+            console.log('>>> MODE PRÉVENTION DE COOKIES ACTIVÉ <<<');
+            
+            // Observer les changements de cookies
+            const originalCookie = document.cookie;
+            
+            // Remplacer la propriété cookie par une version qui bloque certains cookies
+            Object.defineProperty(document, 'cookie', {
+                set: function(val) {
+                    console.log('Tentative de création de cookie:', val);
+                    
+                    // Laisser passer seulement les cookies nécessaires au fonctionnement
+                    if (val.indexOf('70_ans_dinor_session') !== -1 || 
+                        val.indexOf('contest_played_1') !== -1) {
+                        console.log('BLOQUÉ: Cookie interdit en mode nettoyage:', val);
+                        return originalCookie;
+                    }
+                    
+                    // Laisser passer les autres cookies
+                    console.log('AUTORISÉ: Cookie autorisé:', val);
+                    return originalCookie = val;
+                },
+                get: function() {
+                    return originalCookie;
+                }
+            });
+        })();
+    </script>
+    @endif
 
 </body>
 </html>

@@ -3,31 +3,31 @@
         $participantName = $entry->participant ? $entry->participant->first_name . ' ' . $entry->participant->last_name : 'Participant inconnu';
     @endphp
 
-    <div class="container my-4">
+    <div class="container-fluid my-4">
         <div class="row justify-content-center">
-            <div class="col-md-10 text-center">
-                <div class="mt-3">
+            <div class="col-12 col-md-10 text-center">
+                <!--<div class="mt-3">
                     <h2 class="fw-bold">Bienvenue {{ $participantName }}</h2>
                     <p class="lead">Tournez la roue pour tenter de gagner un prix!</p>
-                </div>
+                </div>-->
                 
                 <div class="d-flex justify-content-center">
                     <div class="position-relative wheel-container">
-                        <!-- Conteneur du pointeur et de la roue, alignés verticalement -->
-                        <div class="wheel-and-pointer">
-                            <!-- Triangle indicateur - parfaitement aligné avec le centre exact de la roue -->
+
+                        <div class="wheel-and-pointer position-relative">
+                            <!-- Indicateur de la roue -->
                             <div id="pointer" class="position-absolute">
-                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                <svg width="40" height="40" viewBox="0 0 60 60">
                                     <polygon points="30,0 5,55 55,55" fill="#333" />
                                 </svg>
                             </div>
                             
                             <!-- La roue -->
-                            <canvas id="wheel" width="400" height="400"></canvas>
+                            <canvas id="wheel" width="320" height="320" class="responsive-wheel"></canvas>
                         </div>
                         
                         <!-- Bouton pour tourner -->
-                        <button id="spinBtn" class="btn btn-primary btn-lg mt-3 d-block mx-auto" style="z-index: 20;" @if($spinning) disabled @endif>
+                        <button id="spinBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20;" @if($spinning) disabled @endif>
                             @if($spinning)
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 En cours...
@@ -42,9 +42,10 @@
     </div>
 
     <!-- Sons -->
-    <audio id="wheelSound" src="{{ asset('sound/wheel-spinning.mp3') }}" preload="auto"></audio>
-    <audio id="winSound" src="{{ asset('sound/win-sound.mp3') }}" preload="auto"></audio>
-    <audio id="loseSound" src="{{ asset('sound/lose-sound.mp3') }}" preload="auto"></audio>
+    <audio id="wheelSound" src="{{ asset('sounds/wheel-spinning.mp3') }}" preload="auto"></audio>
+    <audio id="winSound" src="{{ asset('sounds/win.mp3') }}" preload="auto"></audio>
+    <audio id="loseSound" src="{{ asset('sounds/lose.mp3') }}" preload="auto"></audio>
+    <audio id="tickSound" src="{{ asset('sounds/tick.mp3') }}" preload="auto"></audio>
 
     <!-- Scripts pour la roue -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
@@ -58,6 +59,7 @@
         let spinningSound = document.getElementById('wheelSound');
         let winSound = document.getElementById('winSound');
         let loseSound = document.getElementById('loseSound');
+        let tickSound = document.getElementById('tickSound');
         
         // Variables
         let isSpinning = false;
@@ -71,9 +73,9 @@
             theWheel = new Winwheel({
                 'canvasId': 'wheel',
                 'numSegments': 10,
-                'outerRadius': 180,
-                'innerRadius': 50,
-                'textFontSize': 16,
+                'outerRadius': 140,
+                'innerRadius': 30,
+                'textFontSize': 12, 
                 'textFontWeight': 'bold',
                 'textOrientation': 'horizontal',
                 'textAlignment': 'center',
@@ -105,29 +107,20 @@
                 'pointerAngle': 0
             });
             
-            // Ajouter un logo au centre
-            loadCenterImage();
-            
-            // Traçons la roue immédiatement pour l'afficher correctement
+            // Positionner l'indicateur pour qu'il s'arrête exactement au milieu des segments
+            theWheel.pins.centerAngle = 0;
+            theWheel.pins.startAngle = 0;
             theWheel.draw();
         }
         
-        // Charger le logo au centre
-        function loadCenterImage() {
-            let wheelImage = new Image();
-            wheelImage.onload = function() {
-                theWheel.wheelImage = wheelImage;
-                theWheel.draw();
-            };
-            wheelImage.src = '/assets/images/rlogo.svg';
-            wheelImage.onerror = function(e) {
-                console.warn("Impossible de charger le logo:", e);
-            };
-        }
-        
-        // Son du tic-tac pendant la rotation
+        // Fonction de son de tick jouée à chaque fois que la roue passe sur une goupille
         function playTickSound() {
-            // Le son de rotation continue est géré séparément
+            // Jouer le son de tick quand la roue passe sur une goupille
+            if (tickSound) {
+                // Réinitialiser le son pour pouvoir le rejouer rapidement
+                tickSound.currentTime = 0;
+                tickSound.play();
+            }
         }
         
         // Callback lorsque la roue s'arrête
@@ -251,8 +244,8 @@
             // Configuration de l'animation avec l'angle d'arrêt aléatoire
             theWheel.animation = {
                 'type': 'spinToStop',
-                'duration': 8,
-                'spins': 4 + Math.random() * 2, // Nombre de tours également aléatoire
+                'duration': 12 + Math.random() * 4, // Durée plus longue entre 12 et 16 secondes (avant : 8 sec)
+                'spins': 8 + Math.random() * 6, // Nombre de tours plus important entre 8 et 14 tours (avant : 4-6)
                 'stopAngle': stopAngle,
                 'callbackFinished': finishedSpinning,
                 'callbackSound': playTickSound,
@@ -349,54 +342,113 @@
 
     <style>
         .wheel-container {
-            margin: 20px auto;
+            margin: 10px auto;
             position: relative;
-            width: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-flow: column;
+            max-width: 100%;
+            padding: 0 10px;
+        }
+        
+        .welcome-text {
+            width: 100%;
+            max-width: 320px;
+            color: #333;
+        }
+        
+        .welcome-text h4 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .welcome-text p {
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
         }
         
         .wheel-and-pointer {
             position: relative;
-            width: 400px;
-            height: 460px;
+            margin: 0 auto;
+            width: 320px;
+            max-width: 100%;
         }
         
-        #wheel {
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            border-radius: 50%;
-            display: block;
+        /* Logo au centre de la roue avec pseudo-élément */
+        .wheel-and-pointer::after {
+            content: "";
             position: absolute;
-            top: 60px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background-image: url('https://roue.dinorapp.com/assets/images/rlogo.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 5;
+            border-radius: 50%;
+            background-color: white;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .responsive-wheel {
+            max-width: 100%;
+            height: auto;
         }
         
         #pointer {
-            filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5));
-            z-index: 100;
-            position: absolute;
-            top: 0;
-            left: 50%;
+            width:100%;
             transform: translateX(-50%);
+            z-index: 10;
+            transform: rotateX(180deg);
+            display:flex;
+            align-items:center;
+            justify-content:center;
         }
         
-        #spinBtn {
-            transition: all 0.3s ease;
-            background-color: #0079B2;
-            border: none;
-            padding: 12px 30px;
+        .spin-button {
+            width: 100%;
+            max-width: 320px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 20px;
+            font-size: 0.9rem; /* Bouton avec texte plus petit */
+            padding: 0.5rem 1rem; /* Padding réduit pour le bouton */
         }
         
-        #spinBtn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            background-color: #0091D5;
+        @media (max-width: 575.98px) {
+            .wheel-and-pointer {
+                width: 280px;
+            }
+            
+            canvas#wheel {
+                width: 280px;
+                height: 280px;
+            }
+            
+            #pointer svg {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .welcome-text, .spin-button {
+                max-width: 280px;
+            }
         }
         
-        #spinBtn:disabled {
-            background-color: #666;
-            cursor: not-allowed;
+        /* Media query for very small devices */
+        @media (max-width: 350px) {
+            .wheel-and-pointer {
+                width: 250px;
+            }
+            
+            canvas#wheel {
+                width: 250px;
+                height: 250px;
+            }
         }
     </style>
 </div>

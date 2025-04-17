@@ -29,30 +29,36 @@ class ParticipantController extends Controller
         $cookieName = 'contest_played_' . $activeContest->id;
         $hasPlayed = $request->cookie($cookieName) !== null || \Session::has($cookieName);
 
-        // Vérifier aussi via localStorage en injectant du script JavaScript
-        $localStorageKey = 'contest_played_' . $activeContest->id;
+        // Pour les utilisateurs en mode test, ignorer la vérification de participation antérieure
+        if (session('is_test_account')) {
+            \Log::info('Mode test détecté : formulaire d\'inscription toujours affiché');
+            $hasPlayed = false; // Forcer l'affichage du formulaire pour les comptes test
+        } else {
+            // Vérifier aussi via localStorage en injectant du script JavaScript
+            $localStorageKey = 'contest_played_' . $activeContest->id;
 
-        // Vérifier aussi si une entrée existe déjà pour l'utilisateur dans ce concours
-        // (vérification spécifique au concours actif uniquement)
-        $ipAddress = $request->ip();
-        $userAgent = $request->header('User-Agent');
-        $userIdentifier = $request->cookie('user_identifier');
+            // Vérifier aussi si une entrée existe déjà pour l'utilisateur dans ce concours
+            // (vérification spécifique au concours actif uniquement)
+            $ipAddress = $request->ip();
+            $userAgent = $request->header('User-Agent');
+            $userIdentifier = $request->cookie('user_identifier');
 
-        // Si un identifiant utilisateur existe, vérifier directement dans la base de données
-        $existingEntry = null;
-        if ($userIdentifier) {
-            $existingEntry = Entry::where('participant_id', $userIdentifier)
-                                 ->where('contest_id', $activeContest->id)
-                                 ->first();
-            if ($existingEntry) {
-                $hasPlayed = true;
+            // Si un identifiant utilisateur existe, vérifier directement dans la base de données
+            $existingEntry = null;
+            if ($userIdentifier) {
+                $existingEntry = Entry::where('participant_id', $userIdentifier)
+                                     ->where('contest_id', $activeContest->id)
+                                     ->first();
+                if ($existingEntry) {
+                    $hasPlayed = true;
+                }
             }
         }
 
         if ($hasPlayed) {
             // S'assurer que le cookie est défini pour renforcer la limitation
             // Même si l'utilisateur est détecté par session ou BD, ajouter le cookie pour renforcer
-            if (!$request->cookie($cookieName)) {
+            if (!$request->cookie($cookieName) && !session('is_test_account')) {
                 $cookieExpiry = 60 * 24 * 30; // 30 jours en minutes par défaut
 
                 // Si le concours a une date de fin, utiliser cette date pour l'expiration
@@ -63,17 +69,28 @@ class ParticipantController extends Controller
                     $cookieExpiry = $minutesUntilEnd;
                 }
 
-                \Cookie::queue(cookie(
-                    $cookieName,         // nom du cookie
-                    'played',            // valeur
-                    $cookieExpiry,       // durée de vie en minutes
-                    '/',                 // chemin
-                    null,                // domaine (null = domaine actuel)
-                    false,               // secure (https uniquement)
-                    false,               // httpOnly (non accessible par JavaScript)
-                    false,               // raw
-                    'lax'                // sameSite
-                ));
+                // Ne pas créer de cookie pour les utilisateurs en mode test
+                if (!session('is_test_account')) {
+                    \Cookie::queue(cookie(
+                        $cookieName,         // nom du cookie
+                        'played',            // valeur
+                        $cookieExpiry,       // durée de vie en minutes
+                        '/',                 // chemin
+                        null,                // domaine (null = domaine actuel)
+                        false,               // secure (https uniquement)
+                        false,               // httpOnly (non accessible par JavaScript)
+                        false,               // raw
+                        'lax'                // sameSite
+                    ));
+                    
+                    // Journaliser la création du cookie (pour débogage)
+                    \Log::info("Cookie {$cookieName} créé pour un utilisateur normal", [
+                        'cookie_name' => $cookieName,
+                        'expiry_minutes' => $cookieExpiry
+                    ]);
+                } else {
+                    \Log::info("Création du cookie {$cookieName} ÉVITÉE pour un utilisateur en mode test");
+                }
             }
 
             // Stocker aussi en session comme sauvegarde
@@ -162,7 +179,7 @@ class ParticipantController extends Controller
         // 3. LocalStorage (vérifié dans JavaScript côté client)
 
         // Si détecté par cookie ou session, empêcher la participation
-        if ($request->cookie($cookieName) !== null || \Session::has($sessionKey)) {
+        if (($request->cookie($cookieName) !== null || \Session::has($sessionKey)) && !session('is_test_account')) {
             \Log::info('Participation bloquée - Déjà joué au concours ' . $contest->id, [
                 'detection_method' => $request->cookie($cookieName) ? 'cookie' : 'session',
                 'ip' => $request->ip(),
@@ -170,7 +187,7 @@ class ParticipantController extends Controller
             ]);
 
             return redirect()->route('home')->with([
-                'error' => 'Vous avez déjà participé à ce concours.',
+                'error' => 'Vous avez déjà participé au concours "' . $contest->name . '". Une seule participation par concours est autorisée.',
                 'contest_name' => $contest->name
             ]);
         }
@@ -213,8 +230,9 @@ class ParticipantController extends Controller
             ->where('contest_id', $request->contestId)
             ->first();
 
-        if ($existingEntry) {
-            // Définir les cookies/session pour renforcer la limitation
+        if ($existingEntry && !session('is_test_account')) {
+            // Définir les cookies pour empêcher les participations multiples
+            // 1. Cookie HTTP côté serveur
             $cookieName = 'contest_played_' . $request->contestId;
             $cookieExpiry = 60 * 24 * 365; // 1 an en minutes (valable pour toute la durée du concours)
 
@@ -227,10 +245,20 @@ class ParticipantController extends Controller
                 $cookieExpiry = $minutesUntilEnd;
             }
 
-            // Définir le cookie
-            \Cookie::queue(cookie($cookieName, 'played', $cookieExpiry, '/', null, false, false, false, 'lax'));
+            // Créer un cookie avec tous les paramètres explicites pour maximiser la compatibilité
+            $cookie = cookie(
+                $cookieName,                // nom spécifique au concours
+                'played',                   // valeur simple
+                $cookieExpiry,             // durée de vie en minutes
+                '/',                        // chemin
+                null,                       // domaine (null = domaine actuel)
+                false,                      // secure (https uniquement)
+                false,                      // httpOnly (non accessible par JavaScript)
+                false,                      // raw
+                'lax'                       // sameSite (lax = moins restrictif)
+            );
 
-            // Stocker aussi en session
+            // Stocker aussi en session comme backup
             \Session::put($cookieName, 'played');
 
             // Journaliser la tentative de participation multiple
@@ -243,6 +271,21 @@ class ParticipantController extends Controller
             // Rediriger avec un message explicatif
             session()->flash('info', 'Vous avez déjà participé à ce concours. Une seule participation par semaine au concours est autorisée.');
             return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
+        }
+        
+        // Si c'est un compte de test avec une entrée existante, supprimer cette entrée pour permettre de rejouer
+        if ($existingEntry && session('is_test_account')) {
+            \Log::info('Mode test: suppression de la participation existante pour permettre de rejouer', [
+                'participant_id' => $participant->id,
+                'contest_id' => $request->contestId,
+                'email' => $participant->email ?? 'non défini'
+            ]);
+            
+            // Option 1: Supprimer complètement l'entrée existante (plus radical)
+            // $existingEntry->delete();
+            
+            // Option 2: Réutiliser l'entrée existante (préservation des données)
+            // Le code ci-dessous va simplement continuer avec une nouvelle entrée sans supprimer l'ancienne
         }
 
         // Créer une nouvelle participation
@@ -319,84 +362,313 @@ class ParticipantController extends Controller
     }
 
     /**
-     * Traite le résultat de la roue
+     * Traite la requête AJAX pour faire tourner la roue et déterminer un résultat
      */
-    public function processWheelResult(Request $request)
+    public function spinWheel(Request $request)
     {
-        $request->validate([
-            'entry_id' => 'required|exists:entries,id',
-            'prize_id' => 'nullable|exists:prizes,id'
+        \Log::info('Requête spinWheel reçue', $request->all());
+
+        // Validation adaptée au format FormData
+        $validated = $request->validate([
+            'entry_id' => 'required'
         ]);
 
-        // Utiliser find() au lieu de findOrFail()
-        $entry = Entry::find($request->entry_id);
+        try {
+            // Utiliser find() au lieu de findOrFail()
+            $entry = Entry::find($validated['entry_id']);
 
-        // Si l'entrée n'existe pas, rediriger avec un message d'erreur
-        if (!$entry) {
-            return redirect()->route('home')->with('error', 'Participation introuvable. Veuillez vous inscrire à nouveau.');
-        }
+            // Si l'entrée n'existe pas, retourner une erreur
+            if (!$entry) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Participation introuvable. Veuillez vous inscrire à nouveau.'
+                ], 404);
+            }
 
-        // Vérifier si l'utilisateur a déjà participé à ce concours
-        $cookieName = 'contest_played_' . $entry->contest_id;
-        $hasPlayed = $request->cookie($cookieName) !== null || \Session::has($cookieName);
+            // Vérifier si la roue a déjà été tournée pour cette entrée
+            // Pour les comptes en mode test, on ignore cette vérification pour permettre de jouer plusieurs fois
+            if ($entry->has_played && !session('is_test_account')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette roue a déjà été tournée. Vous ne pouvez pas jouer à nouveau.'
+                ]);
+            }
 
-        if ($hasPlayed) {
-            $contest = Contest::find($entry->contest_id);
-            return redirect()->route('home')->with([
-                'error' => 'Vous avez déjà participé à ce concours.',
-                'contest_name' => $contest ? $contest->name : 'ce concours'
+            // Si c'est un compte de test et que l'entrée a déjà été jouée, 
+            // on réinitialise l'entrée pour permettre de jouer à nouveau
+            if ($entry->has_played && session('is_test_account')) {
+                \Log::info('Mode test: permettre de tourner la roue à nouveau', [
+                    'entry_id' => $entry->id,
+                    'email' => $entry->participant->email ?? 'non défini'
+                ]);
+                
+                // On ne réinitialise pas has_played pour conserver le fonctionnement normal
+                // du reste du code. Le problème est résolu uniquement lors de la vérification.
+            }
+
+            // Récupérer le concours et vérifier s'il est actif
+            $contest = $entry->contest;
+
+            // Vérifier que le concours est toujours actif
+            if ($contest->status !== 'active') {
+                // Si le concours n'est plus actif, récupérer le concours actif par défaut
+                $activeContest = Contest::where('status', 'active')->first();
+
+                if (!$activeContest) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ce concours est terminé et aucun autre concours actif n\'est disponible.'
+                    ], 400);
+                }
+
+                // Mettre à jour l'entrée pour utiliser le concours actif
+                $entry->contest_id = $activeContest->id;
+                $entry->save();
+
+                // Utiliser le concours actif
+                $contest = $activeContest;
+
+                \Log::info('Concours associé non actif, basculement vers le concours actif', [
+                    'original_contest_id' => $entry->contest_id,
+                    'active_contest_id' => $activeContest->id
+                ]);
+            }
+
+            // Récupérer les distributions du concours actif
+            $distributions = PrizeDistribution::where('contest_id', $contest->id)
+                ->where('remaining', '>', 0)
+                ->whereDate('start_date', '<=', now())
+                ->whereDate('end_date', '>=', now())
+                ->with('prize')
+                ->get();
+
+            // Vérifier si tous les stocks de prix sont épuisés
+            $hasPrizesInStock = false;
+            foreach ($distributions as $distribution) {
+                if ($distribution->prize && $distribution->prize->stock > 0) {
+                    $hasPrizesInStock = true;
+                    break;
+                }
+            }
+
+            // Définir des probabilités de gagner (5% chance de gagner par défaut)
+            $chanceToWin = 0.05; // 5% de chance de gagner
+            
+            // Si c'est un compte de test, garantir la victoire
+            if (session('is_test_account')) {
+                \Log::info('Compte de test détecté, garantie de victoire activée');
+                $chanceToWin = 1.0; // 100% de chance de gagner pour les comptes test
+                
+                // Pour les comptes de test, on considère qu'il y a toujours des prix en stock
+                $hasPrizesInStock = true;
+            }
+
+            // Créer 20 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance
+            $sectors = [];
+
+            // Si aucun prix en stock, tous les secteurs sont perdants
+            if (!$hasPrizesInStock) {
+                // 20 secteurs perdants
+                for ($i = 0; $i < 20; $i++) {
+                    $sectors[] = [
+                        'id' => null,
+                        'name' => 'Pas de chance',
+                        'distribution_id' => null,
+                        'probability' => 1/20, // Probabilité égale
+                        'is_winning' => false
+                    ];
+                }
+            } else {
+                // Ajouter 1 secteur gagnant (5% de chance de gagner, soit 1/20)
+                $sectors[] = [
+                    'id' => 'win', // Juste un marqueur, le vrai prix sera choisi aléatoirement
+                    'name' => 'Gagné !',
+                    'distribution_id' => null,
+                    'probability' => $chanceToWin,
+                    'is_winning' => true
+                ];
+
+                // Ajouter 19 secteurs perdants (95% de chance de perdre, soit 19/20)
+                for ($i = 0; $i < 19; $i++) {
+                    $sectors[] = [
+                        'id' => null,
+                        'name' => 'Pas de chance',
+                        'distribution_id' => null,
+                        'probability' => (1 - $chanceToWin) / 19,
+                        'is_winning' => false
+                    ];
+                }
+            }
+
+            // Mélanger les secteurs pour une disposition aléatoire sur la roue
+            shuffle($sectors);
+
+            // Normaliser les probabilités pour qu'elles somment à 1
+            $totalProbability = array_sum(array_column($sectors, 'probability'));
+            if ($totalProbability > 0) {
+                foreach ($sectors as &$sector) {
+                    $sector['probability'] = $sector['probability'] / $totalProbability;
+                }
+            }
+
+            // Générer un nombre aléatoire entre 0 et 1
+            $rand = mt_rand(0, 100) / 100;
+
+            // Sélectionner un secteur basé sur les probabilités
+            $selectedSector = null;
+            $cumulativeProbability = 0;
+
+            foreach ($sectors as $sector) {
+                $cumulativeProbability += $sector['probability'];
+                if ($rand <= $cumulativeProbability) {
+                    $selectedSector = $sector;
+                    break;
+                }
+            }
+
+            // Si aucun secteur n'a été sélectionné, prendre le dernier
+            if (!$selectedSector && !empty($sectors)) {
+                $selectedSector = end($sectors);
+            }
+
+            // Enregistrer le résultat dans la base de données
+            DB::beginTransaction();
+
+            try {
+                // Déterminer le résultat (gagné ou perdu)
+                $hasWon = $selectedSector && $selectedSector['is_winning'] && $hasPrizesInStock;
+
+                // Si le joueur a gagné, choisir un prix aléatoirement parmi les disponibles
+                $prizeId = null;
+                $distributionId = null;
+
+                if ($hasWon) {
+                    // Collecter tous les prix disponibles avec leurs distributions
+                    $availablePrizes = [];
+
+                    foreach ($distributions as $distribution) {
+                        if ($distribution->prize && $distribution->prize->stock > 0) {
+                            $availablePrizes[] = [
+                                'prize_id' => $distribution->prize->id,
+                                'distribution_id' => $distribution->id
+                            ];
+                        }
+                    }
+
+                    // Choisir un prix au hasard
+                    if (count($availablePrizes) > 0) {
+                        $randomIndex = array_rand($availablePrizes);
+                        $selectedPrize = $availablePrizes[$randomIndex];
+                        $prizeId = $selectedPrize['prize_id'];
+                        $distributionId = $selectedPrize['distribution_id'];
+                    } else {
+                        // Pas de prix disponible, faire perdre le joueur
+                        $hasWon = false;
+                    }
+                }
+
+                // Mettre à jour l'entrée
+                $entry->has_played = true;
+                $entry->has_won = $hasWon;
+                $entry->prize_id = $prizeId;
+
+                $entry->save();
+
+                // Si c'est un prix gagnant, mettre à jour la distribution
+                if ($hasWon && $distributionId) {
+                    $distribution = PrizeDistribution::find($distributionId);
+                    if ($distribution) {
+                        $distribution->remaining = $distribution->remaining - 1;
+                        $distribution->save();
+                    }
+
+                    // Mettre à jour le stock du prix
+                    $prize = Prize::find($prizeId);
+                    if ($prize) {
+                        $prize->stock = $prize->stock - 1;
+                        $prize->save();
+                    }
+                }
+
+                // Générer un QR code unique pour cette participation
+                $qrCode = 'QR-' . Str::random(8);
+                $entry->qr_code = $qrCode;
+                $entry->save();
+
+                // Si gagné, récupérer les informations du prix pour le résultat
+                $prizeInfo = null;
+                if ($hasWon && $prizeId) {
+                    $prize = Prize::find($prizeId);
+                    if ($prize) {
+                        $prizeInfo = [
+                            'id' => $prize->id,
+                            'name' => $prize->name,
+                            'value' => $prize->value,
+                            'type' => $prize->type,
+                        ];
+                    }
+                }
+
+                DB::commit();
+
+                // Pour les utilisateurs en mode test, réinitialiser l'entrée pour permettre de jouer à nouveau
+                if (session('is_test_account') && isset($entry) && $entry) {
+                    try {
+                        DB::beginTransaction();
+                        
+                        // Réinitialiser l'entrée pour pouvoir jouer à nouveau
+                        $entry->has_played = false;
+                        $entry->save();
+                        
+                        \Log::info('Mode test: entrée réinitialisée pour permettre de jouer à nouveau', [
+                            'entry_id' => $entry->id
+                        ]);
+                        
+                        DB::commit();
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        \Log::error('Erreur lors de la réinitialisation de l\'entrée en mode test', [
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'result' => [
+                        'status' => $entry->has_won ? 'win' : 'lose',
+                        'message' => $entry->has_won
+                            ? 'Félicitations ! Vous avez gagné !'
+                            : 'Pas de chance cette fois-ci. Vous pourrez réessayer ultérieurement !',
+                        'prize' => $selectedSector,
+                        'prize_info' => $prizeInfo
+                    ],
+                    'qr_code' => $entry->qr_code
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                \Log::error('Erreur lors du traitement du résultat de la roue', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Une erreur est survenue lors du traitement du résultat: ' . $e->getMessage()
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du traitement de la requête spinWheel', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Marquer comme joué
-        $entry->has_played = true;
-
-        // Enregistrer le résultat
-        if ($request->prize_id) {
-            $entry->has_won = true;
-            $entry->prize_id = $request->prize_id; // Associer explicitement le prix à l'entrée
-        }
-
-        $entry->save();
-
-        // Définir les cookies pour empêcher les participations multiples
-        // 1. Cookie HTTP côté serveur
-        $contestId = $entry->contest_id;
-        $cookieName = 'contest_played_' . $contestId;
-
-        // Définir l'expiration du cookie pour correspondre à la fin du concours ou 30 jours par défaut
-        $contest = Contest::find($contestId);
-        $cookieExpiry = 60 * 24 * 30; // 30 jours en minutes par défaut
-
-        if ($contest && $contest->end_date) {
-            $contestEndDate = new \DateTime($contest->end_date);
-            $now = new \DateTime();
-            $minutesUntilEnd = max(1, round(($contestEndDate->getTimestamp() - $now->getTimestamp()) / 60));
-            $cookieExpiry = $minutesUntilEnd;
-        }
-
-        // Créer un cookie avec tous les paramètres explicites pour maximiser la compatibilité
-        $cookie = cookie(
-            $cookieName,                // nom spécifique au concours
-            'played',                   // valeur simple
-            $cookieExpiry,             // durée de vie en minutes
-            '/',                        // chemin
-            null,                       // domaine (null = domaine actuel)
-            false,                      // secure (https uniquement)
-            false,                      // httpOnly (non accessible par JavaScript)
-            false,                      // raw
-            'lax'                       // sameSite (lax = moins restrictif)
-        );
-
-        // Stocker aussi en session comme backup
-        \Session::put($cookieName, 'played');
-        \Session::save();
-
-        // Passer la clé localStorage à la vue pour la gestion côté client
-        // La vue result.blade.php devra avoir un script qui stocke cette valeur dans localStorage
-        return redirect()->route('result.show', ['entry' => $entry->id])
-            ->withCookie($cookie)
-            ->with('localStorageKey', $cookieName);
     }
 
     /**
@@ -461,302 +733,5 @@ class ParticipantController extends Controller
     public function qrCodeResultPage($code)
     {
         return view('qr-result', ['code' => $code]);
-    }
-
-    /**
-     * Traite la requête AJAX pour faire tourner la roue et déterminer un résultat
-     */
-    public function spinWheel(Request $request)
-    {
-        \Log::info('Requête spinWheel reçue', $request->all());
-
-        // Validation adaptée au format FormData
-        $validated = $request->validate([
-            'entry_id' => 'required'
-        ]);
-
-        try {
-            // Utiliser find() au lieu de findOrFail()
-            $entry = Entry::find($validated['entry_id']);
-
-            // Si l'entrée n'existe pas, retourner une erreur
-            if (!$entry) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Participation introuvable. Veuillez vous inscrire à nouveau.'
-                ], 404);
-            }
-
-            // Vérifier si la roue a déjà été tournée pour cette entrée
-            if ($entry->has_played) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cette roue a déjà été tournée. Vous ne pouvez pas jouer à nouveau.'
-                ]);
-            }
-
-            // Récupérer le concours et vérifier s'il est actif
-            $contest = $entry->contest;
-
-            // Vérifier que le concours est toujours actif
-            if ($contest->status !== 'active') {
-                // Si le concours n'est plus actif, récupérer le concours actif par défaut
-                $activeContest = Contest::where('status', 'active')->first();
-
-                if (!$activeContest) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Ce concours est terminé et aucun autre concours actif n\'est disponible.'
-                    ], 400);
-                }
-
-                // Mettre à jour l'entrée pour utiliser le concours actif
-                $entry->contest_id = $activeContest->id;
-                $entry->save();
-
-                // Utiliser le concours actif
-                $contest = $activeContest;
-
-                \Log::info('Concours associé non actif, basculement vers le concours actif', [
-                    'original_contest_id' => $entry->contest_id,
-                    'active_contest_id' => $activeContest->id
-                ]);
-            }
-
-            // Récupérer les distributions du concours actif
-            $distributions = PrizeDistribution::where('contest_id', $contest->id)
-                ->where('remaining', '>', 0)
-                ->whereDate('start_date', '<=', now())
-                ->whereDate('end_date', '>=', now())
-                ->with('prize')
-                ->get();
-
-            // Vérifier si tous les stocks de prix sont épuisés
-            $hasPrizesInStock = false;
-            foreach ($distributions as $distribution) {
-                if ($distribution->prize && $distribution->prize->stock > 0) {
-                    $hasPrizesInStock = true;
-                    break;
-                }
-            }
-
-            // Définir des probabilités de gagner (10% chance de gagner)
-            $chanceToWin = 0.10; // 10% de chance de gagner
-
-            // Créer 20 secteurs au total: 10 gagnants, 10 perdants
-            $sectors = [];
-
-            // Si aucun prix en stock, tous les secteurs sont perdants
-            if (!$hasPrizesInStock) {
-                // 20 secteurs perdants
-                for ($i = 0; $i < 20; $i++) {
-                    $sectors[] = [
-                        'id' => null,
-                        'name' => 'Pas de chance',
-                        'distribution_id' => null,
-                        'probability' => 1/20, // Probabilité égale
-                        'is_winning' => false
-                    ];
-                }
-            } else {
-                // Ajouter 10 secteurs gagnants (tous indiquent "Gagné" sans préciser le lot)
-                for ($i = 0; $i < 10; $i++) {
-                    $sectors[] = [
-                        'id' => 'win', // Juste un marqueur, le vrai prix sera choisi aléatoirement
-                        'name' => 'Gagné',
-                        'distribution_id' => null, // Sera déterminé si le joueur gagne
-                        'probability' => $chanceToWin / 10, // Chaque secteur gagnant a une probabilité égale
-                        'is_winning' => true
-                    ];
-                }
-
-                // Ajouter 10 secteurs perdants
-                for ($i = 0; $i < 10; $i++) {
-                    $sectors[] = [
-                        'id' => null,
-                        'name' => 'Pas de chance',
-                        'distribution_id' => null,
-                        'probability' => (1 - $chanceToWin) / 10, // Les secteurs perdants se partagent le reste de probabilité
-                        'is_winning' => false
-                    ];
-                }
-            }
-
-            // Mélanger les secteurs pour une disposition aléatoire sur la roue
-            shuffle($sectors);
-
-            // Normaliser les probabilités pour qu'elles somment à 1
-            $totalProbability = array_sum(array_column($sectors, 'probability'));
-            if ($totalProbability > 0) {
-                foreach ($sectors as &$sector) {
-                    $sector['probability'] = $sector['probability'] / $totalProbability;
-                }
-            }
-
-            // Générer un nombre aléatoire entre 0 et 1
-            $rand = mt_rand(0, 100) / 100;
-
-            // Sélectionner un secteur basé sur les probabilités
-            $selectedSector = null;
-            $cumulativeProbability = 0;
-
-            foreach ($sectors as $sector) {
-                $cumulativeProbability += $sector['probability'];
-                if ($rand <= $cumulativeProbability) {
-                    $selectedSector = $sector;
-                    break;
-                }
-            }
-
-            // Si aucun secteur n'a été sélectionné, prendre le dernier
-            if (!$selectedSector && !empty($sectors)) {
-                $selectedSector = end($sectors);
-            }
-
-            // Enregistrer le résultat dans la base de données
-            DB::beginTransaction();
-
-            try {
-                // Déterminer le résultat (gagné ou perdu)
-                $hasWon = $selectedSector && $selectedSector['is_winning'] && $hasPrizesInStock;
-
-                // Si le joueur a gagné, choisir un prix aléatoirement parmi les disponibles
-                $prizeId = null;
-                $distributionId = null;
-
-                if ($hasWon) {
-                    // Collecter tous les prix disponibles avec leurs distributions
-                    $availablePrizes = [];
-
-                    // Vérification spéciale pour le concours "Préselection-test"
-                    $isPreselectionTest = false;
-                    if ($contest->name === 'Préselection-test') {
-                        $isPreselectionTest = true;
-                        // Journaliser pour le débogage
-                        \Log::info('Concours Préselection-test détecté - Filtrage des prix', [
-                            'contest_id' => $contest->id,
-                            'entry_id' => $entry->id
-                        ]);
-                    }
-
-                    foreach ($distributions as $distribution) {
-                        // Si c'est le concours Préselection-test, vérifier que le prix est un bon d'achat de 50€
-                        if ($isPreselectionTest) {
-                            // Vérifier que c'est bien un bon d'achat de 50€
-                            if ($distribution->prize &&
-                                $distribution->prize->stock > 0 &&
-                                $distribution->prize->name === 'Bon d\'achat 50€') {
-
-                                $availablePrizes[] = [
-                                    'prize_id' => $distribution->prize->id,
-                                    'distribution_id' => $distribution->id
-                                ];
-                                \Log::info('Prix "Bon d\'achat 50€" ajouté aux prix disponibles', [
-                                    'prize_id' => $distribution->prize->id
-                                ]);
-                            }
-                        } else {
-                            // Pour les autres concours, comportement normal
-                            if ($distribution->prize && $distribution->prize->stock > 0) {
-                                $availablePrizes[] = [
-                                    'prize_id' => $distribution->prize->id,
-                                    'distribution_id' => $distribution->id
-                                ];
-                            }
-                        }
-                    }
-
-                    // Choisir un prix au hasard
-                    if (count($availablePrizes) > 0) {
-                        $randomIndex = array_rand($availablePrizes);
-                        $selectedPrize = $availablePrizes[$randomIndex];
-                        $prizeId = $selectedPrize['prize_id'];
-                        $distributionId = $selectedPrize['distribution_id'];
-                    } else {
-                        // Pas de prix disponible, faire perdre le joueur
-                        $hasWon = false;
-                    }
-                }
-
-                // Mettre à jour l'entrée
-                $entry->has_played = true;
-                $entry->has_won = $hasWon;
-                $entry->prize_id = $prizeId;
-
-                $entry->save();
-
-                // Si c'est un prix gagnant, mettre à jour la distribution
-                if ($hasWon && $distributionId) {
-                    $distribution = PrizeDistribution::find($distributionId);
-                    if ($distribution) {
-                        $distribution->remaining = $distribution->remaining - 1;
-                        $distribution->save();
-                    }
-
-                    // Mettre à jour le stock du prix
-                    $prize = Prize::find($prizeId);
-                    if ($prize) {
-                        $prize->stock = $prize->stock - 1;
-                        $prize->save();
-                    }
-                }
-
-                // Générer un QR code unique pour cette participation
-                $qrCode = 'QR-' . Str::random(8);
-                $entry->qr_code = $qrCode;
-                $entry->save();
-
-                // Si gagné, récupérer les informations du prix pour le résultat
-                $prizeInfo = null;
-                if ($hasWon && $prizeId) {
-                    $prize = Prize::find($prizeId);
-                    if ($prize) {
-                        $prizeInfo = [
-                            'id' => $prize->id,
-                            'name' => $prize->name,
-                            'value' => $prize->value,
-                            'type' => $prize->type,
-                        ];
-                    }
-                }
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'result' => [
-                        'status' => $entry->has_won ? 'win' : 'lose',
-                        'message' => $entry->has_won
-                            ? 'Félicitations ! Vous avez gagné !'
-                            : 'Pas de chance cette fois-ci. Vous pourrez réessayer ultérieurement !',
-                        'prize' => $selectedSector,
-                        'prize_info' => $prizeInfo
-                    ],
-                    'qr_code' => $entry->qr_code
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                \Log::error('Erreur lors du traitement du résultat de la roue', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Une erreur est survenue lors du traitement du résultat: ' . $e->getMessage()
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Erreur lors du traitement de la requête spinWheel', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue: ' . $e->getMessage()
-            ], 500);
-        }
     }
 }

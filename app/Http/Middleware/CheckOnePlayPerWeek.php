@@ -4,8 +4,10 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cookie;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use App\Helpers\TestAccountHelper;
 
 class CheckOnePlayPerWeek
 {
@@ -16,43 +18,81 @@ class CheckOnePlayPerWeek
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next): SymfonyResponse
     {
-        // Vérifier si l'utilisateur est noob@saibot.com (compte de test)
-        $specialTestEmail = 'noob@saibot.com';
-        
-        // Récupérer l'utilisateur connecté ou le participant
-        $isTestUser = false;
+        // Récupérer l'email de l'utilisateur à partir de différentes sources
+        $userEmail = null;
         
         // Vérifier l'utilisateur connecté
-        if (auth()->check() && auth()->user()->email === $specialTestEmail) {
-            $isTestUser = true;
+        if (auth()->check()) {
+            $userEmail = auth()->user()->email;
         }
         
-        // Si un formulaire d'inscription a été soumis, vérifier l'email
-        if ($request->has('email') && $request->email === $specialTestEmail) {
-            $isTestUser = true;
+        // Si un formulaire d'inscription a été soumis, récupérer l'email
+        if ($request->has('email')) {
+            $userEmail = $request->email;
         }
         
         // Vérifier via un participant existant dans la session
-        if ($request->session()->has('participant_id')) {
+        if (!$userEmail && $request->session()->has('participant_id')) {
             $participant = \App\Models\Participant::find($request->session()->get('participant_id'));
-            if ($participant && $participant->email === $specialTestEmail) {
-                $isTestUser = true;
+            if ($participant) {
+                $userEmail = $participant->email;
             }
         }
         
-        // Si c'est l'utilisateur de test, autoriser sans vérification et sans cookies
-        if ($isTestUser) {
-            // Ne rien stocker pour l'utilisateur spécial, juste passer au middleware suivant
+        // Vérifier si c'est un compte de test en utilisant notre helper
+        $isTestAccount = TestAccountHelper::isTestAccount($userEmail);
+        
+        // Si c'est un compte de test, stocker les informations dans la session et autoriser sans restriction
+        if ($isTestAccount) {
+            // Stocker des informations dans la session pour l'affichage de la bannière
+            $companyName = TestAccountHelper::getCompanyName($userEmail);
+            $request->session()->put('is_test_account', true);
+            $request->session()->put('test_account_company', $companyName);
+            
+            // Ne rien stocker pour les utilisateurs de test, juste passer au middleware suivant
             $response = $next($request);
             
             // S'assurer qu'aucun cookie n'est mis dans la réponse pour cet utilisateur
-            if ($response->headers->has('Set-Cookie')) {
-                // Supprimer tous les cookies de la réponse
-                $cookieNames = ['played_this_week', 'laravel_session', 'XSRF-TOKEN'];
+            if (method_exists($response, 'headers') && $response->headers->has('Set-Cookie')) {
+                // Récupérer tous les noms de cookies définis dans la réponse
+                $cookieNames = [];
+                foreach ($response->headers->getCookies() as $cookie) {
+                    $cookieNames[] = $cookie->getName();
+                }
+                
+                // Supprimer chaque cookie
                 foreach ($cookieNames as $cookieName) {
                     $response->headers->removeCookie($cookieName);
+                }
+                
+                // Ajouter un en-tête de débogage
+                $response->headers->set('X-Test-Account', 'Cookies-Removed');
+            }
+            
+            // Ajouter un script pour supprimer localStorage si c'est une réponse HTML
+            if ($response instanceof Response || $response instanceof \Illuminate\Http\Response) {
+                $content = $response->getContent();
+                
+                // Vérifier si c'est du HTML et qu'il contient une balise body
+                if (is_string($content) && strpos($content, '</body>') !== false) {
+                    // Ajouter un script pour effacer localStorage à la fin du body
+                    $script = '<script>
+                        // Effacer localStorage pour les comptes de test
+                        localStorage.removeItem("contest_played_1");
+                        localStorage.removeItem("played_this_week");
+                        
+                        // Supprimer tous les cookies via JavaScript
+                        document.cookie.split(";").forEach(function(c) { 
+                            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                        });
+                        
+                        console.log("Mode test: localStorage et cookies nettoyés");
+                    </script>';
+                    
+                    $content = str_replace('</body>', $script . '</body>', $content);
+                    $response->setContent($content);
                 }
             }
             

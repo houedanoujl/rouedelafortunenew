@@ -6,6 +6,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SpinController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\SpinResultController;
+use App\Http\Controllers\TestModeController;
+use App\Http\Controllers\CookieController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +22,9 @@ use App\Http\Controllers\SpinResultController;
 
 // Page d'accueil avec le formulaire d'inscription
 Route::get('/', [ParticipantController::class, 'showRegistrationForm'])->name('home');
+
+// Route alternative pour home (résoudre l'erreur 404 avec /home)
+Route::get('/home', [ParticipantController::class, 'showRegistrationForm']);
 
 // Traitement de l'inscription
 Route::post('/register', [ParticipantController::class, 'register'])->name('register');
@@ -62,3 +67,6 @@ Route::get('/dashboard', function () {
 Route::get('/rules', function () {
     return view('rules');
 })->name('rules');
+
+// Route ultra simplifiée pour nettoyer les cookies (utilisée en mode test)
+Route::get('/clear-cookies', [CookieController::class, 'clearCookies'])->name('clear.cookies');

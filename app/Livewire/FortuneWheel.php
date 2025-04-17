@@ -54,8 +54,8 @@ class FortuneWheel extends Component
 
         $this->spinning = true;
 
-        // Réduire les chances de gagner à 30% (3 sur 10)
-        $isWinning = rand(1, 10) <= 3;
+        // Réduire les chances de gagner à 5% (1 sur 20) au lieu de 20%
+        $isWinning = rand(1, 20) <= 1;
         
         // Déterminer le secteur et l'angle final en fonction du résultat souhaité
         $sectorInfo = $this->determineSector($isWinning);
@@ -102,7 +102,8 @@ class FortuneWheel extends Component
         }
 
         // Rediriger après la fin de l'animation
-        $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 13500)");
+        // Augmentation du délai à 20 secondes pour tenir compte de l'animation plus longue (12-16 secondes)
+        $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 20000)");
     }
     
     /**
@@ -243,8 +244,12 @@ class FortuneWheel extends Component
     protected function saveSpinHistory(int $finalAngle, bool $isWinning, string $sectorId, Entry $entry)
     {
         try {
+            // Récupérer l'adresse IP du joueur
+            $ip = request()->ip();
+            
             // Chemin du fichier d'historique à la racine du projet
             $historyFile = base_path('spin_history.json');
+            $csvFile = storage_path('app/public/participations.csv');
             
             // Données à enregistrer
             $spinData = [
@@ -253,14 +258,16 @@ class FortuneWheel extends Component
                 'participant' => $entry->participant ? [
                     'id' => $entry->participant->id,
                     'name' => $entry->participant->first_name . ' ' . $entry->participant->last_name,
-                    'email' => $entry->participant->email
+                    'email' => $entry->participant->email,
+                    'ip_address' => $ip
                 ] : null,
                 'contest_id' => $entry->contest_id,
                 'angle' => $finalAngle,
                 'sector_id' => $sectorId,
                 'sector_class' => $isWinning ? 'secteur-gagne' : 'secteur-perdu',
                 'result' => $isWinning ? 'win' : 'lose',
-                'has_won_in_db' => $entry->has_won
+                'has_won_in_db' => $entry->has_won,
+                'ip_address' => $ip
             ];
             
             // Créer ou charger le fichier existant
@@ -276,16 +283,88 @@ class FortuneWheel extends Component
             // Sauvegarder le fichier mis à jour
             file_put_contents($historyFile, json_encode($history, JSON_PRETTY_PRINT));
             
-            Log::info('Historique de spin enregistré à la racine du projet', [
+            // Mettre à jour le fichier CSV également
+            $this->updateCsvHistory($entry, $isWinning, $ip, $csvFile);
+            
+            Log::info('Historique de spin enregistré (JSON et CSV)', [
                 'entry_id' => $entry->id,
                 'angle' => $finalAngle,
                 'sector_id' => $sectorId,
                 'result' => $isWinning ? 'win' : 'lose',
+                'ip_address' => $ip,
                 'file_path' => $historyFile
             ]);
         } catch (\Exception $e) {
             // En cas d'erreur, on log mais on ne bloque pas le processus
             Log::error('Erreur lors de l\'enregistrement de l\'historique de spin', [
+                'error' => $e->getMessage(),
+                'entry_id' => $entry->id
+            ]);
+        }
+    }
+    
+    /**
+     * Met à jour le fichier CSV avec les informations de participation
+     */
+    private function updateCsvHistory(Entry $entry, bool $isWinning, string $ip, string $csvFile)
+    {
+        try {
+            // S'assurer que le répertoire existe
+            $directory = dirname($csvFile);
+            if (!is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
+            
+            // En-têtes du CSV
+            $headers = [
+                'Date', 
+                'ID', 
+                'Prénom', 
+                'Nom', 
+                'Email', 
+                'Téléphone', 
+                'Résultat', 
+                'Adresse IP',
+                'Date de naissance',
+                'Adresse',
+                'Code postal',
+                'Ville'
+            ];
+            
+            // Créer le fichier avec les en-têtes s'il n'existe pas
+            $fileExists = file_exists($csvFile);
+            $handle = fopen($csvFile, 'a'); // ouverture en mode ajout
+            
+            if (!$fileExists) {
+                fputcsv($handle, $headers);
+            }
+            
+            // Récupérer les infos du participant
+            $participant = $entry->participant;
+            if ($participant) {
+                $data = [
+                    Carbon::now()->format('Y-m-d H:i:s'),
+                    $entry->id,
+                    $participant->first_name ?? 'N/A',
+                    $participant->last_name ?? 'N/A',
+                    $participant->email ?? 'N/A',
+                    $participant->phone ?? 'N/A',
+                    $isWinning ? 'GAGNÉ' : 'PERDU',
+                    $ip,
+                    $participant->birth_date ?? 'N/A',
+                    $participant->address ?? 'N/A',
+                    $participant->postal_code ?? 'N/A',
+                    $participant->city ?? 'N/A'
+                ];
+                
+                // Écrire la ligne dans le CSV
+                fputcsv($handle, $data);
+            }
+            
+            fclose($handle);
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour du fichier CSV', [
                 'error' => $e->getMessage(),
                 'entry_id' => $entry->id
             ]);

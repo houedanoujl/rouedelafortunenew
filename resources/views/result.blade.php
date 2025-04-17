@@ -200,20 +200,19 @@ if ($displayedResult !== null) {
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Stocker dans localStorage qu'une participation a eu lieu (pour renforcer la limitation)
-    @if(session('localStorageKey'))
-    const localStorageKey = '{{ session("localStorageKey") }}';
-    // Vérifier si l'utilisateur est l'utilisateur spécial
-    const isSpecialUser = {{ isset($entry->participant) && $entry->participant->email === 'noob@saibot.com' ? 'true' : 'false' }};
+    // Récupérer les paramètres d'URL pour la navigation
+    var urlParams = new URLSearchParams(window.location.search);
+    var entryId = '{{ $entry->id }}'; // Utiliser l'ID d'entrée directement du serveur
+    var localStorageKey = 'contest_played_{{ $entry->contest_id }}';
     
-    // Ne pas stocker dans localStorage pour l'utilisateur spécial
-    if (!isSpecialUser) {
+    // Vérifier si nous sommes en mode test (avec le flag dans sessionStorage)
+    // et ne sauvegarder dans localStorage que si ce n'est pas le cas
+    if (!sessionStorage.getItem('prevent_localstorage_recreation')) {
         localStorage.setItem(localStorageKey, 'played');
         console.log('Participation enregistrée dans localStorage:', localStorageKey);
     } else {
-        console.log('Utilisateur spécial détecté, pas de stockage dans localStorage');
+        console.log('Mode test détecté, localStorage non créé');
     }
-    @endif
     
     // Initialisation manuelle du modal pour éviter les conflits
     const viewPrizeBtn = document.getElementById('viewPrizeBtn');

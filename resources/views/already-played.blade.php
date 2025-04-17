@@ -7,8 +7,14 @@
     <script>
         // Stocker l'information dans localStorage pour renforcer la limitation
         document.addEventListener('DOMContentLoaded', function() {
-            localStorage.setItem('{{ $localStorageKey }}', 'played');
-            console.log('Participation enregistrée dans localStorage: {{ $localStorageKey }}');
+            // Vérifier si nous sommes en mode test (avec le flag dans sessionStorage)
+            // et ne sauvegarder dans localStorage que si ce n'est pas le cas
+            if (!sessionStorage.getItem('prevent_localstorage_recreation')) {
+                localStorage.setItem('{{ $localStorageKey }}', 'played');
+                console.log('Participation enregistrée dans localStorage: {{ $localStorageKey }}');
+            } else {
+                console.log('Mode test détecté, localStorage non créé');
+            }
         });
     </script>
     @endif

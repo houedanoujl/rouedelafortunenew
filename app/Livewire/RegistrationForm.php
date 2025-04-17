@@ -172,6 +172,14 @@ class RegistrationForm extends Component
      */
     public function enforceOneParticipationLimit()
     {
+        // Ignorer complètement la vérification pour les comptes de test
+        if (session('is_test_account')) {
+            \Log::info('Mode test: vérification de participation ignorée', [
+                'contest_id' => $this->contestId
+            ]);
+            return;
+        }
+
         // Ignorer la vérification si aucun concours n'est sélectionné
         if (!$this->contestId) {
             return;
@@ -249,6 +257,14 @@ class RegistrationForm extends Component
      */
     protected function storeParticipationLimitation($contestId)
     {
+        // Ne pas stocker de limitations pour les comptes de test
+        if (session('is_test_account')) {
+            \Log::info('Mode test: Aucun marqueur de limitation de participation créé', [
+                'contest_id' => $contestId
+            ]);
+            return;
+        }
+
         $cookieName = 'contest_played_' . $contestId;
         $sessionKey = 'contest_played_' . $contestId;
 
@@ -269,7 +285,8 @@ class RegistrationForm extends Component
         $this->enforceOneParticipationLimit();
 
         // Si l'utilisateur a déjà participé au concours actif, bloquer l'inscription
-        if ($this->alreadyParticipated) {
+        // Sauf si c'est un compte de test
+        if ($this->alreadyParticipated && !session('is_test_account')) {
             session()->flash('error', 'Vous avez déjà participé à ce concours. Une seule participation par semaine au concours est autorisée.');
             return;
         }
@@ -313,16 +330,24 @@ class RegistrationForm extends Component
                     ->where('contest_id', $this->contestId)
                     ->first();
 
-                if ($existingEntry) {
+                if ($existingEntry && !session('is_test_account')) {
                     $this->existingEntry = $existingEntry;
                     $this->alreadyParticipated = true;
                     // Stocker dans cookie, session et localStorage pour renforcer la limitation
                     $this->storeParticipationLimitation($this->contestId);
                     session()->flash('info', 'Vous avez déjà participé à ce concours. Une seule participation par semaine au concours est autorisée.');
                     return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
+                } else if ($existingEntry && session('is_test_account')) {
+                    // Pour un compte test avec participation existante, on log mais on laisse continuer
+                    \Log::info('Mode test: Participation existante ignorée pour permettre des tests multiples', [
+                        'participant_id' => $participant->id,
+                        'contest_id' => $this->contestId,
+                        'email' => $participant->email ?? 'non défini'
+                    ]);
                 }
 
                 // C'est un participant existant mais il n'a pas encore participé à ce concours
+                // ou c'est un compte test autorisé à rejouer
                 session()->flash('success', 'Bienvenue à nouveau ' . $participant->first_name . ' ! Vous pouvez maintenant participer à ce nouveau concours.');
 
                 // Mettre à jour les informations du participant existant
@@ -346,11 +371,15 @@ class RegistrationForm extends Component
             $this->registered = true;
 
             // Double vérification - si un autre appareil/navigateur a créé une participation entre-temps
-            $lastSecondCheck = Entry::where('participant_id', $participant->id)
-                ->where('contest_id', $this->contestId)
-                ->first();
+            // Ignorer cette vérification pour les comptes test
+            $lastSecondCheck = null;
+            if (!session('is_test_account')) {
+                $lastSecondCheck = Entry::where('participant_id', $participant->id)
+                    ->where('contest_id', $this->contestId)
+                    ->first();
+            }
 
-            if ($lastSecondCheck) {
+            if ($lastSecondCheck && !session('is_test_account')) {
                 $this->existingEntry = $lastSecondCheck;
                 $this->alreadyParticipated = true;
                 // Stocker dans cookie, session et localStorage pour renforcer la limitation
@@ -371,7 +400,15 @@ class RegistrationForm extends Component
             ]);
 
             // Stocker les marqueurs de participation pour ce concours
-            $this->storeParticipationLimitation($this->contestId);
+            // Sauf pour les comptes de test
+            if (!session('is_test_account')) {
+                $this->storeParticipationLimitation($this->contestId);
+            } else {
+                \Log::info('Mode test: Limitation de participation non appliquée', [
+                    'participant_id' => $participant->id,
+                    'contest_id' => $this->contestId
+                ]);
+            }
 
             // Rediriger vers la roue de la fortune
             return redirect()->route('wheel.show', ['entry' => $entry->id]);
