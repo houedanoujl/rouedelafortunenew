@@ -166,6 +166,10 @@
             }, 1000);
             
             // Envoyer le résultat réel au serveur via une requête AJAX sécurisée
+            console.log('Envoi du résultat au serveur via AJAX...');
+            console.log('Segment obtenu:', winningSegment.text);
+            console.log('Résultat à enregistrer:', isWinningSegment ? 'win' : 'lose');
+            
             fetch('{{ route('spin.record-result') }}', {
                 method: 'POST',
                 headers: {
@@ -181,9 +185,12 @@
             .then(response => response.json())
             .then(data => {
                 console.log('Résultat enregistré avec succès:', data);
+                console.log('ID de session PHP:', data.session_id);
+                console.log('La session est stockée côté serveur et sécurisée par un cookie de session');
                 
                 // Redirection vers la page de résultat après un court délai
                 setTimeout(() => {
+                    console.log('Redirection vers la page de résultat...');
                     window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
                 }, 2000);
             })

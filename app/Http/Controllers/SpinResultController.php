@@ -37,7 +37,9 @@ class SpinResultController extends Controller
         
         return response()->json([
             'success' => true,
-            'message' => 'Résultat enregistré avec succès'
+            'message' => 'Résultat enregistré avec succès',
+            'session_id' => Session::getId(),
+            'session_key' => $sessionKey
         ]);
     }
 }

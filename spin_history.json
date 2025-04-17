@@ -586,5 +586,50 @@
         "sector_class": "secteur-gagne",
         "result": "win",
         "has_won_in_db": true
+    },
+    {
+        "timestamp": "2025-04-17T08:14:16+00:00",
+        "entry_id": 109,
+        "participant": {
+            "id": 105,
+            "name": "sqdsq qsd",
+            "email": "qsdqs@hma.co"
+        },
+        "contest_id": 1,
+        "angle": 1230,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false
+    },
+    {
+        "timestamp": "2025-04-17T08:37:12+00:00",
+        "entry_id": 110,
+        "participant": {
+            "id": 106,
+            "name": "qfq qfq",
+            "email": "kjjkkj@gma.com"
+        },
+        "contest_id": 1,
+        "angle": 2058,
+        "sector_id": "secteur-2",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true
+    },
+    {
+        "timestamp": "2025-04-17T08:38:41+00:00",
+        "entry_id": 111,
+        "participant": {
+            "id": 107,
+            "name": "dqsfdqsfd fdqsfqdsfdqsf",
+            "email": "dqfdqf@hm.com"
+        },
+        "contest_id": 1,
+        "angle": 2151,
+        "sector_id": "secteur-0",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true
     }
 ]
