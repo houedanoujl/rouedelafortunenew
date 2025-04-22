@@ -388,7 +388,7 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            z-index: 5;
+            z-index: 1000;
             border-radius: 50%;
             background-color: white;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
@@ -402,7 +402,7 @@
         #pointer {
             width:100%;
             transform: translateX(-50%);
-            z-index: 10;
+            z-index: 3000;
             transform: rotateX(180deg);
             display:flex;
             align-items:center;
@@ -417,6 +417,8 @@
             letter-spacing: 1px;
             font-size: 0.9rem; /* Bouton avec texte plus petit */
             padding: 0.5rem 1rem; /* Padding réduit pour le bouton */
+            z-index: 2000;
+            position: relative;
         }
         
         @media (max-width: 575.98px) {

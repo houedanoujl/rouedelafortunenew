@@ -88,6 +88,12 @@
             color: #000000;
             letter-spacing: 0.02em;
         }
+        .register-container{
+
+  align-items: center !important;
+  z-index: 1;
+  position: relative
+        }
         
         .min-h-screen {
             background-image: url('/assets/images/web.png');

@@ -50,23 +50,6 @@
     }
 </style>
 
-<!-- Modal d'avertissement pour navigation privée / cookies désactivés -->
-<div id="privacyWarningOverlay" class="age-verification-overlay hidden">
-    <div class="age-verification-popup">
-        <h2><i class="bi bi-shield-exclamation"></i> Navigation privée détectée</h2>
-        <p>Pour des raisons de sécurité et pour garantir une expérience optimale, ce formulaire n'est pas accessible en navigation privée.</p>
-        <p>Pour participer à notre concours, veuillez :</p>
-        <ul style="text-align: left; margin: 20px auto; max-width: 80%;">
-            <li>Utiliser le mode de navigation normal (non privé)</li>
-            <li>Vous assurer que les cookies sont activés dans les paramètres de votre navigateur</li>
-            <li>Désactiver le mode "Prévention du suivi intelligent" si vous utilisez un appareil iOS</li>
-        </ul>
-        <div class="age-verification-buttons">
-            <button class="btn-age-yes" onclick="window.location.reload()">J'ai changé de mode de navigation</button>
-        </div>
-    </div>
-</div>
-
     <div class="card" style="border: 1px solid #e0e0e0; min-height:100vh; border-radius: 4px; box-shadow: none;">
         <div class="card-header" style="background-color: var(--honolulu-blue); color: white;">
             <h2>📝 Inscription 🎟️</h2>
@@ -227,152 +210,42 @@
     @endif
 </div>
 
-<!-- Script de vérification d'âge, participations et détection du mode privé -->
+<!-- Script de vérification d'âge et de participation (SANS détection navigation privée) -->
 <script>
-    // Détection de la navigation privée et des cookies désactivés
-    function detectPrivateMode() {
-        return new Promise(function(resolve) {
-            const YES = true;
-            const NO = false;
-            const UNKNOWN = null;
-
-            // Pour Firefox
-            if (navigator.userAgent.includes('Firefox')) {
-                try {
-                    indexedDB.open('test').onupgradeneeded = function() {
-                        resolve(NO); // Indexé DB fonctionne => pas en privé
-                    };
-                    setTimeout(function() {
-                        resolve(YES); // Timeout => probablement en privé
-                    }, 500);
-                } catch (e) {
-                    resolve(UNKNOWN);
-                }
-                return;
-            }
-
-            // Pour Safari
-            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-                try {
-                    window.openDatabase(null, null, null, null);
-                    try {
-                        // Tentative de stocker 100MB en localStorage (Safari en privé limite à 50MB)
-                        localStorage.setItem('test', new Array(100000000).join('1'));
-                        localStorage.removeItem('test');
-                        resolve(NO); // Si ça fonctionne => pas en privé
-                    } catch (e) {
-                        resolve(YES); // Si ça échoue => probablement en privé
-                    }
-                } catch (e) {
-                    resolve(UNKNOWN);
-                }
-                return;
-            }
-
-            // Pour Chrome et autres
-            if ('storage' in navigator && 'estimate' in navigator.storage) {
-                navigator.storage.estimate().then(function(estimate) {
-                    // En navigation privée Chrome, la quota est généralement limité à 120MB
-                    if (estimate.quota < 120000000) {
-                        resolve(YES);
-                    } else {
-                        resolve(NO);
-                    }
-                });
-                return;
-            }
-
-            // Méthode de secours - test simple
-            try {
-                localStorage.setItem('test_private', '1');
-                localStorage.removeItem('test_private');
-                if (!navigator.cookieEnabled) {
-                    resolve(YES);
-                } else {
-                    resolve(NO);
-                }
-            } catch (e) {
-                resolve(YES);
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Vérifier le mode de navigation
-        detectPrivateMode().then(function(isPrivate) {
-            if (isPrivate) {
-                // En navigation privée, masquer le formulaire et afficher l'avertissement
-                showPrivacyWarning();
-
-                // Loguer pour débogage
-                console.log("Navigation privée détectée, accès au formulaire bloqué");
-            } else {
-                // En navigation normale, vérifier la participation
-                try {
-                    checkForExistingParticipation();
-                } catch (e) {
-                    console.log('Erreur lors de la vérification de participation:', e);
-                }
-            }
-        });
-    });
-
-    // Fonction pour afficher l'avertissement de navigation privée
-    function showPrivacyWarning() {
-        // Masquer tout le contenu principal
-        const mainContent = document.querySelector('.card');
-        if (mainContent) {
-            mainContent.style.display = 'none';
+    // Fonction pour vérifier l'âge
+    function verifyAge(isAdult) {
+        if (isAdult) {
+            document.getElementById('ageVerificationOverlay').classList.add('hidden');
+        } else {
+            window.location.href = 'https://www.google.com';
         }
-
-        // Masquer les modales et autres éléments
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            modal.style.display = 'none';
-        });
-
-        // Afficher l'avertissement
-        document.getElementById('privacyWarningOverlay').classList.remove('hidden');
     }
 
-    /**
-     * Vérifie si l'utilisateur a déjà participé au concours spécifié
-     */
-    function checkForExistingParticipation(contestId = null) {
+    // Vérification de participation (sans bloquer en navigation privée)
+    document.addEventListener('DOMContentLoaded', function() {
         try {
-            // Si aucun ID de concours n'est fourni, essayer de le récupérer depuis le formulaire
-            if (!contestId) {
-                const contestIdInput = document.getElementById('contestId');
-                if (contestIdInput) {
-                    contestId = contestIdInput.value;
-                }
-            }
-
-            if (!contestId) return; // Ne rien faire si aucun concours n'est spécifié
-
-            // Clé spécifique au concours
-            const key = `contest_played_${contestId}`;
-
-            // Vérifier dans localStorage
-            const hasPlayed = localStorage.getItem(key);
-
-            if (hasPlayed) {
-                console.log(`Participation détectée dans localStorage pour le concours ${contestId}`);
-
-                // Redirect avec les paramètres appropriés
-                const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
-
-                // Ajouter un petit délai pour permettre à Livewire de s'initialiser
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 300);
-            }
+            checkForExistingParticipation();
         } catch (e) {
             console.error('Erreur lors de la vérification de participation:', e);
-            // Si une erreur se produit lors de l'accès au localStorage, cela peut indiquer le mode privé
-            showPrivacyWarning();
+        }
+    });
+
+    // Fonction pour vérifier la participation existante
+    function checkForExistingParticipation() {
+        let contestId = '{{ $contestId ?? '' }}';
+        if (!contestId) {
+            const contestIdInput = document.getElementById('contestId');
+            if (contestIdInput) {
+                contestId = contestIdInput.value;
+            }
+        }
+        if (!contestId) return;
+        const key = `contest_played_${contestId}`;
+        if (localStorage.getItem(key)) {
+            const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 300);
         }
     }
 </script>
-
-<!-- Désactivation du masque de saisie téléphonique qui causait des problèmes -->

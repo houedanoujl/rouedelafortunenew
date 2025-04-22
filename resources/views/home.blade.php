@@ -126,6 +126,8 @@
         padding: 3rem 0;
         border-radius: 4px;
         margin-bottom: 2rem;
+        z-index: 1000;
+        position: relative;
     }
     
     .contest-info {
@@ -135,12 +137,16 @@
         padding: 1.5rem;
         border-radius: 4px;
         border: 1px solid #e0e0e0; min-height:100vh;
+        z-index: 1100;
+        position: relative;
     }
     
     .features-section .card {
         transition: all 0.2s;
         border-radius: 4px;
         border: 1px solid #e0e0e0; min-height:100vh;
+        z-index: 1200;
+        position: relative;
     }
     
     .features-section .card:hover {
@@ -153,6 +159,8 @@
         border-radius: 4px;
         border: 1px solid #e0e0e0; min-height:100vh;
         height: 100%;
+        z-index: 1300;
+        position: relative;
     }
     
     .step-number {
@@ -165,6 +173,8 @@
         border-radius: 50%;
         font-weight: bold;
         margin-bottom: 1rem;
+        z-index: 1400;
+        position: relative;
     }
     
     .card {
@@ -179,6 +189,8 @@
     .btn-primary {
         background-color: var(--honolulu-blue);
         border: none;
+        z-index: 1500;
+        position: relative;
     }
     
     .btn-primary:hover {
