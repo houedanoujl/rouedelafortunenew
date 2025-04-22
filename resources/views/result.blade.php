@@ -28,7 +28,7 @@ if ($displayedResult !== null) {
                         <span style="font-weight: normal; color: var(--primary-red);">{{ $entry->participant->first_name }} {{ $entry->participant->last_name }}</span>,
                         @if($showWinResult)
                             vous avez gagné ! 🎁 <br>
-                            Scannez le QR code ci-dessous pour réclamer votre prix.
+                            Conservez les fichiers téléchargés depuis cette page précieusement, ils feront office de justificatifs lors du retrait.
                             @if($qrCode)
                                 <div class="qr-code-container mt-4 d-flex justify-content-center align-items-center">
                                     <a href="javascript:void(0)" class="qr-code-link" title="Cliquez pour voir votre lot" aria-label="Voir les détails de votre lot gagné" role="button">
@@ -63,6 +63,19 @@ if ($displayedResult !== null) {
         </div>
     </div>
 </div>
+
+@if(session('whatsapp_result'))
+    <div class="alert alert-info text-center" id="whatsapp-alert" style="z-index:9999;position:fixed;top:20px;left:50%;transform:translateX(-50%);min-width:300px;max-width:90%;">
+        {{ session('whatsapp_result') }}
+    </div>
+    <script>
+        console.log('WhatsApp: {{ session('whatsapp_result') }}');
+        setTimeout(function() {
+            var alert = document.getElementById('whatsapp-alert');
+            if(alert) alert.style.display = 'none';
+        }, 6000);
+    </script>
+@endif
 
 @if($showWinResult)
 <!-- Modal -->

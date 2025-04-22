@@ -15,7 +15,6 @@
                         Bonjour <span style="font-weight: normal; color: var(--primary-red);">{{ $entry->participant->first_name }} {{ $entry->participant->last_name }}</span>, <br>
                         @if(!$entry->has_played)
                             tournez la roue et tentez votre chance ! 🍀🎁<br>
-                            Prêt à découvrir ce que la fortune vous réserve ? 😊🔥
                         @else
                             votre participation est terminée. <br>
                             @if($entry->has_won)

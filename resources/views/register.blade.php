@@ -9,9 +9,9 @@
                     <h2 class="mb-0">📝 Inscription au concours 🎁</h2>
                 </div>
                 <div class="card-body">
-                    <p class="lead mb-4">
+                    <p id="isidor" class="lead mb-4">
                         🔥 Tentez votre chance et remportez des cadeaux incroyables ! 🎉<br>
-                        Remplissez le formulaire ci-dessous pour participer à la <span style="font-weight: normal; color: var(--primary-red);">Roue de la Fortune</span>. 🎰<br>
+                        Remplissez le formulaire ci-dessous pour participer  au <span style="font-weight: normal; color: var(--primary-red);">Grand Jeu DINOR 70 ans</span>. 🎰<br>
                                             </p>
                     
                     <!-- <h3>Test Component:</h3>

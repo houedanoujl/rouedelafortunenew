@@ -995,5 +995,73 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-22T16:11:17+00:00",
+        "entry_id": 136,
+        "participant": {
+            "id": 131,
+            "name": "efdqF QDFF",
+            "email": "qsdfqsfqsdqsdfqsd@dqsfqdfqd.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1086,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-22T16:12:45+00:00",
+        "entry_id": 137,
+        "participant": {
+            "id": 132,
+            "name": "gilbet monic",
+            "email": "testz@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1467,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-22T16:23:57+00:00",
+        "entry_id": 138,
+        "participant": {
+            "id": 133,
+            "name": "aazd sdsqd",
+            "email": "kp@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1978,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-22T16:25:08+00:00",
+        "entry_id": 139,
+        "participant": {
+            "id": 134,
+            "name": "chevel blanc",
+            "email": "tesas@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1685,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
     }
 ]

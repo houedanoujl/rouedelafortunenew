@@ -32,7 +32,7 @@
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 En cours...
                             @else
-                                Tourner la roue!
+                                Tourner la roue
                             @endif
                         </button>
                     </div>
@@ -100,8 +100,12 @@
                 // Activation du pointerGuide pour le développement
                 'pointerGuide': {
                     'display': true,
-                    'strokeStyle': 'rgba(255, 0, 0, 0.8)',
-                    'lineWidth': 3
+                    'strokeStyle': 'rgba(255, 255, 255, 0.8)',
+                    'lineWidth': 3,
+                    'shadowBlur': 10,
+                    'shadowColor': 'rgba(255, 255, 255, 0.6)',
+                    'shadowOffsetX': 2,
+                    'shadowOffsetY': 2
                 },
                 // Position du pointeur à midi - exactement 0 degrés
                 'pointerAngle': 0
@@ -137,11 +141,20 @@
             // Déterminer si c'est un segment gagnant basé sur le texte réel du segment
             const isWinningSegment = winningSegment.text === 'GAGNÉ';
             
-            // Afficher une alerte avec le résultat
+            // Mettre en avant le segment obtenu
+            if (winningSegment) {
+                // Sauvegarder l'ancien style
+                const oldFillStyle = winningSegment.fillStyle;
+                // Appliquer un effet visuel temporaire
+                winningSegment.fillStyle = '#fffbe6'; // Couleur plus claire ou personnalisée
+                theWheel.draw();
+                setTimeout(() => {
+                    winningSegment.fillStyle = oldFillStyle;
+                    theWheel.draw();
+                }, 1600);
+            }
+            
             setTimeout(() => {
-                // Affiché en fonction du texte du segment, pas de la couleur
-                alert("Vous avez " + (isWinningSegment ? "GAGNÉ!" : "PERDU!"));
-                
                 // Jouer le son correspondant
                 if (isWinningSegment) {
                     console.log("Jouer le son de victoire");
@@ -149,6 +162,8 @@
                         winSound.currentTime = 0;
                         winSound.play();
                     }
+                    // Afficher les confettis
+                    launchConfetti();
                 } else {
                     console.log("Jouer le son de défaite");
                     if (loseSound) {
@@ -331,7 +346,7 @@
                 } catch (e) {
                     console.error("Erreur lors de l'appel à spin():", e);
                     this.disabled = false;
-                    this.innerText = "Tourner la roue!";
+                    this.innerText = "Tourner la roue";
                 }
             });
         }
@@ -419,6 +434,11 @@
             padding: 0.5rem 1rem; /* Padding réduit pour le bouton */
             z-index: 2000;
             position: relative;
+        }
+        
+        /* Suppression du halo blanc à l'indicateur */
+        .pointer-halo {
+            filter: none;
         }
         
         @media (max-width: 575.98px) {

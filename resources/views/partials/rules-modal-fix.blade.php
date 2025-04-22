@@ -1,6 +1,6 @@
 <!-- Modal pour le règlement de la tombola (version simplifiée) -->
 <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="reglementModalLabel">REGLEMENT DE LA TOMBOLA « Promo 70 ans de la marque DINOR »</h5>

@@ -10,6 +10,9 @@ use App\Models\Prize;
 use App\Models\PrizeDistribution;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\WhatsAppService;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 
 class ParticipantController extends Controller
 {
@@ -594,6 +597,30 @@ class ParticipantController extends Controller
                 $qrCode = 'QR-' . Str::random(8);
                 $entry->qr_code = $qrCode;
                 $entry->save();
+
+                // ENVOI WHATSAPP AU GAGNANT
+                if ($hasWon && $participant = $entry->participant) {
+                    $recipientPhone = '+225' . ltrim($participant->phone, '0');
+                    $qrDir = storage_path('app/qrcodes');
+                    if (!file_exists($qrDir)) {
+                        mkdir($qrDir, 0777, true);
+                    }
+                    $qrPath = $qrDir . "/qr-{$entry->id}.png";
+                    Builder::create()
+                        ->writer(new PngWriter())
+                        ->data($qrCode)
+                        ->size(300)
+                        ->margin(10)
+                        ->build()
+                        ->saveToFile($qrPath);
+                    $whatsapp = new WhatsAppService();
+                    try {
+                        $whatsapp->sendQrCodeToWinner($recipientPhone, $qrPath);
+                        \Log::info('Message WhatsApp envoyé au gagnant', ['phone' => $recipientPhone, 'entry_id' => $entry->id]);
+                    } catch (\Exception $ex) {
+                        \Log::error('Erreur lors de l\'envoi WhatsApp', ['error' => $ex->getMessage()]);
+                    }
+                }
 
                 // Si gagné, récupérer les informations du prix pour le résultat
                 $prizeInfo = null;

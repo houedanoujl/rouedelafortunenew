@@ -110,4 +110,17 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 @endif
+
+@if(session('whatsapp_result'))
+    <div class="alert alert-info text-center" id="whatsapp-alert" style="z-index:9999;position:fixed;top:20px;left:50%;transform:translateX(-50%);min-width:300px;max-width:90%;">
+        {{ session('whatsapp_result') }}
+    </div>
+    <script>
+        setTimeout(function() {
+            var alert = document.getElementById('whatsapp-alert');
+            if(alert) alert.style.display = 'none';
+        }, 6000);
+    </script>
+@endif
+
 @endsection

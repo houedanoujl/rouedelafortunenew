@@ -86,7 +86,7 @@
 <div id="ageVerificationOverlay" class="age-verification-overlay">
     <div class="age-verification-popup">
         <h2>Vérification de l'âge</h2>
-        <p>Êtes-vous âgé d'au moins 18 ans ?</p>
+        <p>Êtes-vous âgé(e) d'au moins 18 ans ?</p>
         <div class="age-verification-buttons">
             <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
             <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
