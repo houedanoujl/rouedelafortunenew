@@ -9,81 +9,36 @@
         left: 0;
         right: 0;
     }
-    /* Styles pour l'accordéon personnalisé */
-    .custom-accordion {
-        margin-bottom: 10px;
-    }
-    .custom-accordion-header {
+    
+    /* Styles Bootstrap améliorés pour l'accordéon */
+    #accordionReglement .accordion-button {
         background-color: #f8f9fa;
         color: #212529;
-        padding: 12px 15px;
-        cursor: pointer;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
         font-weight: bold;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
-    .custom-accordion-header:hover {
+    #accordionReglement .accordion-button:not(.collapsed) {
         background-color: #e9ecef;
-    }
-    .custom-accordion-icon::after {
-        content: '\002B'; /* Signe + */
-        font-size: 18px;
         color: #212529;
+        box-shadow: none;
     }
-    .custom-accordion-header.active .custom-accordion-icon::after {
-        content: '\2212'; /* Signe - */
+    #accordionReglement .accordion-button:focus {
+        box-shadow: none;
+        border-color: #dee2e6;
     }
-    .custom-accordion-content {
-        padding: 15px;
-        background-color: #ffffff;
-        border: 1px solid #dee2e6;
-        border-top: none;
-        border-radius: 0 0 4px 4px;
-        display: none;
-        color: #212529;
+    #accordionReglement .accordion-body,
+    #accordionReglement .accordion-body * {
+        color: #212529 !important;
+        background: transparent !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        font-size: 1.1rem !important;
     }
-    .custom-accordion-content.active {
-        display: block;
-    }
-    .custom-accordion-content p {
-        color: #212529;
-        margin-bottom: 10px;
-        line-height: 1.6;
-    }
-    .custom-accordion-content h5 {
-        color: #212529;
-        font-weight: bold;
-        margin-top: 15px;
-        margin-bottom: 10px;
-    }
-    .custom-accordion-content ul {
-        color: #212529;
-        margin-left: 20px;
-        margin-bottom: 15px;
-    }
-    .custom-accordion-content li {
-        color: #212529;
-        margin-bottom: 5px;
-    }
-    .custom-accordion-content table {
-        margin-top: 15px;
-        color: #212529;
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .custom-accordion-content th, 
-    .custom-accordion-content td {
-        border: 1px solid #dee2e6;
-        padding: 8px;
-        text-align: left;
-        color: #212529;
-    }
-    .custom-accordion-content th {
-        background-color: #f8f9fa;
-        font-weight: bold;
+    
+    /* Assurer que le contenu est toujours visible */
+    #collapseArt1, #collapseArt2, #collapseArt3, #collapseArt4, 
+    #collapseArt5, #collapseArt6, #collapseArt7, #collapseArt8,
+    #collapseArt9, #collapseArt10, #collapseArt11, #collapseArt12, #collapseArt13 {
+        color: #212529 !important;
     }
 </style>
 
@@ -95,7 +50,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 20px; background-color: #fff; color: #212529;">
-                <div class="custom-accordion" id="accordionReglement">
+                <div class="accordion" id="accordionReglement">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingArt1">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArt1" aria-expanded="true" aria-controls="collapseArt1">
