@@ -23,3 +23,9 @@ yarn-error.log
 /.zed
 /composer.lock
 /vendor
+
+# Fichiers générés par Filament
+/public/css/filament/
+
+# Fichiers de données générés pendant l'exécution
+spin_history.json
