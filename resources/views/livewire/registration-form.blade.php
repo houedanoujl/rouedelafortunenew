@@ -123,9 +123,9 @@
                     </div>
                     <div class="form-group">
                             <label for="phone">{{ __('registration.fields.phone.label') }} <span style="color: red;">*</span></label>
-                            <input type="tel" class="form-control" id="phone" wire:model.lazy="phone" required>
+                            <input type="tel" class="form-control" id="phone" wire:model.lazy="phone" required maxlength="10" pattern="[0-9]{10}" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                             @if (!$isExistingParticipant)
-                                <small class="form-text text-muted">Si vous avez déjà participé, saisissez votre numéro pour retrouver vos informations.</small>
+                                <small class="form-text text-muted">Saisissez un numéro à 10 chiffres sans espaces ni indicatif. Ex: 0701234567</small>
                             @endif
                             @error('phone') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>

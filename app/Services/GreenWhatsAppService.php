@@ -23,6 +23,18 @@ class GreenWhatsAppService
         $apiTokenInstance = env('GREENAPI_API_TOKEN', '094a4edc1a0146279d051bb1fce10af462886c767ea54dd9a4');
         $apiUrl = env('GREENAPI_API_URL', 'https://7105.api.greenapi.com');
         
+        // Enregistrer les paramètres initiaux
+        Log::debug('Green API WhatsApp - Paramètres d\'entrée', [
+            'recipient_original' => $recipientPhone,
+            'qrcode_path' => $qrCodePath,
+            'message' => $message ?? 'Non spécifié',
+            'api_config' => [
+                'id_instance' => $idInstance,
+                'api_url' => $apiUrl,
+                'api_token_exists' => !empty($apiTokenInstance)
+            ]
+        ]);
+        
         if (!$idInstance || !$apiTokenInstance || !$apiUrl) {
             Log::error('Configuration Green API manquante', [
                 'id_instance_exists' => !empty($idInstance),
@@ -34,12 +46,19 @@ class GreenWhatsAppService
         
         // Formater le numéro de téléphone (supprimer + et espaces)
         $recipientPhone = $this->formatPhoneNumber($recipientPhone);
-        $formattedChatId = $recipientPhone . '@c.us';
+        
+        // Pour le chatId, enlever le + du numéro (Green API n'accepte pas le + dans le chatId)
+        $chatIdNumber = ltrim($recipientPhone, '+');
+        $formattedChatId = $chatIdNumber . '@c.us';
         
         Log::info('Début de l\'envoi WhatsApp via Green API', [
             'recipient' => $recipientPhone,
+            'chatId' => $formattedChatId,
             'qrcode_path' => $qrCodePath,
-            'id_instance' => $idInstance
+            'id_instance' => $idInstance,
+            'numéro_original' => $recipientPhone,
+            'numéro_formaté_api' => $chatIdNumber,
+            'format_complet_chatId' => $formattedChatId
         ]);
         
         if (!file_exists($qrCodePath)) {
@@ -140,12 +159,12 @@ class GreenWhatsAppService
         // Supprimer tout sauf les chiffres
         $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
         
-        // Si le numéro commence par 225, on le garde tel quel
-        if (substr($phone, 0, 3) === '225') {
-            return $phone;
+        // Ne garder que les 8 derniers chiffres
+        if (strlen($phone) > 8) {
+            $phone = substr($phone, -8);
         }
         
-        // Sinon, on ajoute 225 (pour la Côte d'Ivoire)
-        return '225' . $phone;
+        // Ajouter le préfixe +225 (Côte d'Ivoire)
+        return '+225' . $phone;
     }
 }

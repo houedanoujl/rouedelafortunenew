@@ -40,10 +40,23 @@ class RegistrationForm extends Component
     // Règles de validation spécifiques pour les nouveaux participants
     protected function getNewParticipantRules()
     {
+        // Règles allégées pour les comptes test
+        if (session('is_test_account')) {
+            return [
+                'firstName' => 'required|string|max:255',
+                'lastName' => 'required|string|max:255',
+                'phone' => 'required|string|max:50', // Pas de vérification d'unicité pour les tests
+                'email' => 'nullable|max:255', // Pas de validation d'email pour les tests
+                'consentement' => 'required|accepted',
+                'reglement' => 'required|accepted',
+            ];
+        }
+        
+        // Règles standard pour les utilisateurs normaux
         return [
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
-            'phone' => 'required|string|max:50|unique:participants,phone', // Uniquement pour nouveaux participants
+            'phone' => 'required|string|max:50|unique:participants,phone',
             'email' => 'nullable|email|max:255',
             'consentement' => 'required|accepted',
             'reglement' => 'required|accepted',
@@ -112,10 +125,14 @@ class RegistrationForm extends Component
 
     public function updated($propertyName)
     {
-        $this->validateOnly($propertyName);
+        // Désactiver la validation en temps réel pour les comptes test
+        if (!session('is_test_account')) {
+            $this->validateOnly($propertyName);
+        }
 
         // Vérifier si l'utilisateur a déjà participé lorsqu'il entre son téléphone ou son email
-        if ($propertyName === 'phone' || $propertyName === 'email') {
+        // Ignorer cette vérification pour les comptes test
+        if (($propertyName === 'phone' || $propertyName === 'email') && !session('is_test_account')) {
             $this->checkExistingParticipation();
         }
     }
@@ -292,11 +309,30 @@ class RegistrationForm extends Component
         }
 
         // Vérifier explicitement si c'est un participant existant
-        $participant = Participant::where('phone', $this->phone)->first();
-        $this->isExistingParticipant = $participant ? true : false;
+        if (!session('is_test_account')) {
+            $participant = Participant::where('phone', $this->phone)->first();
+            $this->isExistingParticipant = $participant ? true : false;
+        } else {
+            // Pour les comptes test, on ignore cette vérification
+            $this->isExistingParticipant = false;
+        }
 
         // Validation différente selon le type de participant
-        if ($this->isExistingParticipant) {
+        if (session('is_test_account')) {
+            // Pour les comptes test, validation minimale sans vérification d'unicité ni format d'email
+            $this->validate([
+                'firstName' => 'required|string|max:255',
+                'lastName' => 'required|string|max:255',
+                'phone' => 'required|string|max:50', // Pas de vérification d'unicité
+                'email' => 'nullable|max:255', // Pas de validation du format email
+                'consentement' => 'required|accepted',
+                'reglement' => 'required|accepted',
+            ]);
+            \Log::info('Mode test: validation allégée des données utilisateur', [
+                'email' => $this->email,
+                'phone' => $this->phone
+            ]);
+        } else if ($this->isExistingParticipant) {
             // Pour les participants existants, uniquement valider les champs requis sans vérifier l'unicité
             $this->validate([
                 'firstName' => 'required|string|max:255',
@@ -312,9 +348,15 @@ class RegistrationForm extends Component
 
         try {
             // Vérifier si un participant existe déjà avec ce numéro de téléphone ou email
-            $participantByPhone = Participant::where('phone', $this->phone)->first();
-            $participantByEmail = !empty($this->email) ? Participant::where('email', $this->email)->first() : null;
-            $participant = $participantByPhone ?? $participantByEmail;
+            // Ignorer cette vérification pour les comptes test
+            if (session('is_test_account')) {
+                // Pour les comptes test, on crée toujours un nouveau participant ou on utilise un existant sans vérification
+                $participant = $participantByPhone ?? $participantByEmail ?? null;
+            } else {
+                $participantByPhone = Participant::where('phone', $this->phone)->first();
+                $participantByEmail = !empty($this->email) ? Participant::where('email', $this->email)->first() : null;
+                $participant = $participantByPhone ?? $participantByEmail;
+            }
 
             // Vérifier immédiatement si le participant existe déjà et a participé à ce concours
             if ($participant) {
