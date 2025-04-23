@@ -8,6 +8,9 @@ use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\SpinResultController;
 use App\Http\Controllers\TestModeController;
 use App\Http\Controllers\CookieController;
+use App\Http\Controllers\WhatsappTestController;
+use App\Http\Controllers\MetaWhatsappTestController;
+use App\Http\Controllers\GreenApiWhatsappController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,3 +73,15 @@ Route::get('/rules', function () {
 
 // Route ultra simplifiée pour nettoyer les cookies (utilisée en mode test)
 Route::get('/clear-cookies', [CookieController::class, 'clearCookies'])->name('clear.cookies');
+
+// Page de test WhatsApp Infobip
+Route::get('/whatsapp-test', [WhatsappTestController::class, 'showForm'])->name('whatsapp.test');
+Route::post('/whatsapp-test', [WhatsappTestController::class, 'sendMessage'])->name('whatsapp.send');
+
+// Page de test WhatsApp Meta (Facebook)
+Route::get('/meta-whatsapp-test', [MetaWhatsappTestController::class, 'showForm'])->name('meta.whatsapp.test');
+Route::post('/meta-whatsapp-test', [MetaWhatsappTestController::class, 'sendMessage'])->name('meta.whatsapp.send');
+
+// Page de test WhatsApp Green API
+Route::get('/green-api-whatsapp-test', [GreenApiWhatsappController::class, 'showForm'])->name('green.whatsapp.test');
+Route::post('/green-api-whatsapp-test', [GreenApiWhatsappController::class, 'sendMessage'])->name('green.whatsapp.send');

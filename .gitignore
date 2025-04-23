@@ -29,3 +29,7 @@ yarn-error.log
 
 # Fichiers de données générés pendant l'exécution
 spin_history.json
+app/Http/Controllers/MetaWhatsappTestController.php
+resources/views/green-api-whatsapp-test.blade.php
+resources/views/meta-whatsapp-test.blade.php
+resources/views/whatsapp-test.blade.php

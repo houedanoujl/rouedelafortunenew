@@ -11,6 +11,7 @@ use App\Models\PrizeDistribution;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Services\WhatsAppService;
+use App\Services\GreenWhatsAppService;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 
@@ -613,30 +614,33 @@ class ParticipantController extends Controller
                         ->margin(10)
                         ->build()
                         ->saveToFile($qrPath);
-                    $whatsapp = new WhatsAppService();
-                    try {
-                        $whatsapp->sendQrCodeToWinner($recipientPhone, $qrPath);
-                        \Log::info('Message WhatsApp envoyé au gagnant', ['phone' => $recipientPhone, 'entry_id' => $entry->id]);
-                    } catch (\Exception $ex) {
-                        \Log::error('Erreur lors de l\'envoi WhatsApp', ['error' => $ex->getMessage()]);
-                    }
-                }
-
-                // Si gagné, récupérer les informations du prix pour le résultat
-                $prizeInfo = null;
-                if ($hasWon && $prizeId) {
-                    $prize = Prize::find($prizeId);
+                    
+                    // Stocker le nom du prix dans la session pour le message WhatsApp
                     if ($prize) {
-                        $prizeInfo = [
-                            'id' => $prize->id,
-                            'name' => $prize->name,
-                            'value' => $prize->value,
-                            'type' => $prize->type,
-                        ];
+                        session(['prize_name' => $prize->name]);
+                    }
+                    
+                    // Utiliser Green API pour l'envoi WhatsApp (nouvelle méthode)
+                    $greenWhatsapp = new GreenWhatsAppService();
+                    try {
+                        $message = "Félicitations ! Vous avez gagné " . ($prize ? $prize->name : "un prix") . 
+                                  ". Voici votre QR code pour récupérer votre gain. Conservez-le précieusement !";
+                        
+                        $greenWhatsapp->sendQrCodeToWinner($recipientPhone, $qrPath, $message);
+                        \Log::info('Message WhatsApp envoyé au gagnant via Green API', ['phone' => $recipientPhone, 'entry_id' => $entry->id]);
+                    } catch (\Exception $ex) {
+                        \Log::error('Erreur lors de l\'envoi WhatsApp via Green API', ['error' => $ex->getMessage()]);
+                        
+                        // Fallback sur l'ancien service en cas d'échec
+                        try {
+                            $whatsapp = new WhatsAppService();
+                            $whatsapp->sendQrCodeToWinner($recipientPhone, $qrPath);
+                            \Log::info('Message WhatsApp envoyé au gagnant (fallback sur ancien service)', ['phone' => $recipientPhone, 'entry_id' => $entry->id]);
+                        } catch (\Exception $innerEx) {
+                            \Log::error('Erreur lors de l\'envoi WhatsApp (fallback également échoué)', ['error' => $innerEx->getMessage()]);
+                        }
                     }
                 }
-
-                DB::commit();
 
                 // Pour les utilisateurs en mode test, réinitialiser l'entrée pour permettre de jouer à nouveau
                 if (session('is_test_account') && isset($entry) && $entry) {
@@ -668,7 +672,12 @@ class ParticipantController extends Controller
                             ? 'Félicitations ! Vous avez gagné !'
                             : 'Pas de chance cette fois-ci. Vous pourrez réessayer ultérieurement !',
                         'prize' => $selectedSector,
-                        'prize_info' => $prizeInfo
+                        'prize_info' => $prize ? [
+                            'id' => $prize->id,
+                            'name' => $prize->name,
+                            'value' => $prize->value,
+                            'type' => $prize->type,
+                        ] : null
                     ],
                     'qr_code' => $entry->qr_code
                 ]);
