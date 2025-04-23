@@ -40,4 +40,11 @@ return [
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
     ],
 
+    'greenapi' => [
+        'api_url' => env('GREENAPI_API_URL'),
+        'media_url' => env('GREENAPI_MEDIA_URL'),
+        'id_instance' => env('GREENAPI_ID_INSTANCE'),
+        'api_token' => env('GREENAPI_API_TOKEN'),
+    ],
+
 ];

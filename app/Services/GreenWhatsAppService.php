@@ -19,9 +19,9 @@ class GreenWhatsAppService
     public function sendQrCodeToWinner($recipientPhone, $qrCodePath, $message = null)
     {
         // Récupérer les informations d'API depuis la configuration
-        $idInstance = env('GREENAPI_ID_INSTANCE', '7105222328');
-        $apiTokenInstance = env('GREENAPI_API_TOKEN', '094a4edc1a0146279d051bb1fce10af462886c767ea54dd9a4');
-        $apiUrl = env('GREENAPI_API_URL', 'https://7105.api.greenapi.com');
+        $idInstance = config('services.greenapi.id_instance');
+        $apiTokenInstance = config('services.greenapi.api_token');
+        $apiUrl = config('services.greenapi.api_url');
         
         // Enregistrer les paramètres initiaux
         Log::debug('Green API WhatsApp - Paramètres d\'entrée', [

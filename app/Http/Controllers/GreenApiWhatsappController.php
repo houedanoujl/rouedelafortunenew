@@ -28,9 +28,9 @@ class GreenApiWhatsappController extends Controller
             $phoneNumber = ltrim($phoneNumber, '+');
             
             // Récupération des informations d'API
-            $idInstance = env('GREENAPI_ID_INSTANCE', '7105222328');
-            $apiTokenInstance = env('GREENAPI_API_TOKEN', '094a4edc1a0146279d051bb1fce10af462886c767ea54dd9a4');
-            $apiUrl = env('GREENAPI_API_URL', 'https://7105.api.greenapi.com');
+            $idInstance = config('services.greenapi.id_instance');
+            $apiTokenInstance = config('services.greenapi.api_token');
+            $apiUrl = config('services.greenapi.api_url');
             
             // Construction de l'URL pour l'API Green API - Méthode sendMessage
             $url = "{$apiUrl}/waInstance{$idInstance}/sendMessage/{$apiTokenInstance}";
@@ -58,10 +58,10 @@ class GreenApiWhatsappController extends Controller
         
         // Informations de débogage
         $debugInfo = [
-            'api_url' => env('GREENAPI_API_URL', 'https://7105.api.greenapi.com'),
-            'media_url' => env('GREENAPI_MEDIA_URL', 'https://7105.media.greenapi.com'),
-            'id_instance' => env('GREENAPI_ID_INSTANCE', '7105222328'),
-            'api_token' => '********' . substr(env('GREENAPI_API_TOKEN', ''), -4), // Masquer pour la sécurité
+            'api_url' => config('services.greenapi.api_url'),
+            'media_url' => config('services.greenapi.media_url'),
+            'id_instance' => config('services.greenapi.id_instance'),
+            'api_token' => '********' . substr(config('services.greenapi.api_token', ''), -4), // Masquer pour la sécurité
             'to_number' => $phoneNumber,
             'formatted_chat_id' => $phoneNumber . '@c.us',
         ];
