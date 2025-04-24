@@ -41,7 +41,12 @@ class PrizeResource extends Resource
                 Forms\Components\TextInput::make('value')
                     ->required(),
                 Forms\Components\TextInput::make('image_url')
-                    ->maxLength(255),
+                    ->label('Image du prix (URL)')
+                    ->placeholder('http://example.com/image.jpg')
+                    ->url()
+                    ->suffixIcon('heroicon-m-photo')
+                    ->columnSpanFull()
+                    ->helperText('Entrez l\'URL de l\'image du prix ou téléchargez-la manuellement dans le dossier public/prizes'),
                 Forms\Components\TextInput::make('stock')
                     ->required()
                     ->numeric()

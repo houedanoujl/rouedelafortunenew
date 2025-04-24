@@ -71,13 +71,14 @@ class PrizeResource extends Resource
 
                 Forms\Components\Section::make('Média')
                     ->schema([
-                        Forms\Components\FileUpload::make('image')
-                            ->label('Image')
-                            ->image()
-                            ->directory('prizes')
-                            ->maxSize(2048)
-                            ->columnSpanFull(),
-                    ])->columnSpan(['lg' => 1]),
+                        Forms\Components\TextInput::make('image_url')
+                            ->label('Image du prix (URL)')
+                            ->placeholder('http://example.com/image.jpg')
+                            ->url()
+                            ->suffixIcon('heroicon-m-photo')
+                            ->columnSpanFull()
+                            ->helperText('Entrez l\'URL de l\'image du prix ou téléchargez-la manuellement dans le dossier public/prizes'),
+                    ])->columnSpan(['lg' => 3]),
             ])
             ->columns(3);
     }

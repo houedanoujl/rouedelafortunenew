@@ -89,7 +89,7 @@
                         </h2>
                         <div id="collapseArt3" class="accordion-collapse collapse" aria-labelledby="headingArt3" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                La Tombola se déroulera du 1er avril au 30 juin 2025 inclus.
+                                La Tombola se déroulera du 1er avril au 30 juillet 2025 inclus.
                             </div>
                         </div>
                     </div>

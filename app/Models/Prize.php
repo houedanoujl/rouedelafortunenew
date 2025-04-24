@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Filament\Models\Upload;
 
 class Prize extends Model
 {
@@ -32,6 +33,7 @@ class Prize extends Model
     protected $casts = [
         'value' => 'decimal:2',
         'stock' => 'integer',
+        'image_url' => 'string',
     ];
 
     /**

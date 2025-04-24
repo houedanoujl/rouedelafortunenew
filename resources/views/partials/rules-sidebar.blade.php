@@ -40,7 +40,7 @@
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
-                    <p>La Tombola se déroulera du 1er avril au 30 juin 2025 inclus.</p>
+                    <p>La Tombola se déroulera du 1er avril au 30 juillet 2025 inclus.</p>
                 </div>
             </div>
             
