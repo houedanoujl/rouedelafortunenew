@@ -83,7 +83,7 @@
     }
 </style>
 
-<div id="ageVerificationOverlay" class="age-verification-overlay hidden">
+<div id="ageVerificationOverlay" class="age-verification-overlay">
     <div class="age-verification-popup">
         <h2>Vérification de l'âge</h2>
         <p>Êtes-vous âgé(e) d'au moins 18 ans ?</p>
@@ -97,22 +97,15 @@
 <script>
     // Exécuter après le chargement du DOM
     document.addEventListener('DOMContentLoaded', function() {
-        // Vérifier si l'utilisateur a déjà confirmé son âge
-        if (!localStorage.getItem('age_verified')) {
-            // Afficher le popup de vérification d'âge
-            document.getElementById('ageVerificationOverlay').classList.remove('hidden');
-        } else {
-            // Cacher le popup si l'âge a déjà été vérifié
-            document.getElementById('ageVerificationOverlay').classList.add('hidden');
-        }
+        // Afficher le popup de vérification d'âge sans vérifier le cookie
+        document.getElementById('ageVerificationOverlay').classList.remove('hidden');
     });
 
     // Fonction pour vérifier l'âge
     function verifyAge(isAdult) {
         if (isAdult) {
-            // Si l'utilisateur a plus de 18 ans, cacher le popup et mémoriser dans localStorage
+            // Si l'utilisateur a plus de 18 ans, cacher le popup (sans sauvegarder dans localStorage)
             document.getElementById('ageVerificationOverlay').classList.add('hidden');
-            localStorage.setItem('age_verified', 'true');
         } else {
             // Si l'utilisateur a moins de 18 ans, rediriger vers Google
             window.location.href = 'https://www.google.com';
