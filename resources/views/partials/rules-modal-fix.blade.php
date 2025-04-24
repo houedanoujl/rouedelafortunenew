@@ -82,7 +82,7 @@
                     <!-- Article 3 -->
                     <div class="article-title" data-article="3">Article 3 : Date et durée</div>
                     <div class="article-content" id="content-3">
-                        <p>La Tombola se déroulera du 1er avril au 30 juillet 2025 inclus.</p>
+                        <p>La Tombola se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
                     </div>
 
                     <!-- Article 4 -->

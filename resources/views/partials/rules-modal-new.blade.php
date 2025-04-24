@@ -52,7 +52,7 @@
                         </h2>
                         <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#reglementAccordion">
                             <div class="accordion-body">
-                                <p>La Tombola se déroulera du 1er avril au 30 juillet 2025 inclus.</p>
+                                <p>La Tombola se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
                             </div>
                         </div>
                     </div>
