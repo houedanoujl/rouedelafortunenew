@@ -1,9 +1,9 @@
-<!-- Modal pour le règlement de la tombola (version simplifiée) -->
+<!-- Modal pour le règlement de le jeu (version simplifiée) -->
 <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true">
 <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="reglementModalLabel">REGLEMENT DE LA TOMBOLA « Promo 70 ans de la marque DINOR »</h5>
+                <h5 class="modal-title" id="reglementModalLabel">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
@@ -62,39 +62,39 @@
                 <!-- Accordéon custom des articles -->
                 <div class="reglement-accordion">
                     <!-- Article 1 -->
-                    <div class="article-title active" data-article="1">Article 1 : Organisation de la Tombola</div>
+                    <div class="article-title active" data-article="1">Article 1 : Organisation de le jeu</div>
                     <div class="article-content show" id="content-1">
                         <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01, représentée par son Directeur Général, Monsieur Philippe RAYNAL ayant tous pouvoirs à l'effet des présentes ;</p>
                         <p>Ci-après dénommée « l'Organisateur »</p>
                         <p>Organise une Tombola dénommée « Promo 70 ans de la marque DINOR ».</p>
-                        <p>Ci-après désignée « la Tombola ».</p>
+                        <p>Ci-après désignée « le jeu ».</p>
                     </div>
 
                     <!-- Article 2 -->
-                    <div class="article-title" data-article="2">Article 2 : Objet de la Tombola</div>
+                    <div class="article-title" data-article="2">Article 2 : Objet de le jeu</div>
                     <div class="article-content" id="content-2">
                         <p>La présente Tombola promotionnelle a pour objectif de commémorer les 70 ans de la marque DINOR.</p>
                         <p>Ci-après « les Participants »</p>
-                        <p>La participation à la Tombola implique l'acceptation sans réserve par les participants du présent règlement dans son intégralité.</p>
+                        <p>La participation à le jeu implique l'acceptation sans réserve par les participants du présent règlement dans son intégralité.</p>
                         <p>Ci-après « le Règlement ».</p>
                     </div>
 
                     <!-- Article 3 -->
                     <div class="article-title" data-article="3">Article 3 : Date et durée</div>
                     <div class="article-content" id="content-3">
-                        <p>La Tombola se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
+                        <p>le jeu se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
                     </div>
 
                     <!-- Article 4 -->
                     <div class="article-title" data-article="4">Article 4 : Cadre réglementaire et conditions de participation</div>
                     <div class="article-content" id="content-4">
                         <h5>4-1 Cadre réglementaire</h5>
-                        <p>La Tombola « Promo 70 ans de la marque DINOR » se déroule conformément aux dispositions de la loi n°2020-480 du 27 Mai 2020 portant régime juridique des jeux de hasard en Côte d'Ivoire et du décret n°2023-946 du 06 décembre 2023 portant régime juridique des jeux de hasard soumis à autorisation.</p>
+                        <p>le jeu « Promo 70 ans de la marque DINOR » se déroule conformément aux dispositions de la loi n°2020-480 du 27 Mai 2020 portant régime juridique des jeux de hasard en Côte d'Ivoire et du décret n°2023-946 du 06 décembre 2023 portant régime juridique des jeux de hasard soumis à autorisation.</p>
                         <p>Le présent règlement est authentifié par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.</p>
 
                         <h5>4-2 Conditions de participation</h5>
-                        <p>La Tombola qui se déroulera sur toute l'étendue du territoire de la République de Côte d'Ivoire est destinée aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l'Application « Dinor App ». Cette Tombola est interdite aux mineurs de moins de 18 ans.</p>
-                        <p>Lesdits Participants pourront via le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à la Tombola, accéder à une roue qui leur permettra de gagner des lots immédiats.</p>
+                        <p>le jeu qui se déroulera sur toute l'étendue du territoire de la République de Côte d'Ivoire est destinée aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l'Application « Dinor App ». Cette Tombola est interdite aux mineurs de moins de 18 ans.</p>
+                        <p>Lesdits Participants pourront via le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à le jeu, accéder à une roue qui leur permettra de gagner des lots immédiats.</p>
                         <p>La roue comporte les mentions « Gagné » et « Perdu ».</p>
                         <p>En pratique, les Participants devront :</p>
                         <ul>
@@ -232,7 +232,7 @@
                     <!-- Article 10 -->
                     <div class="article-title" data-article="10">Article 10 : Cas de force majeure</div>
                     <div class="article-content" id="content-10">
-                        <p>La responsabilité de l'organisateur ne saurait être encourue si, pour un cas de force majeure, la Tombola devait être modifiée, écourtée ou annulée.</p>
+                        <p>La responsabilité de l'organisateur ne saurait être encourue si, pour un cas de force majeure, le jeu devait être modifiée, écourtée ou annulée.</p>
                     </div>
 
                     <!-- Article 11 -->
@@ -246,7 +246,7 @@
                     <!-- Article 12 -->
                     <div class="article-title" data-article="12">Article 12 : Dépôt et consultation du Règlement</div>
                     <div class="article-content" id="content-12">
-                        <p>Le règlement de la Tombola est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
+                        <p>Le règlement de le jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
                         <p>Un Procès-verbal de jeu est dressé et transmis à l'ARJH à la fin du jeu.</p>
                     </div>
 

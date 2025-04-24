@@ -392,12 +392,12 @@
         }
     }
 </script>                    
-                    <!-- Case à cocher pour le règlement de la tombola -->
+                    <!-- Case à cocher pour le règlement de le jeu -->
                     <div class="form-group mt-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="rulesCheckbox" wire:model="reglement" required>
                             <label class="form-check-label" for="rulesCheckbox">
-                                J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal" style="color: red;">règlement de la tombola</a>
+                                J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal" style="color: red;">règlement de le jeu</a>
                             </label>
                         </div>
 
@@ -583,12 +583,12 @@
         }
     }
 </script>    
-    <!-- Modal pour le règlement de la tombola -->
+    <!-- Modal pour le règlement de le jeu -->
     <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true" style="z-index: 1060;" data-bs-backdrop="false">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="reglementModalLabel">{{ $modalContents['rules']['title'] ?? 'Règlement de la tombola' }}</h5>
+                    <h5 class="modal-title" id="reglementModalLabel">{{ $modalContents['rules']['title'] ?? 'Règlement de le jeu' }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 

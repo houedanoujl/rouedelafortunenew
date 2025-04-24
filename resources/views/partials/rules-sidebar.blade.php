@@ -1,8 +1,8 @@
-<!-- Sidebar pour le règlement de la tombola -->
+<!-- Sidebar pour le règlement de le jeu -->
 <div class="sidebar-overlay" id="reglementOverlay"></div>
 <div class="sidebar" id="reglementSidebar">
     <div class="sidebar-header">
-        <h5 class="sidebar-title">REGLEMENT DE LA TOMBOLA « Promo 70 ans de la marque DINOR »</h5>
+        <h5 class="sidebar-title">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
         <button type="button" class="sidebar-close">&times;</button>
     </div>
     <div class="sidebar-body">
@@ -11,21 +11,21 @@
             <!-- Article 1 -->
             <div class="custom-accordion">
                 <div class="custom-accordion-header active" data-accordion="article1">
-                    Article 1 : Organisation de la Tombola
+                    Article 1 : Organisation de le jeu
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content active">
                     <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01. Abidjan.</p>
                     <p>Ci-après dénommée « l'Organisateur »</p>
                     <p>Organise une Tombola dénommée « Promo 70 ans de la marque DINOR ».</p>
-                    <p>Ci-après désignée « la Tombola ».</p>
+                    <p>Ci-après désignée « le jeu ».</p>
                 </div>
             </div>
             
             <!-- Article 2 -->
             <div class="custom-accordion">
                 <div class="custom-accordion-header" data-accordion="article2">
-                    Article 2 : Objet de la Tombola
+                    Article 2 : Objet de le jeu
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
@@ -36,11 +36,11 @@
             <!-- Article 3 -->
             <div class="custom-accordion">
                 <div class="custom-accordion-header" data-accordion="article3">
-                    Article 3 : Durée de la Tombola
+                    Article 3 : Durée de le jeu
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
-                    <p>La Tombola se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
+                    <p>le jeu se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
                 </div>
             </div>
             
@@ -52,7 +52,7 @@
                 </div>
                 <div class="custom-accordion-content">
                     <h5>4-1 Cadre réglementaire</h5>
-                    <p>La Tombola est régie par la règlementation en vigueur notamment la Loi n°2019-572 du 26 Juin 2019 portant régime juridique des jeux de hasard en Côte d'Ivoire.</p>
+                    <p>le jeu est régie par la règlementation en vigueur notamment la Loi n°2019-572 du 26 Juin 2019 portant régime juridique des jeux de hasard en Côte d'Ivoire.</p>
                     <p>La roue comporte les mentions « Gagné » et « Perdu ».</p>
                     <p>En pratique, les Participants devront :</p>
                     <ul>
@@ -71,7 +71,7 @@
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
-                    <p>La Tombola est ouverte à toute personne physique majeure résidant en Côte d'Ivoire.</p>
+                    <p>le jeu est ouverte à toute personne physique majeure résidant en Côte d'Ivoire.</p>
                 </div>
             </div>
             
