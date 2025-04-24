@@ -92,7 +92,7 @@ if ($displayedResult !== null) {
                     <p class="mt-3">{{ $prize->description }}</p>
                     @if($prize->image_url)
                         <div class="prize-image-container mt-3">
-                            <img src="{{ asset('storage/' . $prize->image_url) }}" class="prize-image" alt="{{ $prize->name }}" onerror="this.src='{{ asset('img/prize_placeholder.jpg') }}'; this.onerror=null;">
+                            <img src="{{ $prize->image_url }}" class="prize-image" alt="{{ $prize->name }}" onerror="this.src='{{ asset('img/prize_placeholder.jpg') }}'; this.onerror=null;">
                         </div>
                     @else
                         <div class="no-image-container mt-3">

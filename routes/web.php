@@ -11,6 +11,7 @@ use App\Http\Controllers\CookieController;
 use App\Http\Controllers\WhatsappTestController;
 use App\Http\Controllers\MetaWhatsappTestController;
 use App\Http\Controllers\GreenApiWhatsappController;
+use App\Http\Controllers\PrizeUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,7 @@ Route::get('/wheel/{entry}', [SpinController::class, 'show'])->name('wheel.show'
 Route::get('/spin/result/{entry}', [SpinController::class, 'result'])->name('spin.result');
 
 // Route pour le QR code
+Route::get('/qrcode/check', [QrCodeController::class, 'check'])->name('qrcode.check');
 Route::get('/qrcode/{code}', [QrCodeController::class, 'show'])->name('qrcode.result');
 Route::get('/qrcode/{code}/download/pdf', [QrCodeController::class, 'downloadPdf'])->name('qrcode.download.pdf');
 Route::get('/qrcode/{code}/download/png', [QrCodeController::class, 'downloadJpg'])->name('qrcode.download.png');
@@ -71,8 +73,16 @@ Route::get('/rules', function () {
     return view('rules');
 })->name('rules');
 
-// Route ultra simplifiée pour nettoyer les cookies (utilisée en mode test)
-Route::get('/clear-cookies', [CookieController::class, 'clearCookies'])->name('clear.cookies');
+// Route pour vider les cookies (mode test)
+Route::get('/clear-cookies', [TestModeController::class, 'clearAllCookies'])->name('clear.cookies');
+
+// Route pour sortir du mode test et nettoyer toutes les données
+Route::get('/exit-test-mode', [TestModeController::class, 'exitTestMode'])->name('exit.test.mode');
+
+// Routes pour le gestionnaire d'images des prix
+Route::get('/gestion-images-prix', [PrizeUploadController::class, 'showUploadForm'])->name('prizes.upload.form');
+Route::post('/prizes/upload', [PrizeUploadController::class, 'uploadImage'])->name('prizes.upload');
+Route::get('/prizes/delete/{filename}', [PrizeUploadController::class, 'deleteImage'])->name('prizes.delete');
 
 // Page de test WhatsApp Infobip
 Route::get('/whatsapp-test', [WhatsappTestController::class, 'showForm'])->name('whatsapp.test');

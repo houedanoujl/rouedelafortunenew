@@ -60,6 +60,14 @@ return [
             'report' => false,
         ],
 
+        'prizes' => [
+            'driver' => 'local',
+            'root' => public_path('assets/prizes'),
+            'url' => 'http://localhost:8888/assets/prizes',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
     ],
 
     /*

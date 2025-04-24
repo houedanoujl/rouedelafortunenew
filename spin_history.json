@@ -1233,5 +1233,22 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-24T13:12:47+00:00",
+        "entry_id": 8,
+        "participant": {
+            "id": 8,
+            "name": "Big Abidjan",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1690,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
     }
 ]

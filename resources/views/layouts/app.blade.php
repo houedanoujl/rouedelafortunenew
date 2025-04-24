@@ -318,9 +318,18 @@
     <!-- Bannière de mode test pour les employés de Big Five et Sania -->
     @if(session('is_test_account'))
     <div class="test-mode-banner">
-        <strong>MODE TEST ACTIVÉ</strong> pour les employés de SIFCA &{{ session('test_account_company') }} - 
-        Les restrictions de jeu hebdomadaires sont désactivées . Aucun lot attribué dans ce mode ne sera envoyé ou remis.
-        <button onclick="clearStorageAndRedirect()" class="test-mode-button">Retour à l'accueil</button>
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <strong>MODE TEST ACTIVÉ</strong> pour les employés de SIFCA &{{ session('test_account_company') }} - 
+                Les restrictions de jeu hebdomadaires sont désactivées. Aucun lot attribué dans ce mode ne sera envoyé ou remis.
+            </div>
+            <div>
+                <button onclick="clearStorageAndRedirect()" class="test-mode-button btn-sm me-2">Retour à l'accueil</button>
+                <a href="{{ route('exit.test.mode') }}" class="btn btn-danger btn-sm" onclick="return confirm('Cette action va complètement réinitialiser toutes vos données de test (sessions, cookies, localStorage). Continuer?');">
+                    <i class="bi bi-x-circle-fill me-1"></i> Quitter le mode test
+                </a>
+            </div>
+        </div>
     </div>
     <script>
         // Journaliser tous les cookies au chargement de la page

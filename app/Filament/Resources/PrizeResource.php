@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Spatie\MediaLibraryPro\Media;
 
 class PrizeResource extends Resource
 {
@@ -42,11 +43,15 @@ class PrizeResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('image_url')
                     ->label('Image du prix (URL)')
-                    ->placeholder('http://example.com/image.jpg')
+                    ->placeholder(url('assets/prizes/image.jpg'))
+                    ->helperText('URL de l\'image du prix. <a href="/gestion-images-prix" target="_blank">Ouvrir le gestionnaire d\'images</a>')
                     ->url()
-                    ->suffixIcon('heroicon-m-photo')
-                    ->columnSpanFull()
-                    ->helperText('Entrez l\'URL de l\'image du prix ou téléchargez-la manuellement dans le dossier public/prizes'),
+                    ->suffixAction(
+                        Forms\Components\Actions\Action::make('openManager')
+                            ->label('Gérer les images')
+                            ->url('/gestion-images-prix', true)
+                            ->icon('heroicon-m-photo')
+                    ),
                 Forms\Components\TextInput::make('stock')
                     ->required()
                     ->numeric()
