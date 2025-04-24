@@ -25,7 +25,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 2 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading2">
@@ -42,7 +42,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 3 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading3">
@@ -56,7 +56,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 4 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading4">
@@ -68,8 +68,8 @@
                             <div class="accordion-body">
                                 <h5>4-1 Cadre réglementaire</h5>
                                 <p>La Tombola « Promo 70 ans de la marque DINOR » se déroule conformément aux dispositions de la loi n°2020-480 du 27 Mai 2020 portant régime juridique des jeux de hasard en Côte d'Ivoire et du décret n°2023-946 du 06 décembre 2023 portant régime juridique des jeux de hasard soumis à autorisation.</p>
-                                <p>Le présent règlement est authentifié par Maitre Diamilatou SIDIBET AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.</p>
-                                
+                                <p>Le présent règlement est authentifié par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.</p>
+
                                 <h5>4-2 Conditions de participation</h5>
                                 <p>La Tombola qui se déroulera sur toute l'étendue du territoire de la République de Côte d'Ivoire est destinée aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l'Application « Dinor App ». Cette Tombola est interdite aux mineurs de moins de 18 ans.</p>
                                 <p>Lesdits Participants pourront via le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à la Tombola, accéder à une roue qui leur permettra de gagner des lots immédiats.</p>
@@ -84,7 +84,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 5 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading5">
@@ -99,7 +99,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 6 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading6">
@@ -199,7 +199,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 7 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading7">
@@ -215,7 +215,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 8 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading8">
@@ -231,7 +231,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 9 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading9">
@@ -248,7 +248,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 10 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading10">
@@ -262,7 +262,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 11 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading11">
@@ -278,7 +278,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 12 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading12">
@@ -288,12 +288,12 @@
                         </h2>
                         <div id="collapse12" class="accordion-collapse collapse" aria-labelledby="heading12" data-bs-parent="#reglementAccordion">
                             <div class="accordion-body">
-                                <p>Le règlement de la Tombola est déposé en l'Etude par Maitre Diamilatou SIDIBET AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
+                                <p>Le règlement de la Tombola est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
                                 <p>Un Procès-verbal de jeu est dressé et transmis à l'ARJH à la fin du jeu.</p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Article 13 -->
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading13">
@@ -304,10 +304,10 @@
                         <div id="collapse13" class="accordion-collapse collapse" aria-labelledby="heading13" data-bs-parent="#reglementAccordion">
                             <div class="accordion-body">
                                 <p>Une copie certifiée conforme à l'original sera remise gratuitement en mains propres à toute personne qui en fera la demande par écrit. Elle ne pourra en aucun cas être expédiée par voie postale ou autrement.</p>
-                                
+
                                 <p>Fait à Abidjan, le</p>
                                 <p>En deux (02) exemplaires originaux</p>
-                                
+
                                 <p>Authentification Notaire<br>Directeur Général</p>
                             </div>
                         </div>

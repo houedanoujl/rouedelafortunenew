@@ -10,7 +10,7 @@
                     <h2 class="fw-bold">Bienvenue {{ $participantName }}</h2>
                     <p class="lead">Tournez la roue pour tenter de gagner un prix!</p>
                 </div>-->
-                
+
                 <div class="d-flex justify-content-center">
                     <div class="position-relative wheel-container">
 
@@ -21,11 +21,11 @@
                                     <polygon points="30,0 5,55 55,55" fill="#333" />
                                 </svg>
                             </div>
-                            
+
                             <!-- La roue -->
                             <canvas id="wheel" width="320" height="320" class="responsive-wheel"></canvas>
                         </div>
-                        
+
                         <!-- Bouton pour tourner -->
                         <button id="spinBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20;" @if($spinning) disabled @endif>
                             @if($spinning)
@@ -43,31 +43,31 @@
 
     <!-- Sons -->
     <audio id="wheelSound" src="{{ asset('sounds/wheel-spinning.mp3') }}" preload="auto"></audio>
-    <audio id="winSound" src="{{ asset('sounds/win.mp3') }}" preload="auto"></audio>
-    <audio id="loseSound" src="{{ asset('sounds/lose.mp3') }}" preload="auto"></audio>
+    <audio id="winSound" src="{{ asset('sounds/cheering.mp3') }}" preload="auto"></audio>
+    <audio id="loseSound" src="{{ asset('sounds/sadtrombone.swf.mp3') }}" preload="auto"></audio>
     <audio id="tickSound" src="{{ asset('sounds/tick.mp3') }}" preload="auto"></audio>
 
     <!-- Scripts pour la roue -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="{{ asset('js/Winwheel.min.js') }}"></script>
-    
+
     <script>
         // Vérifier si l'utilisateur est l'utilisateur spécial
         const isSpecialUser = {{ $entry->participant && $entry->participant->email === 'noob@saibot.com' ? 'true' : 'false' }};
-        
+
         // Sons
         let spinningSound = document.getElementById('wheelSound');
         let winSound = document.getElementById('winSound');
         let loseSound = document.getElementById('loseSound');
         let tickSound = document.getElementById('tickSound');
-        
+
         // Variables
         let isSpinning = false;
         let theWheel;
-        
+
         // Initialisation de la roue
         initWheel();
-        
+
         function initWheel() {
             // Création de la roue avec Winwheel.js
             theWheel = new Winwheel({
@@ -75,7 +75,7 @@
                 'numSegments': 10,
                 'outerRadius': 140,
                 'innerRadius': 30,
-                'textFontSize': 12, 
+                'textFontSize': 12,
                 'textFontWeight': 'bold',
                 'textOrientation': 'horizontal',
                 'textAlignment': 'center',
@@ -110,13 +110,13 @@
                 // Position du pointeur à midi - exactement 0 degrés
                 'pointerAngle': 0
             });
-            
+
             // Positionner l'indicateur pour qu'il s'arrête exactement au milieu des segments
             theWheel.pins.centerAngle = 0;
             theWheel.pins.startAngle = 0;
             theWheel.draw();
         }
-        
+
         // Fonction de son de tick jouée à chaque fois que la roue passe sur une goupille
         function playTickSound() {
             // Jouer le son de tick quand la roue passe sur une goupille
@@ -126,21 +126,21 @@
                 tickSound.play();
             }
         }
-        
+
         // Callback lorsque la roue s'arrête
         function finishedSpinning() {
             isSpinning = false;
-            
+
             // Obtenez le segment final indiqué par le pointeur
             const winningSegment = theWheel.getIndicatedSegment();
-            
+
             // Afficher les résultats
             console.log("Segment final:", winningSegment);
             console.log("Texte du segment:", winningSegment.text);
-            
+
             // Déterminer si c'est un segment gagnant basé sur le texte réel du segment
             const isWinningSegment = winningSegment.text === 'GAGNÉ';
-            
+
             // Mettre en avant le segment obtenu
             if (winningSegment) {
                 // Sauvegarder l'ancien style
@@ -153,7 +153,7 @@
                     theWheel.draw();
                 }, 1600);
             }
-            
+
             setTimeout(() => {
                 // Jouer le son correspondant
                 if (isWinningSegment) {
@@ -172,12 +172,12 @@
                     }
                 }
             }, 1000);
-            
+
             // Envoyer le résultat réel au serveur via une requête AJAX sécurisée
             console.log('Envoi du résultat au serveur via AJAX...');
             console.log('Segment obtenu:', winningSegment.text);
             console.log('Résultat à enregistrer:', isWinningSegment ? 'win' : 'lose');
-            
+
             fetch('{{ route('spin.record-result') }}', {
                 method: 'POST',
                 headers: {
@@ -195,7 +195,7 @@
                 console.log('Résultat enregistré avec succès:', data);
                 console.log('ID de session PHP:', data.session_id);
                 console.log('La session est stockée côté serveur et sécurisée par un cookie de session');
-                
+
                 // Redirection vers la page de résultat après un court délai
                 setTimeout(() => {
                     console.log('Redirection vers la page de résultat...');
@@ -204,58 +204,58 @@
             })
             .catch(error => {
                 console.error('Erreur lors de l\'enregistrement du résultat:', error);
-                
+
                 // En cas d'erreur, rediriger quand même
                 setTimeout(() => {
                     window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
                 }, 2000);
             });
         }
-        
+
         // Faire tourner la roue avec un résultat aléatoire mais respectant le résultat gagné/perdu
         function spinWheel(data) {
             if (isSpinning) return;
-            
+
             isSpinning = true;
-            
+
             // Jouer le son de rotation
             if (spinningSound) {
                 spinningSound.currentTime = 0;
                 spinningSound.play();
             }
-            
+
             // Extraire les informations envoyées par le backend
             console.log('Données reçues du serveur:', data);
             const isWinning = data.isWinning === 1;
-            
+
             // Générer un angle d'arrêt aléatoire qui respecte le résultat gagné/perdu
             let stopAngle;
-            
+
             if (isWinning) {
                 // Choisir aléatoirement un secteur gagnant (secteurs pairs: 0, 2, 4, 6, 8)
                 const winningSectors = [0, 2, 4, 6, 8];
                 const randomWinningSector = winningSectors[Math.floor(Math.random() * winningSectors.length)];
-                
+
                 // Calculer un angle aléatoire dans ce secteur (36 degrés par secteur)
                 const sectorStart = randomWinningSector * 36;
                 stopAngle = sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
-                
+
                 console.log('Secteur gagnant sélectionné:', randomWinningSector, 'Angle d\'arrêt:', stopAngle);
             } else {
                 // Choisir aléatoirement un secteur perdant (secteurs impairs: 1, 3, 5, 7, 9)
                 const losingSectors = [1, 3, 5, 7, 9];
                 const randomLosingSector = losingSectors[Math.floor(Math.random() * losingSectors.length)];
-                
+
                 // Calculer un angle aléatoire dans ce secteur
                 const sectorStart = randomLosingSector * 36;
                 stopAngle = sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
-                
+
                 console.log('Secteur perdant sélectionné:', randomLosingSector, 'Angle d\'arrêt:', stopAngle);
             }
-            
+
             // Réinitialiser la roue avant une nouvelle rotation
             theWheel.rotationAngle = 0;
-            
+
             // Configuration de l'animation avec l'angle d'arrêt aléatoire
             theWheel.animation = {
                 'type': 'spinToStop',
@@ -266,23 +266,23 @@
                 'callbackSound': playTickSound,
                 'soundTrigger': 'pin'
             };
-            
+
             // Désactiver le bouton
             const spinBtn = document.getElementById('spinBtn');
             if (spinBtn) {
                 spinBtn.disabled = true;
                 spinBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> En cours...';
             }
-            
+
             // Démarrer l'animation
             theWheel.startAnimation();
         }
-        
+
         // Écouter les événements Livewire
         document.addEventListener('livewire:initialized', () => {
             @this.on('startSpinWithSound', (data) => {
                 console.log('Données reçues du serveur:', data);
-                
+
                 // Vérifier que les données sont valides
                 if (data) {
                     spinWheel(data);
@@ -290,19 +290,19 @@
                     console.error("Erreur: Données invalides reçues du serveur:", data);
                 }
             });
-            
+
             @this.on('victory', () => {
                 setTimeout(launchConfetti, 1000);
             });
         });
-        
+
         // Confettis pour les gagnants
         function launchConfetti() {
             if (typeof confetti !== 'function') {
                 console.warn("La fonction confetti n'est pas disponible");
                 return;
             }
-            
+
             try {
                 var count = 200;
                 var defaults = {
@@ -331,16 +331,16 @@
                 console.error("Erreur lors du lancement des confettis:", e);
             }
         }
-        
+
         // Clic sur le bouton
         const spinBtn = document.getElementById('spinBtn');
         if (spinBtn) {
             spinBtn.addEventListener('click', function() {
                 if (isSpinning) return;
-                
+
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> En cours...';
-                
+
                 try {
                     @this.spin();
                 } catch (e) {
@@ -366,30 +366,30 @@
             max-width: 100%;
             padding: 0 10px;
         }
-        
+
         .welcome-text {
             width: 100%;
             max-width: 320px;
             color: #333;
         }
-        
+
         .welcome-text h4 {
             font-size: 1rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .welcome-text p {
             font-size: 0.85rem;
             margin-bottom: 0.3rem;
         }
-        
+
         .wheel-and-pointer {
             position: relative;
             margin: 0 auto;
             width: 320px;
             max-width: 100%;
         }
-        
+
         /* Logo au centre de la roue avec pseudo-élément */
         .wheel-and-pointer::after {
             content: "";
@@ -408,12 +408,12 @@
             background-color: white;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
-        
+
         .responsive-wheel {
             max-width: 100%;
             height: auto;
         }
-        
+
         #pointer {
             width:100%;
             transform: translateX(-50%);
@@ -423,7 +423,7 @@
             align-items:center;
             justify-content:center;
         }
-        
+
         .spin-button {
             width: 100%;
             max-width: 320px;
@@ -435,38 +435,38 @@
             z-index: 2000;
             position: relative;
         }
-        
+
         /* Suppression du halo blanc à l'indicateur */
         .pointer-halo {
             filter: none;
         }
-        
+
         @media (max-width: 575.98px) {
             .wheel-and-pointer {
                 width: 280px;
             }
-            
+
             canvas#wheel {
                 width: 280px;
                 height: 280px;
             }
-            
+
             #pointer svg {
                 width: 30px;
                 height: 30px;
             }
-            
+
             .welcome-text, .spin-button {
                 max-width: 280px;
             }
         }
-        
+
         /* Media query for very small devices */
         @media (max-width: 350px) {
             .wheel-and-pointer {
                 width: 250px;
             }
-            
+
             canvas#wheel {
                 width: 250px;
                 height: 250px;

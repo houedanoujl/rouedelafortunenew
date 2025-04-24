@@ -21,11 +21,11 @@
                         position: relative;
                         transition: all 0.3s ease;
                     }
-                    
+
                     .reglement-accordion .article-title:hover {
                         background-color: #e9ecef;
                     }
-                    
+
                     .reglement-accordion .article-title::after {
                         content: "+";
                         position: absolute;
@@ -34,11 +34,11 @@
                         transform: translateY(-50%);
                         font-size: 18px;
                     }
-                    
+
                     .reglement-accordion .article-title.active::after {
                         content: "-";
                     }
-                    
+
                     .reglement-accordion .article-content {
                         padding: 15px;
                         border: 1px solid #e9ecef;
@@ -47,18 +47,18 @@
                         margin-bottom: 15px;
                         display: none;
                     }
-                    
+
                     .reglement-accordion .article-content.show {
                         display: block;
                     }
-                    
+
                     .reglement-accordion .article-title.active {
                         background-color: #e2e6ea;
                         border-radius: 4px 4px 0 0;
                         margin-bottom: 0;
                     }
                 </style>
-                
+
                 <!-- Accordéon custom des articles -->
                 <div class="reglement-accordion">
                     <!-- Article 1 -->
@@ -69,7 +69,7 @@
                         <p>Organise une Tombola dénommée « Promo 70 ans de la marque DINOR ».</p>
                         <p>Ci-après désignée « la Tombola ».</p>
                     </div>
-                    
+
                     <!-- Article 2 -->
                     <div class="article-title" data-article="2">Article 2 : Objet de la Tombola</div>
                     <div class="article-content" id="content-2">
@@ -78,20 +78,20 @@
                         <p>La participation à la Tombola implique l'acceptation sans réserve par les participants du présent règlement dans son intégralité.</p>
                         <p>Ci-après « le Règlement ».</p>
                     </div>
-                    
+
                     <!-- Article 3 -->
                     <div class="article-title" data-article="3">Article 3 : Date et durée</div>
                     <div class="article-content" id="content-3">
                         <p>La Tombola se déroulera du 1er avril au 30 juin 2025 inclus.</p>
                     </div>
-                    
+
                     <!-- Article 4 -->
                     <div class="article-title" data-article="4">Article 4 : Cadre réglementaire et conditions de participation</div>
                     <div class="article-content" id="content-4">
                         <h5>4-1 Cadre réglementaire</h5>
                         <p>La Tombola « Promo 70 ans de la marque DINOR » se déroule conformément aux dispositions de la loi n°2020-480 du 27 Mai 2020 portant régime juridique des jeux de hasard en Côte d'Ivoire et du décret n°2023-946 du 06 décembre 2023 portant régime juridique des jeux de hasard soumis à autorisation.</p>
-                        <p>Le présent règlement est authentifié par Maitre Diamilatou SIDIBET AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.</p>
-                        
+                        <p>Le présent règlement est authentifié par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.</p>
+
                         <h5>4-2 Conditions de participation</h5>
                         <p>La Tombola qui se déroulera sur toute l'étendue du territoire de la République de Côte d'Ivoire est destinée aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l'Application « Dinor App ». Cette Tombola est interdite aux mineurs de moins de 18 ans.</p>
                         <p>Lesdits Participants pourront via le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à la Tombola, accéder à une roue qui leur permettra de gagner des lots immédiats.</p>
@@ -104,14 +104,14 @@
                             <li>Retirer le lot au siège social de Sania Cie, sis à Abidjan Vridi, rue des Textiles ;</li>
                         </ul>
                     </div>
-                    
+
                     <!-- Article 5 -->
                     <div class="article-title" data-article="5">Article 5 : Désignation des lauréats</div>
                     <div class="article-content" id="content-5">
                         <p>Est déclaré gagnant tout Participant qui, après rotation de la roue, voit cette dernière s'arrêter sur la mention "Gagné".</p>
                         <p>Le lauréat est toute personne ayant rempli les conditions de participation et ayant été reconnue gagnante conformément à l'article 4.2 des présentes.</p>
                     </div>
-                    
+
                     <!-- Article 6 -->
                     <div class="article-title" data-article="6">Article 6 : Lots à gagner</div>
                     <div class="article-content" id="content-6">
@@ -203,7 +203,7 @@
                             </table>
                         </div>
                     </div>
-                    
+
                     <!-- Article 7 -->
                     <div class="article-title" data-article="7">Article 7 : Informations sur les lauréats</div>
                     <div class="article-content" id="content-7">
@@ -211,7 +211,7 @@
                         <p>Le Commissaire de Justice constate le tirage électronique et dresse un procès-verbal de tirage. Il dresse également un procès-verbal d'attribution des lots.</p>
                         <p>Un exemplaire des procès-verbaux susvisés dûment enregistrés, est transmis à l'ARJH, dans un délai de dix jours après les opérations constatées par le Commissaire de Justice cité aux alinéas précédents.</p>
                     </div>
-                    
+
                     <!-- Article 8 -->
                     <div class="article-title" data-article="8">Article 8 : Retrait des Lots</div>
                     <div class="article-content" id="content-8">
@@ -219,7 +219,7 @@
                         <p>Passé ce délai, les lots gagnés et non réclamés seront reversés à l'ARJH, au profit d'un organisme de bienfaisance désigné par le Conseil de régulation.</p>
                         <p>La remise des lots pourra être faite au représentant du lauréat muni de la coipe de la carte nationale d'identité ou du passeport du gagnant.</p>
                     </div>
-                    
+
                     <!-- Article 9 -->
                     <div class="article-title" data-article="9">Article 9 : Données personnelles</div>
                     <div class="article-content" id="content-9">
@@ -228,13 +228,13 @@
                         <p>Les données personnelles des participants sont collectées et traitées conformément à la règlementation en vigueur. Elles ne seront utilisées uniquement que pour les besoins du jeu et ne seront pas transmises à des tiers.</p>
                         <p>Conformément à la loi n°2013-450 relative à la protection des données à caractère personnel, les gagnants disposent d'un droit d'accès, de modification, de rectification et de suppression des données les concernant. S'ils souhaitent l'exercer, ils peuvent adresser leur demande à l'adresse mail : .</p>
                     </div>
-                    
+
                     <!-- Article 10 -->
                     <div class="article-title" data-article="10">Article 10 : Cas de force majeure</div>
                     <div class="article-content" id="content-10">
                         <p>La responsabilité de l'organisateur ne saurait être encourue si, pour un cas de force majeure, la Tombola devait être modifiée, écourtée ou annulée.</p>
                     </div>
-                    
+
                     <!-- Article 11 -->
                     <div class="article-title" data-article="11">Article 11 : Litiges</div>
                     <div class="article-content" id="content-11">
@@ -242,52 +242,52 @@
                         <p>Toutes contestations qui découlent du présent jeu ou qui s'y rapportent, feront l'objet d'un règlement amiable entre les parties.</p>
                         <p>À défaut d'accord entre les parties, l'Autorité de Régulation de Jeux de Hasard (ARJH) sera compétente pour connaître du litige.</p>
                     </div>
-                    
+
                     <!-- Article 12 -->
                     <div class="article-title" data-article="12">Article 12 : Dépôt et consultation du Règlement</div>
                     <div class="article-content" id="content-12">
-                        <p>Le règlement de la Tombola est déposé en l'Etude par Maitre Diamilatou SIDIBET AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
+                        <p>Le règlement de la Tombola est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
                         <p>Un Procès-verbal de jeu est dressé et transmis à l'ARJH à la fin du jeu.</p>
                     </div>
-                    
+
                     <!-- Article 13 -->
                     <div class="article-title" data-article="13">Article 13 : Consultation du règlement</div>
                     <div class="article-content" id="content-13">
                         <p>Une copie certifiée conforme à l'original sera remise gratuitement en mains propres à toute personne qui en fera la demande par écrit. Elle ne pourra en aucun cas être expédiée par voie postale ou autrement.</p>
-                        
+
                         <p>Fait à Abidjan, le</p>
                         <p>En deux (02) exemplaires originaux</p>
-                        
+
                         <p>Authentification Notaire<br>Directeur Général</p>
                     </div>
                 </div>
-                
+
                 <!-- Script JS personnalisé pour l'accordéon -->
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         // Sélectionner tous les titres d'articles
                         const articleTitles = document.querySelectorAll('.reglement-accordion .article-title');
-                        
+
                         // Ajouter des écouteurs d'événements à chaque titre
                         articleTitles.forEach(title => {
                             title.addEventListener('click', function() {
                                 // Récupérer l'id de l'article
                                 const articleId = this.getAttribute('data-article');
                                 const content = document.getElementById('content-' + articleId);
-                                
+
                                 // Vérifier si cet article est déjà actif
                                 const isActive = this.classList.contains('active');
-                                
+
                                 // Fermer tous les articles
                                 articleTitles.forEach(t => {
                                     t.classList.remove('active');
                                 });
-                                
+
                                 const allContents = document.querySelectorAll('.reglement-accordion .article-content');
                                 allContents.forEach(c => {
                                     c.classList.remove('show');
                                 });
-                                
+
                                 // Si l'article n'était pas actif, l'ouvrir
                                 if (!isActive) {
                                     this.classList.add('active');

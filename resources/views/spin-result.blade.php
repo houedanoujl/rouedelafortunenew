@@ -8,10 +8,10 @@
                 <div class="winner-content">
                     <h1 class="result-title">🎉 Félicitations ! 🎉</h1>
                     <p class="result-message">Votre participation est terminée. Scannez le QR code pour découvrir votre lot !</p>
-                    
+
                     <div class="qr-code-section">
                         @livewire('qr-code-display', ['code' => $qrCode->code])
-                        
+
                         <div class="qr-actions">
                             <button class="btn btn-primary" onclick="captureQR()">
                                 <i class="fas fa-camera"></i> Capturer
@@ -157,7 +157,7 @@ function downloadQR() {
 // Jouer un son en fonction du résultat
 document.addEventListener('DOMContentLoaded', function() {
     const isWinner = {{ $isWinner ? 'true' : 'false' }};
-    const sound = new Audio(isWinner ? '/sounds/win.mp3' : '/sounds/lose.mp3');
+    const sound = new Audio(isWinner ? '/sounds/cheering.mp3' : '/sounds/sadtrombone.swf.mp3');
     sound.play();
 });
 </script>

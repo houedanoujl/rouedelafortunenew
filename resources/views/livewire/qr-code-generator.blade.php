@@ -10,7 +10,7 @@
                         <img src="{{ $qrCodeUrl }}" alt="QR Code" class="qr-code">
                     </div>
                     <div class="alert alert-info mb-3">
-                        <b>Scannez le QR code ci-dessous pour réclamer votre prix.<br>Conservez cette page précieusement, elle fait office de justificatifs lors du retrait.</b>
+                        <b>Scannez le QR code ci-dessous pour réclamer votre prix.<br>Conservez cette page précieusement, elle fait office de justificatifs lors du retrait de votre lot.</b>
                     </div>
                     <div class="prize-info mb-4">
                         <h4>Prix gagné: {{ $entry->prize->name }}</h4>

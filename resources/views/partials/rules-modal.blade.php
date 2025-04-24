@@ -9,7 +9,7 @@
         left: 0;
         right: 0;
     }
-    
+
     /* Styles Bootstrap améliorés pour l'accordéon */
     #accordionReglement .accordion-button {
         background-color: #f8f9fa;
@@ -33,9 +33,9 @@
         visibility: visible !important;
         font-size: 1.1rem !important;
     }
-    
+
     /* Assurer que le contenu est toujours visible */
-    #collapseArt1, #collapseArt2, #collapseArt3, #collapseArt4, 
+    #collapseArt1, #collapseArt2, #collapseArt3, #collapseArt4,
     #collapseArt5, #collapseArt6, #collapseArt7, #collapseArt8,
     #collapseArt9, #collapseArt10, #collapseArt11, #collapseArt12, #collapseArt13 {
         color: #212529 !important;
@@ -103,7 +103,7 @@
                             <div class="accordion-body">
                                 <b>4-1 Cadre réglementaire</b><br>
                                 La Tombola « Promo 70 ans de la marque DINOR » se déroule conformément aux dispositions de la loi n°2020-480 du 27 Mai 2020 portant régime juridique des jeux de hasard en Côte d’Ivoire et du décret n°2023-946 du 06 décembre 2023 portant régime juridique des jeux de hasard soumis à autorisation.<br><br>
-                                Le présent règlement est authentifié par Maitre Diamilatou SIDIBET AKA-ANGHUI, Notaire, dont l’Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.<br><br>
+                                Le présent règlement est authentifié par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l’Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.<br><br>
                                 <b>4-2 Conditions de participation</b><br>
                                 La Tombola qui se déroulera sur toute l’étendue du territoire de la République de Côte d’Ivoire est destinée aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l’Application « Dinor App ». Cette Tombola est interdite aux mineurs de moins de 18 ans.<br><br>
                                 Lesdits Participants pourront via le  le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à la Tombola, accéder à une roue qui leur permettra de gagner des lots immédiats.<br><br>
@@ -138,8 +138,25 @@
                         </h2>
                         <div id="collapseArt6" class="accordion-collapse collapse" aria-labelledby="headingArt6" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                <!-- Les détails des prix et le total ont été retirés conformément à la demande -->
-                                <b>Les lots à gagner seront communiqués ultérieurement ou selon les modalités définies par l'organisateur.</b>
+                                <b>Les lots mis en jeu dans cette Tombola sont :</b><br><br>
+                                <ul>
+                                    <li>TV</li>
+                                    <li>Téléphone portable</li>
+                                    <li>Tablette</li>
+                                    <li>Bons d'achat LDF 50 000 F CFA</li>
+                                    <li>Bons d'achat Hyper U 50 000 F CFA</li>
+                                    <li>Friteuse air fryer</li>
+                                    <li>Robot de cuisine</li>
+                                    <li>Micro onde</li>
+                                    <li>Gazinière 4 feux four</li>
+                                    <li>Lot de poêle</li>
+                                    <li>Cartons de 5L Huile Dinor</li>
+                                    <li>Sacs de riz 18KG Dinor</li>
+                                    <li>Packs de mayonnaise de 430G Dinor</li>
+                                    <li>Scooters électriques</li>
+                                    <li>Voitures</li>
+                                </ul>
+                                <p>L'Organisateur se réserve le droit de remplacer tout ou partie des lots par d'autres lots de valeur équivalente, en cas de difficulté extérieure pour obtenir ce qui a été annoncé, notamment rupture même momentanée de stock ou de prestation.</p>
                             </div>
                         </div>
                     </div>

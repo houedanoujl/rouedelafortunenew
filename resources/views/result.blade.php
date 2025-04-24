@@ -28,7 +28,7 @@ if ($displayedResult !== null) {
                         <span style="font-weight: normal; color: var(--primary-red);">{{ $entry->participant->first_name }} {{ $entry->participant->last_name }}</span>,
                         @if($showWinResult)
                             vous avez gagné ! 🎁 <br>
-                            Conservez les fichiers téléchargés depuis cette page précieusement, ils feront office de justificatifs lors du retrait.
+                            Conservez les fichiers téléchargés depuis cette page précieusement, ils feront office de justificatifs lors du retrait de votre lot.
                             @if($qrCode)
                                 <div class="qr-code-container mt-4 d-flex justify-content-center align-items-center">
                                     <a href="javascript:void(0)" class="qr-code-link" title="Cliquez pour voir votre lot" aria-label="Voir les détails de votre lot gagné" role="button">
@@ -90,8 +90,17 @@ if ($displayedResult !== null) {
                 @if(isset($prize) && $prize)
                     <h4>🎁 {{ $prize->name }}</h4>
                     <p class="mt-3">{{ $prize->description }}</p>
-                    @if($prize->image)
-                        <img src="{{ asset('storage/' . $prize->image) }}" alt="{{ $prize->name }}" class="img-fluid mt-3">
+                    @if($prize->image_url)
+                        <div class="prize-image-container mt-3">
+                            <img src="{{ $prize->image_url }}" alt="{{ $prize->name }}" class="img-fluid prize-image">
+                        </div>
+                    @else
+                        <div class="no-image-container mt-3">
+                            <div class="no-image-placeholder">
+                                <i class="bi bi-gift-fill" style="font-size: 3rem;"></i>
+                                <p>Image non disponible</p>
+                            </div>
+                        </div>
                     @endif
                 @else
                     <h4>🎁 Félicitations !</h4>
@@ -207,6 +216,51 @@ if ($displayedResult !== null) {
     
     .qr-code-link:hover:after {
         opacity: 1;
+    }
+    
+    /* Styles pour l'image du prix */
+    .prize-image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 1rem auto;
+        max-width: 300px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .prize-image {
+        max-height: 250px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+    
+    .prize-image:hover {
+        transform: scale(1.05);
+    }
+    
+    .no-image-placeholder {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 200px;
+        height: 200px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        color: #6c757d;
+        margin: 0 auto;
+    }
+
+    /* Transition pour la modal */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+        transform: scale(0.8);
+    }
+    
+    .modal.show .modal-dialog {
+        transform: scale(1);
     }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>

@@ -43,68 +43,124 @@ class DatabaseSeeder extends Seeder
             // Création de prix
             $prizes = [
                 [
-                    'name' => 'Bon d\'achat 50€',
-                    'description' => 'Bon d\'achat d\'une valeur de 50€',
-                    'type' => 'voucher',
-                    'value' => 50.00,
-                    'image_url' => '/images/prizes/voucher50.jpg',
+                    'name' => 'TV',
+                    'description' => 'Téléviseur écran plat',
+                    'type' => 'electronic',
+                    'value' => 150000.00,
+                    'image_url' => '/images/prizes/tv.jpg',
+                    'stock' => 10,
+                ],
+                [
+                    'name' => 'Téléphone portable',
+                    'description' => 'Smartphone dernière génération',
+                    'type' => 'electronic',
+                    'value' => 100000.00,
+                    'image_url' => '/images/prizes/phone.jpg',
                     'stock' => 10,
                 ],
                 [
                     'name' => 'Tablette',
-                    'description' => 'Tablette tactile dernière génération',
+                    'description' => 'Tablette tactile',
                     'type' => 'electronic',
-                    'value' => 299.99,
+                    'value' => 80000.00,
                     'image_url' => '/images/prizes/tablet.jpg',
-                    'stock' => 5,
+                    'stock' => 10,
                 ],
                 [
-                    'name' => 'Casque audio',
-                    'description' => 'Casque audio sans fil',
-                    'type' => 'electronic',
-                    'value' => 89.99,
-                    'image_url' => '/images/prizes/headphones.jpg',
-                    'stock' => 8,
-                ],
-                [
-                    'name' => 'Bon d\'achat 20€',
-                    'description' => 'Bon d\'achat d\'une valeur de 20€',
+                    'name' => 'Bons d\'achat LDF 50 000 F CFA',
+                    'description' => 'Bon d\'achat utilisable dans les magasins LDF',
                     'type' => 'voucher',
-                    'value' => 20.00,
-                    'image_url' => '/images/prizes/voucher20.jpg',
+                    'value' => 50000.00,
+                    'image_url' => '/images/prizes/voucher_ldf.jpg',
                     'stock' => 15,
                 ],
                 [
-                    'name' => 'Smartphone',
-                    'description' => 'Smartphone haut de gamme',
-                    'type' => 'electronic',
-                    'value' => 499.99,
-                    'image_url' => '/images/prizes/smartphone.jpg',
+                    'name' => 'Bons d\'achat Hyper U 50 000 F CFA',
+                    'description' => 'Bon d\'achat utilisable dans les magasins Hyper U',
+                    'type' => 'voucher',
+                    'value' => 50000.00,
+                    'image_url' => '/images/prizes/voucher_hyperu.jpg',
+                    'stock' => 15,
+                ],
+                [
+                    'name' => 'Friteuse air fryer',
+                    'description' => 'Friteuse sans huile nouvelle génération',
+                    'type' => 'household',
+                    'value' => 45000.00,
+                    'image_url' => '/images/prizes/airfryer.jpg',
+                    'stock' => 10,
+                ],
+                [
+                    'name' => 'Robot de cuisine',
+                    'description' => 'Robot multifonction pour la cuisine',
+                    'type' => 'household',
+                    'value' => 70000.00,
+                    'image_url' => '/images/prizes/kitchenrobot.jpg',
+                    'stock' => 8,
+                ],
+                [
+                    'name' => 'Micro onde',
+                    'description' => 'Four à micro-ondes',
+                    'type' => 'household',
+                    'value' => 35000.00,
+                    'image_url' => '/images/prizes/microwave.jpg',
+                    'stock' => 10,
+                ],
+                [
+                    'name' => 'Gazinière 4 feux four',
+                    'description' => 'Cuisinière à gaz 4 feux avec four',
+                    'type' => 'household',
+                    'value' => 120000.00,
+                    'image_url' => '/images/prizes/stove.jpg',
+                    'stock' => 5,
+                ],
+                [
+                    'name' => 'Lot de poêle',
+                    'description' => 'Ensemble de poêles de cuisine',
+                    'type' => 'household',
+                    'value' => 25000.00,
+                    'image_url' => '/images/prizes/pans.jpg',
+                    'stock' => 15,
+                ],
+                [
+                    'name' => 'Cartons de 5L Huile Dinor',
+                    'description' => 'Carton contenant de l\'huile Dinor (5 litres)',
+                    'type' => 'food',
+                    'value' => 15000.00,
+                    'image_url' => '/images/prizes/oil.jpg',
+                    'stock' => 30,
+                ],
+                [
+                    'name' => 'Sacs de riz 18KG Dinor',
+                    'description' => 'Sac de riz Dinor de 18 kg',
+                    'type' => 'food',
+                    'value' => 12000.00,
+                    'image_url' => '/images/prizes/rice.jpg',
+                    'stock' => 30,
+                ],
+                [
+                    'name' => 'Packs de mayonnaise de 430G Dinor',
+                    'description' => 'Pack de mayonnaise Dinor (430g)',
+                    'type' => 'food',
+                    'value' => 5000.00,
+                    'image_url' => '/images/prizes/mayonnaise.jpg',
+                    'stock' => 40,
+                ],
+                [
+                    'name' => 'Scooters électriques',
+                    'description' => 'Scooter électrique urbain',
+                    'type' => 'vehicle',
+                    'value' => 350000.00,
+                    'image_url' => '/images/prizes/scooter.jpg',
                     'stock' => 3,
                 ],
                 [
-                    'name' => 'Week-end SPA',
-                    'description' => 'Week-end pour deux personnes dans un spa de luxe',
-                    'type' => 'experience',
-                    'value' => 399.00,
-                    'image_url' => '/images/prizes/spa.jpg',
-                    'stock' => 2,
-                ],
-                [
-                    'name' => 'TV 4K',
-                    'description' => 'Téléviseur 4K Ultra HD 55 pouces',
-                    'type' => 'electronic',
-                    'value' => 649.99,
-                    'image_url' => '/images/prizes/tv.jpg',
+                    'name' => 'Voitures',
+                    'description' => 'Voiture citadine neuve',
+                    'type' => 'vehicle',
+                    'value' => 5000000.00,
+                    'image_url' => '/images/prizes/car.jpg',
                     'stock' => 1,
-                ],
-                [
-                    'name' => 'Cafetière',
-                    'description' => 'Machine à café automatique',
-                    'type' => 'household',
-                    'value' => 159.99,
-                    'image_url' => '/images/prizes/coffeemaker.jpg',
-                    'stock' => 5,
                 ],
             ];
 
@@ -117,7 +173,7 @@ class DatabaseSeeder extends Seeder
                 // Concours "Jeu du Printemps" - Distribution équilibrée pour démonstration
                 [
                     'contest_id' => 1,
-                    'prize_id' => 1, // Bon d'achat 50€
+                    'prize_id' => 1, // TV
                     'quantity' => 10,
                     'start_date' => '2025-03-01 00:00:00',
                     'end_date' => '2025-06-30 23:59:59',
@@ -125,23 +181,23 @@ class DatabaseSeeder extends Seeder
                 ],
                 [
                     'contest_id' => 1,
-                    'prize_id' => 2, // Tablette
-                    'quantity' => 2,
+                    'prize_id' => 2, // Téléphone portable
+                    'quantity' => 10,
                     'start_date' => '2025-03-01 00:00:00',
                     'end_date' => '2025-06-30 23:59:59',
-                    'remaining' => 2,
+                    'remaining' => 10,
                 ],
                 [
                     'contest_id' => 1,
-                    'prize_id' => 3, // Casque audio
-                    'quantity' => 5,
+                    'prize_id' => 3, // Tablette
+                    'quantity' => 10,
                     'start_date' => '2025-03-01 00:00:00',
                     'end_date' => '2025-06-30 23:59:59',
-                    'remaining' => 5,
+                    'remaining' => 10,
                 ],
                 [
                     'contest_id' => 1,
-                    'prize_id' => 4, // Bon d'achat 20€
+                    'prize_id' => 4, // Bons d'achat LDF
                     'quantity' => 15,
                     'start_date' => '2025-03-01 00:00:00',
                     'end_date' => '2025-06-30 23:59:59',
@@ -149,7 +205,79 @@ class DatabaseSeeder extends Seeder
                 ],
                 [
                     'contest_id' => 1,
-                    'prize_id' => 5, // Smartphone
+                    'prize_id' => 5, // Bons d'achat Hyper U
+                    'quantity' => 15,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 15,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 6, // Friteuse air fryer
+                    'quantity' => 10,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 10,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 7, // Robot de cuisine
+                    'quantity' => 8,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 8,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 8, // Micro onde
+                    'quantity' => 10,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 10,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 9, // Gazinière 4 feux four
+                    'quantity' => 5,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 5,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 10, // Lot de poêle
+                    'quantity' => 15,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 15,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 11, // Cartons de 5L Huile Dinor
+                    'quantity' => 30,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 30,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 12, // Sacs de riz 18KG Dinor
+                    'quantity' => 30,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 30,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 13, // Packs de mayonnaise de 430G Dinor
+                    'quantity' => 40,
+                    'start_date' => '2025-03-01 00:00:00',
+                    'end_date' => '2025-06-30 23:59:59',
+                    'remaining' => 40,
+                ],
+                [
+                    'contest_id' => 1,
+                    'prize_id' => 14, // Scooters électriques
                     'quantity' => 3,
                     'start_date' => '2025-03-01 00:00:00',
                     'end_date' => '2025-06-30 23:59:59',
@@ -157,27 +285,11 @@ class DatabaseSeeder extends Seeder
                 ],
                 [
                     'contest_id' => 1,
-                    'prize_id' => 6, // Week-end SPA
-                    'quantity' => 2,
-                    'start_date' => '2025-03-01 00:00:00',
-                    'end_date' => '2025-06-30 23:59:59',
-                    'remaining' => 2,
-                ],
-                [
-                    'contest_id' => 1,
-                    'prize_id' => 7, // TV 4K
+                    'prize_id' => 15, // Voitures
                     'quantity' => 1,
                     'start_date' => '2025-03-01 00:00:00',
                     'end_date' => '2025-06-30 23:59:59',
                     'remaining' => 1,
-                ],
-                [
-                    'contest_id' => 1,
-                    'prize_id' => 8, // Cafetière
-                    'quantity' => 5,
-                    'start_date' => '2025-03-01 00:00:00',
-                    'end_date' => '2025-06-30 23:59:59',
-                    'remaining' => 5,
                 ],
             ];
 
