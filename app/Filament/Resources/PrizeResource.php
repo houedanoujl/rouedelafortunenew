@@ -45,12 +45,13 @@ class PrizeResource extends Resource
                     ->label('Image du prix (URL)')
                     ->placeholder('/assets/prizes/image.jpg')
                     ->helperText(function ($record) {
-                        if (!$record || !$record->image_url) return 'URL de l\'image du prix. <a href="/gestion-images-prix" target="_blank">Ouvrir le gestionnaire d\'images</a>';
+                        if (!$record || !$record->image_url) {
+                            return "URL de l'image du prix. Voir /gestion-images-prix";
+                        }
                         $filename = basename($record->image_url);
                         $dynamicUrl = url('/assets/prizes/' . $filename);
-                        return 'URL de l\'image du prix. <a href="/gestion-images-prix" target="_blank">Ouvrir le gestionnaire d\'images</a><br><a href="' . $dynamicUrl . '" target="_blank">Lien dynamique (environnement actuel)</a>';
+                        return "URL de l'image du prix. Voir /gestion-images-prix | Lien dynamique : $dynamicUrl";
                     })
-                    ->html()
                     ->url()
                     ->suffixAction(
                         Forms\Components\Actions\Action::make('openManager')
