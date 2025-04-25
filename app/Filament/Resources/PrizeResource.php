@@ -41,6 +41,17 @@ class PrizeResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('value')
                     ->required(),
+                Forms\Components\TextInput::make('image_url')
+                    ->label('Image du prix (URL)')
+                    ->placeholder('/assets/prizes/image.jpg')
+                    ->helperText('URL de l\'image du prix. <a href="/gestion-images-prix" target="_blank">Ouvrir le gestionnaire d\'images</a>')
+                    ->url()
+                    ->suffixAction(
+                        Forms\Components\Actions\Action::make('openManager')
+                            ->label('Gérer les images')
+                            ->url('/gestion-images-prix', true)
+                            ->icon('heroicon-m-photo')
+                    ),
                 Forms\Components\FileUpload::make('image')
                     ->label('Image du prix')
                     ->directory('images/prizes')

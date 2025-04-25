@@ -37,16 +37,23 @@ class Prize extends Model
     ];
 
     /**
-     * Accesseur pour obtenir l'URL complète de l'image uploadée
-     *
-     * @return string|null
+     * Accesseur pour obtenir l'URL dynamique de l'image du prix
      */
-    public function getImageUrlAttribute()
+    public function getImageUrlAttribute($value)
     {
-        if (!$this->image) {
+        if (empty($value)) {
             return asset('img/prize_placeholder.jpg');
         }
-        return asset('storage/' . $this->image);
+        // Si l'URL commence par http:// ou https://, c'est déjà une URL complète
+        if (preg_match('#^https?://#', $value)) {
+            return $value;
+        }
+        // Si l'URL commence par /, c'est un chemin relatif à la racine du site
+        if (strpos($value, '/') === 0) {
+            return url($value);
+        }
+        // Sinon, on suppose que c'est dans assets/prizes
+        return asset('assets/prizes/' . $value);
     }
 
     /**
