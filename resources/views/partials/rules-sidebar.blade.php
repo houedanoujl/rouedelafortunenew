@@ -40,7 +40,7 @@
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
-                    <p>le jeu se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
+                    <p>le jeu se déroulera du 1er mai au 31 juillet 2025 inclus.</p>
                 </div>
             </div>
             

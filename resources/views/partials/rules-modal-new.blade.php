@@ -52,7 +52,7 @@
                         </h2>
                         <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#reglementAccordion">
                             <div class="accordion-body">
-                                <p>le jeu se déroulera du 1er mai au 30 juillet 2025 inclus.</p>
+                                <p>le jeu se déroulera du 1er mai au 31 juillet 2025 inclus.</p>
                             </div>
                         </div>
                     </div>

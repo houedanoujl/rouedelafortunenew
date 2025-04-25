@@ -21,7 +21,7 @@ class Prize extends Model
         'description',
         'type',
         'value',
-        'image_url',
+        'image',
         'stock',
     ];
 
@@ -33,27 +33,20 @@ class Prize extends Model
     protected $casts = [
         'value' => 'decimal:2',
         'stock' => 'integer',
-        'image_url' => 'string',
+        'image' => 'string',
     ];
 
     /**
-     * Accesseur pour obtenir l'URL complète de l'image
-     * 
-     * @return string
+     * Accesseur pour obtenir l'URL complète de l'image uploadée
+     *
+     * @return string|null
      */
-    public function getImageUrlAttribute($value)
+    public function getImageUrlAttribute()
     {
-        if (empty($value)) {
+        if (!$this->image) {
             return asset('img/prize_placeholder.jpg');
         }
-
-        // Si l'URL commence par http:// ou https://, c'est déjà une URL complète
-        if (strpos($value, 'http://') === 0 || strpos($value, 'https://') === 0) {
-            return $value;
-        }
-
-        // Si l'URL est un chemin relatif, construire l'URL complète
-        return asset('assets/prizes/' . basename($value));
+        return asset('storage/' . $this->image);
     }
 
     /**
