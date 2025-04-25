@@ -10,6 +10,7 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Log;
 use App\Services\WhatsAppService;
 use App\Services\GreenWhatsAppService;
+use Illuminate\Support\Facades\Schema;
 
 class SpinController extends Controller
 {
@@ -75,64 +76,83 @@ class SpinController extends Controller
         
         // CORRECTION: Toujours vérifier et décrémenter les stocks si l'entrée est gagnante
         if ($entry->has_won) {
-            // Vérifier si un prix n'a pas encore été attribué
+            // Vérifier si la page est bien celle d'une entrée gagnante avec QR Code
             if (!$entry->prize_id) {
-                $prize = Prize::where('stock', '>', 0)
+                // CORRECTION: Chercher le prix dans les distributions du concours actif
+                $contest_id = $entry->contest_id;
+                
+                // Récupérer une distribution aléatoire avec stock disponible
+                $distribution = \App\Models\PrizeDistribution::where('contest_id', $contest_id)
+                    ->where('remaining', '>', 0)
+                    ->with('prize') // Charger la relation prize
                     ->inRandomOrder()
                     ->first();
                 
-                // Si aucun prix n'est disponible en stock, vérifier les comptes de test spéciaux
-                if (!$prize && $isTestAccount) {
-                    $prize = Prize::first(); // Forcer l'attribution d'un prix pour les comptes test
+                // Si aucune distribution n'est disponible en stock mais que c'est un compte test
+                if (!$distribution && $isTestAccount) {
+                    // Trouver n'importe quelle distribution même sans stock
+                    $distribution = \App\Models\PrizeDistribution::where('contest_id', $contest_id)
+                        ->with('prize')
+                        ->first();
                 }
                 
-                if ($prize) {
+                if ($distribution && $distribution->prize) {
+                    $prize = $distribution->prize;
+                    
                     // Enregistrer le prix dans l'entrée
                     $entry->prize_id = $prize->id;
+                    $entry->distribution_id = $distribution->id; // Ajouter la référence à la distribution
                     $entry->save();
                     
-                    // Décrémenter le stock
-                    Log::info('Décrémentation du stock du prix pour une nouvelle entrée gagnante', [
+                    // Décrémenter à la fois le stock du prix et celui de la distribution
+                    Log::info('Décrémentation du stock pour une nouvelle entrée gagnante', [
                         'entry_id' => $entry->id,
                         'prize_id' => $prize->id,
                         'prize_name' => $prize->name,
+                        'distribution_id' => $distribution->id,
                         'stock_before' => $prize->stock,
+                        'remaining_before' => $distribution->remaining,
                         'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
                     ]);
                     
-                    $prize->stock--;
-                    $prize->save();
+                    // Vérifier si la table existe avant de l'utiliser
+                    if (Schema::hasTable('stock_decremented_logs')) {
+                        // Vérifier si déjà décrémenté
+                        $stockDecremented = \DB::table('stock_decremented_logs')
+                            ->where('entry_id', $entry->id)
+                            ->exists();
+                    } else {
+                        // Fallback si la table n'existe pas encore
+                        $stockDecremented = false;
+                        Log::warning('Table stock_decremented_logs n\'existe pas encore, migration requise');
+                    }
                     
-                    Log::info('Stock du prix décrémenté avec succès', [
-                        'prize_id' => $prize->id,
-                        'prize_name' => $prize->name,
-                        'stock_after' => $prize->stock
-                    ]);
-                    
-                    // AJOUT: Chercher et décrémenter aussi le stock dans la distribution correspondante
-                    $distributions = \App\Models\PrizeDistribution::where('prize_id', $prize->id)
-                        ->where('contest_id', $entry->contest_id)
-                        ->where('remaining', '>', 0)
-                        ->get();
+                    // Ne décrémenter que si ce n'est pas déjà fait
+                    if (!$stockDecremented) {
+                        $prize->stock--;
+                        $prize->save();
                         
-                    if ($distributions->isNotEmpty()) {
-                        // Prendre la première distribution avec du stock
-                        $distribution = $distributions->first();
-                        $oldRemaining = $distribution->remaining;
+                        $distribution->remaining--;
+                        $distribution->save();
                         
-                        if ($distribution->decrementRemaining()) {
-                            Log::info('Stock de distribution décrémenté avec succès pour une nouvelle entrée', [
-                                'distribution_id' => $distribution->id,
+                        Log::info('Stock décrémenté avec succès', [
+                            'prize_id' => $prize->id,
+                            'prize_name' => $prize->name,
+                            'stock_after' => $prize->stock,
+                            'distribution_id' => $distribution->id,
+                            'remaining_after' => $distribution->remaining
+                        ]);
+                        
+                        // Enregistrer dans la base de données que le stock a été décrémenté
+                        if (Schema::hasTable('stock_decremented_logs')) {
+                            \DB::table('stock_decremented_logs')->insert([
+                                'entry_id' => $entry->id,
                                 'prize_id' => $prize->id,
-                                'remaining_before' => $oldRemaining,
-                                'remaining_after' => $distribution->remaining
+                                'decremented_at' => now(),
+                                'created_at' => now(),
+                                'updated_at' => now()
                             ]);
                         }
-                    } else {
-                        Log::warning('Aucune distribution avec stock disponible pour ce prix', [
-                            'prize_id' => $prize->id,
-                            'contest_id' => $entry->contest_id
-                        ]);
                     }
                 }
             } 
