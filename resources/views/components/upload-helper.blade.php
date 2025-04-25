@@ -1,6 +1,6 @@
 @php
     $uploadDir = public_path('assets/prizes');
-    $baseUrl = 'http://localhost:8888/assets/prizes/';
+    $baseUrl = url('/assets/prizes/');
     
     // Créer le dossier s'il n'existe pas
     if (!file_exists($uploadDir)) {

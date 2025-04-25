@@ -21,7 +21,7 @@ class Prize extends Model
         'description',
         'type',
         'value',
-        'image',
+        'image_url',
         'stock',
     ];
 
@@ -33,7 +33,7 @@ class Prize extends Model
     protected $casts = [
         'value' => 'decimal:2',
         'stock' => 'integer',
-        'image' => 'string',
+        'image_url' => 'string',
     ];
 
     /**
