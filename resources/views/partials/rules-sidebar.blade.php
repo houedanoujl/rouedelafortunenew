@@ -1,8 +1,8 @@
-<!-- Sidebar pour le règlement de le jeu -->
+<!-- Sidebar pour le règlement du jeu -->
 <div class="sidebar-overlay" id="reglementOverlay"></div>
 <div class="sidebar" id="reglementSidebar">
     <div class="sidebar-header">
-        <h5 class="sidebar-title">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
+        <h5 class="sidebar-title">REGLEMENT du jeu « Promo 70 ans de la marque DINOR »</h5>
         <button type="button" class="sidebar-close">&times;</button>
     </div>
     <div class="sidebar-body">
@@ -11,7 +11,7 @@
             <!-- Article 1 -->
             <div class="custom-accordion">
                 <div class="custom-accordion-header active" data-accordion="article1">
-                    Article 1 : Organisation de le jeu
+                    Article 1 : Organisation du jeu
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content active">
@@ -25,7 +25,7 @@
             <!-- Article 2 -->
             <div class="custom-accordion">
                 <div class="custom-accordion-header" data-accordion="article2">
-                    Article 2 : Objet de le jeu
+                    Article 2 : Objet du jeu
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
@@ -36,7 +36,7 @@
             <!-- Article 3 -->
             <div class="custom-accordion">
                 <div class="custom-accordion-header" data-accordion="article3">
-                    Article 3 : Durée de le jeu
+                    Article 3 : Durée du jeu
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">

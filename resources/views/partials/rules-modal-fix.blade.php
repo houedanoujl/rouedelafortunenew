@@ -1,9 +1,9 @@
-<!-- Modal pour le règlement de le jeu (version simplifiée) -->
+<!-- Modal pour le règlement du jeu (version simplifiée) -->
 <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true">
 <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="reglementModalLabel">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
+                <h5 class="modal-title" id="reglementModalLabel">REGLEMENT du jeu « Promo 70 ans de la marque DINOR »</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
@@ -62,7 +62,7 @@
                 <!-- Accordéon custom des articles -->
                 <div class="reglement-accordion">
                     <!-- Article 1 -->
-                    <div class="article-title active" data-article="1">Article 1 : Organisation de le jeu</div>
+                    <div class="article-title active" data-article="1">Article 1 : Organisation du jeu</div>
                     <div class="article-content show" id="content-1">
                         <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01, représentée par son Directeur Général, Monsieur Philippe RAYNAL ayant tous pouvoirs à l'effet des présentes ;</p>
                         <p>Ci-après dénommée « l'Organisateur »</p>
@@ -71,7 +71,7 @@
                     </div>
 
                     <!-- Article 2 -->
-                    <div class="article-title" data-article="2">Article 2 : Objet de le jeu</div>
+                    <div class="article-title" data-article="2">Article 2 : Objet du jeu</div>
                     <div class="article-content" id="content-2">
                         <p>La présente Tombola promotionnelle a pour objectif de commémorer les 70 ans de la marque DINOR.</p>
                         <p>Ci-après « les Participants »</p>
@@ -215,7 +215,7 @@
                     <!-- Article 8 -->
                     <div class="article-title" data-article="8">Article 8 : Retrait des Lots</div>
                     <div class="article-content" id="content-8">
-                        <p>Les lots sont à retirer dans un délai maximum d'un (01) mois à compter de la date de leur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.</p>
+                        <p>Les lots sont à retirer dans un délai maximum d'un (01) mois à compter de la date duur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.</p>
                         <p>Passé ce délai, les lots gagnés et non réclamés seront reversés à l'ARJH, au profit d'un organisme de bienfaisance désigné par le Conseil de régulation.</p>
                         <p>La remise des lots pourra être faite au représentant du lauréat muni de la coipe de la carte nationale d'identité ou du passeport du gagnant.</p>
                     </div>
@@ -246,7 +246,7 @@
                     <!-- Article 12 -->
                     <div class="article-title" data-article="12">Article 12 : Dépôt et consultation du Règlement</div>
                     <div class="article-content" id="content-12">
-                        <p>Le règlement de le jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
+                        <p>Le règlement du jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
                         <p>Un Procès-verbal de jeu est dressé et transmis à l'ARJH à la fin du jeu.</p>
                     </div>
 

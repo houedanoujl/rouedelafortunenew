@@ -146,12 +146,12 @@
                         @error('consentement') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Case à cocher pour le règlement de le jeu -->
+                    <!-- Case à cocher pour le règlement du jeu -->
                     <div class="form-group mt-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="reglementCheckbox" wire:model="reglement" required>
                             <label class="form-check-label" for="reglementCheckbox">
-                                J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal" style="color: red;">règlement de le jeu</a>
+                                J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal" style="color: red;">règlement du jeu</a>
                             </label>
                         </div>
                         @error('reglement') <span class="text-danger">{{ $message }}</span> @enderror

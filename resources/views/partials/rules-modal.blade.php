@@ -1,4 +1,4 @@
-<!-- Modal pour le règlement de le jeu (version accordéon personnalisé) -->
+<!-- Modal pour le règlement du jeu (version accordéon personnalisé) -->
 <style>
     #reglementModal .modal-content {
         height: 80vh !important;
@@ -46,7 +46,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content" style="background-color: #fff; color: #212529;">
             <div class="modal-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-                <h5 class="modal-title" id="reglementModalLabel" style="color: #212529; font-weight: bold;">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
+                <h5 class="modal-title" id="reglementModalLabel" style="color: #212529; font-weight: bold;">REGLEMENT du jeu « Promo 70 ans de la marque DINOR »</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 20px; background-color: #fff; color: #212529;">
@@ -54,7 +54,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingArt1">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArt1" aria-expanded="true" aria-controls="collapseArt1">
-                                Article 1 : Organisation de le jeu
+                                Article 1 : Organisation du jeu
                             </button>
                         </h2>
                         <div id="collapseArt1" class="accordion-collapse collapse show" aria-labelledby="headingArt1" data-bs-parent="#accordionReglement">
@@ -69,7 +69,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingArt2">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArt2" aria-expanded="false" aria-controls="collapseArt2">
-                                Article 2 : Objet de le jeu
+                                Article 2 : Objet du jeu
                             </button>
                         </h2>
                         <div id="collapseArt2" class="accordion-collapse collapse" aria-labelledby="headingArt2" data-bs-parent="#accordionReglement">
@@ -184,7 +184,7 @@
                         </h2>
                         <div id="collapseArt8" class="accordion-collapse collapse" aria-labelledby="headingArt8" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                Les lots sont à retirer dans un délai maximum d’un (01) mois à compter de la date de leur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.<br>
+                                Les lots sont à retirer dans un délai maximum d’un (01) mois à compter de la date duur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.<br>
                                 Passé ce délai, les lots gagnés et non réclamés seront reversés à l’ARJH, au profit d’un organisme de bienfaisance désigné par le Conseil de régulation.<br><br>
                                 La remise des lots pourra être faite au représentant du lauréat muni de la coipe de la carte nationale d’identité ou du passeport du gagnant.
                             </div>
@@ -239,7 +239,7 @@
                         </h2>
                         <div id="collapseArt12" class="accordion-collapse collapse" aria-labelledby="headingArt12" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                Le règlement de le jeu est déposé en l’Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l’Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l’Autorité de Régulation des Jeux de hasard (ARJH).
+                                Le règlement du jeu est déposé en l’Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l’Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l’Autorité de Régulation des Jeux de hasard (ARJH).
                             </div>
                         </div>
                     </div>

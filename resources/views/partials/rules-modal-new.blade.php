@@ -1,9 +1,9 @@
-<!-- Modal pour le règlement de le jeu (version accordéon) -->
+<!-- Modal pour le règlement du jeu (version accordéon) -->
 <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="reglementModalLabel">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
+                <h5 class="modal-title" id="reglementModalLabel">REGLEMENT du jeu « Promo 70 ans de la marque DINOR »</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
@@ -13,7 +13,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading1">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-                                Article 1 : Organisation de le jeu
+                                Article 1 : Organisation du jeu
                             </button>
                         </h2>
                         <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#reglementAccordion">
@@ -30,7 +30,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading2">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
-                                Article 2 : Objet de le jeu
+                                Article 2 : Objet du jeu
                             </button>
                         </h2>
                         <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#reglementAccordion">
@@ -225,7 +225,7 @@
                         </h2>
                         <div id="collapse8" class="accordion-collapse collapse" aria-labelledby="heading8" data-bs-parent="#reglementAccordion">
                             <div class="accordion-body">
-                                <p>Les lots sont à retirer dans un délai maximum d'un (01) mois à compter de la date de leur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.</p>
+                                <p>Les lots sont à retirer dans un délai maximum d'un (01) mois à compter de la date duur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.</p>
                                 <p>Passé ce délai, les lots gagnés et non réclamés seront reversés à l'ARJH, au profit d'un organisme de bienfaisance désigné par le Conseil de régulation.</p>
                                 <p>La remise des lots pourra être faite au représentant du lauréat muni de la coipe de la carte nationale d'identité ou du passeport du gagnant.</p>
                             </div>
@@ -288,7 +288,7 @@
                         </h2>
                         <div id="collapse12" class="accordion-collapse collapse" aria-labelledby="heading12" data-bs-parent="#reglementAccordion">
                             <div class="accordion-body">
-                                <p>Le règlement de le jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
+                                <p>Le règlement du jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
                                 <p>Un Procès-verbal de jeu est dressé et transmis à l'ARJH à la fin du jeu.</p>
                             </div>
                         </div>

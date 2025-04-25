@@ -62,12 +62,12 @@
                         @error('consentement') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Case à cocher pour le règlement de le jeu -->
+                    <!-- Case à cocher pour le règlement du jeu -->
                     <div class="form-group mt-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="rulesCheckbox" wire:model="reglement" required>
                             <label class="form-check-label" for="rulesCheckbox">
-                                J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal">règlement de le jeu</a>
+                                J'ai lu et j'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#reglementModal">règlement du jeu</a>
                             </label>
                         </div>
                         @error('reglement') <span class="text-danger">{{ $message }}</span> @enderror
@@ -94,12 +94,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Dans le cadre uniquement de la communication des résultats de le jeu dénommée « Promo 70 ans de la marque DINOR  », la société …..  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
+                    <p>Dans le cadre uniquement de la communication des résultats du jeu dénommée « Promo 70 ans de la marque DINOR  », la société …..  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
                     <p>Les destinataires de vos données sont les services concernés de la société …….. </p>
                     <p>Conformément à la loi N° 2013-450 du 19 juin 2013 portant sur la protection des données à caractère personnel, vous bénéficiez d'un droit à l'information, d'accès, de rectification, d'opposition, d'effacement, et d'oubli numérique relativement aux informations qui vous concernent.</p>
                     <p>Pour exercer ces droits et obtenir communication desdites informations, vous pouvez contacter ………en écrivant à l'adresse suivante : xxxxxi@xxxx.com.</p>
                     <p>En signant ce présent document, je consens de façon expresse et éclairée au traitement de mes données par les services concernés.</p>
-                    <p>Ces données pourront être utilisées à des fins de prises de contacts et d'études de satisfaction, sans contrepartie financière, uniquement dans le cadre de la communication des résultats de le jeu promotionnelle …... </p>
+                    <p>Ces données pourront être utilisées à des fins de prises de contacts et d'études de satisfaction, sans contrepartie financière, uniquement dans le cadre de la communication des résultats du jeu promotionnelle …... </p>
 
                     <div class="d-flex justify-content-between mt-4">
                         <div><strong>J'accepte</strong></div>
@@ -119,22 +119,22 @@
         </div>
     </div>
 
-    <!-- Modal pour le règlement de le jeu -->
+    <!-- Modal pour le règlement du jeu -->
     <div class="modal fade" id="reglementModal" tabindex="-1" aria-labelledby="reglementModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="reglementModalLabel">REGLEMENT DE le jeu « Promo 70 ans de la marque DINOR »</h5>
+                    <h5 class="modal-title" id="reglementModalLabel">REGLEMENT du jeu « Promo 70 ans de la marque DINOR »</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="max-height: $0vh; overflow-y: auto;">
-                    <h4>Article 1 : Organisation de le jeu</h4>
+                    <h4>Article 1 : Organisation du jeu</h4>
                     <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01, représentée par son Directeur Général, Monsieur Philippe RAYNAL ayant tous pouvoirs à l'effet des présentes ;</p>
                     <p>Ci-après dénommée « l'Organisateur »</p>
                     <p>Organise une Tombola dénommée « Promo 70 ans de la marque DINOR ».</p>
                     <p>Ci-après désignée « le jeu ».</p>
 
-                    <h4>Article 2 : Objet de le jeu</h4>
+                    <h4>Article 2 : Objet du jeu</h4>
                     <p>La présente Tombola promotionnelle a pour objectif de commémorer les 70 ans de la marque DINOR.</p>
                     <p>Ci-après « les Participants »</p>
                     <p>La participation à le jeu implique l'acceptation sans réserve par les participants du présent règlement dans son intégralité.</p>
@@ -291,7 +291,7 @@
                     <p>Un exemplaire des procès-verbaux susvisés dûment enregistrés, est transmis à l'ARJH, dans un délai de dix jours après les opérations constatées par le Commissaire de Justice cité aux alinéas précédents.</p>
 
                     <h4>Article 8 : Retrait des Lots</h4>
-                    <p>Les lots sont à retirer dans un délai maximum d'un (01) mois à compter de la date de leur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.</p>
+                    <p>Les lots sont à retirer dans un délai maximum d'un (01) mois à compter de la date duur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.</p>
                     <p>Passé ce délai, les lots gagnés et non réclamés seront reversés à l'ARJH, au profit d'un organisme de bienfaisance désigné par le Conseil de régulation.</p>
                     <p>La remise des lots pourra être faite au représentant du lauréat muni de la coipe de la carte nationale d'identité ou du passeport du gagnant.</p>
 
@@ -310,7 +310,7 @@
                     <p>À défaut d'accord entre les parties, l'Autorité de Régulation de Jeux de Hasard (ARJH) sera compétente pour connaître du litige.</p>
 
                     <h4>Article 12 : Dépôt et consultation du Règlement</h4>
-                    <p>Le règlement de le jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
+                    <p>Le règlement du jeu est déposé en l'Etude par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l'Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan et à l'Autorité de Régulation des Jeux de hasard (ARJH).</p>
                     <p>Un Procès-verbal de jeu est dressé et transmis à l'ARJH à la fin du jeu.</p>
 
                     <h4>Article 13 : Consultation du règlement</h4>

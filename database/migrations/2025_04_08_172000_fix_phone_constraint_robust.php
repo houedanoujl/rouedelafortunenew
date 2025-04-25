@@ -17,7 +17,7 @@ return new class extends Migration
         // 1. Récupérer tous les index liés à la colonne 'phone'
         $indexes = DB::select("SHOW INDEXES FROM participants WHERE Column_name = 'phone'");
         
-        // 2. Pour chaque index, tenter de le supprimer
+        // 2. Pour chaque index, tenter du supprimer
         $processedKeys = [];
         foreach ($indexes as $index) {
             $keyName = $index->Key_name;

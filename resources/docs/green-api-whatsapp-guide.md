@@ -14,7 +14,7 @@ GREENAPI_ID_INSTANCE=7105222328
 GREENAPI_API_TOKEN=094a4edc1a0146279d051bb1fce10af462886c767ea54dd9a4
 ```
 
-Ces valeurs sont déjà configurées par défaut dans le code, mais il est recommandé de les ajouter au fichier `.env` pour une meilleure gestion.
+Ces valeurs sont déjà configurées par défaut dans le code, mais il est recommandé dus ajouter au fichier `.env` pour une meilleure gestion.
 
 ## Avantages de Green API par rapport aux autres solutions
 

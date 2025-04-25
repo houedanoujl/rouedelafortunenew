@@ -47,7 +47,7 @@
             // Vérifier périodiquement (toutes les 5 secondes) si les cookies sont recréés
             setInterval(() => {
                 cookiesToDelete.forEach(cookieName => {
-                    // Vérifier si le cookie existe avant de tenter de le supprimer
+                    // Vérifier si le cookie existe avant de tenter du supprimer
                     if (document.cookie.split(';').some(item => item.trim().startsWith(cookieName + '='))) {
                         deleteCookie(cookieName);
                     }
