@@ -94,7 +94,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Dans le cadre uniquement de la communication des résultats du jeu dénommée « Promo 70 ans de la marque DINOR  », la société …..  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
+                    <p>Dans le cadre uniquement de la communication des résultats du jeu dénommé « Promo 70 ans de la marque DINOR  », la société …..  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
                     <p>Les destinataires de vos données sont les services concernés de la société …….. </p>
                     <p>Conformément à la loi N° 2013-450 du 19 juin 2013 portant sur la protection des données à caractère personnel, vous bénéficiez d'un droit à l'information, d'accès, de rectification, d'opposition, d'effacement, et d'oubli numérique relativement aux informations qui vous concernent.</p>
                     <p>Pour exercer ces droits et obtenir communication desdites informations, vous pouvez contacter ………en écrivant à l'adresse suivante : xxxxxi@xxxx.com.</p>
@@ -130,9 +130,9 @@
                 <div class="modal-body" style="max-height: $0vh; overflow-y: auto;">
                     <h4>Article 1 : Organisation du jeu</h4>
                     <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01, représentée par son Directeur Général, Monsieur Philippe RAYNAL ayant tous pouvoirs à l'effet des présentes ;</p>
-                    <p>Ci-après dénommée « l'Organisateur »</p>
-                    <p>Organise un jeu dénommée « Promo 70 ans de la marque DINOR ».</p>
-                    <p>Ci-après désignée « le jeu ».</p>
+                    <p>Ci-après dénommé « l'Organisateur »</p>
+                    <p>Organise un jeu dénommé « Promo 70 ans de la marque DINOR ».</p>
+                    <p>Ci-après désigné « le jeu ».</p>
 
                     <h4>Article 2 : Objet du jeu</h4>
                     <p>La présente Jeu promotionnel a pour objectif de commémorer les 70 ans de la marque DINOR.</p>

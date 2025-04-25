@@ -7,7 +7,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-            <p>Dans le cadre uniquement de la communication des résultats du jeu dénommée « Promo 70 ans de la marque DINOR  », la société SANIA  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
+            <p>Dans le cadre uniquement de la communication des résultats du jeu dénommé « Promo 70 ans de la marque DINOR  », la société SANIA  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
         <p>Les destinataires de vos données sont les services concernés de la société SANIA </p>
         <p>Conformément à la loi N° 2013-450 du 19 juin 2013 portant sur la protection des données à caractère personnel, vous bénéficiez d'un droit à l'information, d'accès, de rectification, d'opposition, d'effacement, et d'oubli numérique relativement aux informations qui vous concernent.</p>
         <p>Pour exercer ces droits et obtenir communication desdites informations, vous pouvez contacter ………en écrivant à l'adresse suivante : KOUAKOUJP@sifca-ci.com </p>

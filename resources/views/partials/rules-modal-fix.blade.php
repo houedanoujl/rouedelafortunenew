@@ -65,9 +65,9 @@
                     <div class="article-title active" data-article="1">Article 1 : Organisation du jeu</div>
                     <div class="article-content show" id="content-1">
                         <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01, représentée par son Directeur Général, Monsieur Philippe RAYNAL ayant tous pouvoirs à l'effet des présentes ;</p>
-                        <p>Ci-après dénommée « l'Organisateur »</p>
-                        <p>Organise un jeu dénommée « Promo 70 ans de la marque DINOR ».</p>
-                        <p>Ci-après désignée « le jeu ».</p>
+                        <p>Ci-après dénommé « l'Organisateur »</p>
+                        <p>Organise un jeu dénommé « Promo 70 ans de la marque DINOR ».</p>
+                        <p>Ci-après désigné « le jeu ».</p>
                     </div>
 
                     <!-- Article 2 -->
