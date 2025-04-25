@@ -7,6 +7,16 @@
 
     <title>{{ config('app.name', 'Roue de la Fortune') }}</title>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X79CM0D4S6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-X79CM0D4S6');
+    </script>
+
     @if(session('is_test_account'))
     <script>
         // Version simplifiée et sécurisée de l'intercepteur de cookies pour mode test

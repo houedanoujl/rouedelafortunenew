@@ -9,56 +9,30 @@ class TestModeController extends Controller
 {
     /**
      * Nettoie tous les cookies et redirige vers la page d'accueil.
-     * Cette méthode utilise une approche plus directe et agressive
-     * pour supprimer les cookies persistants comme 70_ans_dinor_session
-     * et contest_played_1.
+     * Version simplifiée et plus stable pour éviter les erreurs 502.
      */
     public function clearAllCookies(Request $request)
     {
-        // Récupérer tous les cookies de la requête
-        $cookies = $request->cookies->all();
-        
-        // Préparer une réponse pour la redirection
-        $response = redirect()->route('home')->with('cookies_cleared', true);
-        
-        // Supprimer tous les cookies standards
-        foreach ($cookies as $name => $value) {
-            Cookie::queue(Cookie::forget($name));
-            $response->withoutCookie($name);
-        }
-        
-        // Supprimer spécifiquement les cookies problématiques
-        $problemCookies = [
-            '70_ans_dinor_session',
+        // Cookies spécifiques à supprimer
+        $cookiesToClear = [
             'contest_played_1',
-            'XSRF-TOKEN',
-            'laravel_session'
+            'played_this_week',
+            'already_participated'
         ];
         
-        $paths = ['/', '/home', '/spin', '/register', '/result', ''];
+        // Préparer la réponse
+        $response = redirect()->route('home')
+            ->with('message', 'Cookies nettoyés. Mode test activé.');
         
-        foreach ($problemCookies as $cookieName) {
-            // Méthode standard Laravel
-            Cookie::queue(Cookie::forget($cookieName));
-            $response->withoutCookie($cookieName);
-            
-            // Approche plus agressive avec différents chemins
-            foreach ($paths as $path) {
-                // Créer un cookie expiré avec le même nom
-                $expiredCookie = cookie($cookieName, '', -1, $path);
-                Cookie::queue($expiredCookie);
-                $response->withCookie($expiredCookie);
-                
-                // Utiliser également la méthode withoutCookie
-                $response->withoutCookie($cookieName, $path);
-            }
+        // Supprimer chaque cookie de manière simple
+        foreach ($cookiesToClear as $name) {
+            $response->withCookie(cookie($name, '', -1));
         }
         
-        // Ajouter un indicateur pour déboguer
-        $response->header('X-Cookies-Cleared', implode(',', array_keys($cookies)));
+        // Ne pas toucher aux cookies de session Laravel essentiels
+        // Cela évite les problèmes avec le middleware
         
-        // Ajouter un paramètre à l'URL pour débogage
-        return $response->with('message', 'Tous les cookies ont été nettoyés. Mode test activé.');
+        return $response;
     }
 
     /**

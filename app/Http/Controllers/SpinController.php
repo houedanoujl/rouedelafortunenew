@@ -73,33 +73,176 @@ class SpinController extends Controller
             'timestamp' => now()->toDateTimeString()
         ]);
         
-        // Vérifier si la page est bien celle d'une entrée gagnante avec QR Code
-        if ($entry->has_won && !$entry->prize_id) {
-            $prize = Prize::where('stock', '>', 0)
-                ->inRandomOrder()
-                ->first();
-            
-            // Si aucun prix n'est disponible en stock, vérifier les comptes de test spéciaux
-            if (!$prize && $isTestAccount) {
-                $prize = Prize::first(); // Forcer l'attribution d'un prix pour les comptes test
-            }
-            
-            if ($prize) {
-                // Enregistrer le prix dans l'entrée
-                $entry->prize_id = $prize->id;
-                $entry->save();
+        // CORRECTION: Toujours vérifier et décrémenter les stocks si l'entrée est gagnante
+        if ($entry->has_won) {
+            // Vérifier si un prix n'a pas encore été attribué
+            if (!$entry->prize_id) {
+                $prize = Prize::where('stock', '>', 0)
+                    ->inRandomOrder()
+                    ->first();
                 
-                // Décrémenter le stock
-                $prize->stock--;
-                $prize->save();
+                // Si aucun prix n'est disponible en stock, vérifier les comptes de test spéciaux
+                if (!$prize && $isTestAccount) {
+                    $prize = Prize::first(); // Forcer l'attribution d'un prix pour les comptes test
+                }
+                
+                if ($prize) {
+                    // Enregistrer le prix dans l'entrée
+                    $entry->prize_id = $prize->id;
+                    $entry->save();
+                    
+                    // Décrémenter le stock
+                    Log::info('Décrémentation du stock du prix pour une nouvelle entrée gagnante', [
+                        'entry_id' => $entry->id,
+                        'prize_id' => $prize->id,
+                        'prize_name' => $prize->name,
+                        'stock_before' => $prize->stock,
+                        'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
+                    ]);
+                    
+                    $prize->stock--;
+                    $prize->save();
+                    
+                    Log::info('Stock du prix décrémenté avec succès', [
+                        'prize_id' => $prize->id,
+                        'prize_name' => $prize->name,
+                        'stock_after' => $prize->stock
+                    ]);
+                    
+                    // AJOUT: Chercher et décrémenter aussi le stock dans la distribution correspondante
+                    $distributions = \App\Models\PrizeDistribution::where('prize_id', $prize->id)
+                        ->where('contest_id', $entry->contest_id)
+                        ->where('remaining', '>', 0)
+                        ->get();
+                        
+                    if ($distributions->isNotEmpty()) {
+                        // Prendre la première distribution avec du stock
+                        $distribution = $distributions->first();
+                        $oldRemaining = $distribution->remaining;
+                        
+                        if ($distribution->decrementRemaining()) {
+                            Log::info('Stock de distribution décrémenté avec succès pour une nouvelle entrée', [
+                                'distribution_id' => $distribution->id,
+                                'prize_id' => $prize->id,
+                                'remaining_before' => $oldRemaining,
+                                'remaining_after' => $distribution->remaining
+                            ]);
+                        }
+                    } else {
+                        Log::warning('Aucune distribution avec stock disponible pour ce prix', [
+                            'prize_id' => $prize->id,
+                            'contest_id' => $entry->contest_id
+                        ]);
+                    }
+                }
+            } 
+            // Si un prix a déjà été attribué mais que le stock n'a pas été décrémenté
+            else {
+                // Vérifier si le prix existe
+                $prize = Prize::find($entry->prize_id);
+                
+                if ($prize) {
+                    // Vérifie si la session indique que le stock a déjà été décrémenté
+                    if ($request->session()->get('decrement_stock_' . $entry->id, false)) {
+                        Log::info('Pas de décrémentation du stock (déjà fait)', [
+                            'entry_id' => $entry->id,
+                            'prize_id' => $prize->id,
+                            'prize_name' => $prize->name,
+                            'current_stock' => $prize->stock,
+                            'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
+                        ]);
+                    } else {
+                        // Vérification supplémentaire dans la base de données
+                        $stockDecremented = \DB::table('stock_decremented_logs')
+                            ->where('entry_id', $entry->id)
+                            ->exists();
+                            
+                        if ($stockDecremented) {
+                            Log::info('Pas de décrémentation du stock (déjà fait selon la base de données)', [
+                                'entry_id' => $entry->id,
+                                'prize_id' => $prize->id,
+                                'prize_name' => $prize->name
+                            ]);
+                            
+                            // Mettre à jour la session également
+                            $request->session()->put('decrement_stock_' . $entry->id, true);
+                        } else {
+                            // Stock pas encore décrémenté pour cette entrée
+                            Log::info('Décrémentation automatique du stock pour une entrée existante', [
+                                'entry_id' => $entry->id,
+                                'prize_id' => $prize->id,
+                                'prize_name' => $prize->name,
+                                'stock_before' => $prize->stock,
+                                'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
+                            ]);
+                            
+                            $prize->stock--;
+                            $prize->save();
+                            
+                            // Marquer dans la session que le stock a été décrémenté pour cette entrée
+                            $request->session()->put('decrement_stock_' . $entry->id, true);
+                            
+                            Log::info('Stock du prix décrémenté avec succès (première visite après attribution)', [
+                                'prize_id' => $prize->id,
+                                'prize_name' => $prize->name,
+                                'stock_after' => $prize->stock
+                            ]);
+                            
+                            // AJOUT: Chercher et décrémenter aussi le stock dans la distribution correspondante
+                            $distributions = \App\Models\PrizeDistribution::where('prize_id', $prize->id)
+                                ->where('contest_id', $entry->contest_id)
+                                ->where('remaining', '>', 0)
+                                ->get();
+                                
+                            if ($distributions->isNotEmpty()) {
+                                // Prendre la première distribution avec du stock
+                                $distribution = $distributions->first();
+                                $oldRemaining = $distribution->remaining;
+                                
+                                if ($distribution->decrementRemaining()) {
+                                    Log::info('Stock de distribution décrémenté avec succès (première visite après attribution)', [
+                                        'distribution_id' => $distribution->id,
+                                        'prize_id' => $prize->id, 
+                                        'remaining_before' => $oldRemaining,
+                                        'remaining_after' => $distribution->remaining
+                                    ]);
+                                }
+                            } else {
+                                Log::warning('Aucune distribution avec stock disponible pour ce prix (première visite après attribution)', [
+                                    'prize_id' => $prize->id,
+                                    'contest_id' => $entry->contest_id
+                                ]);
+                            }
+                            
+                            // Enregistrer dans la base de données que le stock a été décrémenté
+                            \DB::table('stock_decremented_logs')->insert([
+                                'entry_id' => $entry->id,
+                                'prize_id' => $prize->id,
+                                'decremented_at' => now(),
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
+                    }
+                } else {
+                    Log::warning('Prix non trouvé pour l\'entrée gagnante', [
+                        'entry_id' => $entry->id,
+                        'prize_id' => $entry->prize_id
+                    ]);
+                }
             }
         } else {
-            // Utiliser le prix déjà associé à l'entrée
-            $prize = $entry->prize;
+            Log::info('Entrée non gagnante, pas de décrémentation de stock', [
+                'entry_id' => $entry->id,
+                'has_won' => 'Non'
+            ]);
         }
 
         // Récupérer ou créer le QR code
         $qrCode = $entry->qrCode;
+        
+        // Initialiser la variable $prize pour éviter l'erreur
+        $prize = $entry->prize;
         
         // ENVOI WHATSAPP SI GAGNANT ET NUMÉRO DISPONIBLE
         $whatsappMsg = null;
@@ -157,7 +300,7 @@ class SpinController extends Controller
                     $greenWhatsAppService = new GreenWhatsAppService();
                     
                     // Message pour les gagnants
-                    $prizeText = $prize ? $prize->name : "un prix";
+                    $prizeText = $entry->prize ? $entry->prize->name : "un prix";
                     $customMessage = "Félicitations ! Vous avez gagné {$prizeText}. Voici votre QR code pour récupérer votre gain. Conservez-le précieusement !";
                     
                     // Envoyer le message à chaque affichage/rafraîchissement

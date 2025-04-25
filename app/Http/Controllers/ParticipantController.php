@@ -440,11 +440,16 @@ class ParticipantController extends Controller
 
             // Récupérer les distributions du concours actif
             $distributions = PrizeDistribution::where('contest_id', $contest->id)
-                ->where('remaining', '>', 0)
+                ->where('remaining', '>', 0)  // Ne sélectionner que les distributions avec stock restant
                 ->whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now())
-                ->with('prize')
-                ->get();
+                ->with(['prize' => function($query) {
+                    $query->where('stock', '>', 0);  // Ne sélectionner que les prix avec stock positif
+                }])
+                ->get()
+                ->filter(function($distribution) {
+                    return $distribution->prize !== null;  // Filtrer les distributions sans prix valide
+                });
 
             // Vérifier si tous les stocks de prix sont épuisés
             $hasPrizesInStock = false;
@@ -548,16 +553,26 @@ class ParticipantController extends Controller
 
                 if ($hasWon) {
                     // Collecter tous les prix disponibles avec leurs distributions
+                    // mais uniquement ceux associés au concours actuel
                     $availablePrizes = [];
 
                     foreach ($distributions as $distribution) {
-                        if ($distribution->prize && $distribution->prize->stock > 0) {
+                        if ($distribution->prize && 
+                            $distribution->prize->stock > 0 && 
+                            $distribution->contest_id == $contest->id) {
                             $availablePrizes[] = [
                                 'prize_id' => $distribution->prize->id,
-                                'distribution_id' => $distribution->id
+                                'distribution_id' => $distribution->id,
+                                'prize_name' => $distribution->prize->name
                             ];
                         }
                     }
+
+                    \Log::info('Sélection de prix pour le concours actif', [
+                        'contest_id' => $contest->id,
+                        'available_prizes_count' => count($availablePrizes),
+                        'available_prizes' => $availablePrizes
+                    ]);
 
                     // Choisir un prix au hasard
                     if (count($availablePrizes) > 0) {
@@ -565,6 +580,13 @@ class ParticipantController extends Controller
                         $selectedPrize = $availablePrizes[$randomIndex];
                         $prizeId = $selectedPrize['prize_id'];
                         $distributionId = $selectedPrize['distribution_id'];
+                        
+                        \Log::info('Prix sélectionné aléatoirement', [
+                            'selected_index' => $randomIndex,
+                            'prize_id' => $prizeId,
+                            'prize_name' => $selectedPrize['prize_name'],
+                            'distribution_id' => $distributionId
+                        ]);
                     } else {
                         // Pas de prix disponible, faire perdre le joueur
                         $hasWon = false;
@@ -578,19 +600,97 @@ class ParticipantController extends Controller
 
                 $entry->save();
 
-                // Si c'est un prix gagnant, mettre à jour la distribution
-                if ($hasWon && $distributionId) {
-                    $distribution = PrizeDistribution::find($distributionId);
-                    if ($distribution) {
-                        $distribution->remaining = $distribution->remaining - 1;
-                        $distribution->save();
-                    }
+                // Force le débogage pour voir ce qui se passe exactement ici
+                \Log::debug('État avant décrémentation des stocks', [
+                    'hasWon' => $hasWon,
+                    'entry_id' => $entry->id, 
+                    'prize_id' => $prizeId,
+                    'distribution_id' => $distributionId
+                ]);
 
-                    // Mettre à jour le stock du prix
+                // Si c'est un prix gagnant, mettre à jour la distribution et le stock
+                // Même s'il n'y a pas de distribution_id, essayer de trouver une distribution
+                if ($hasWon && $prizeId) {
+                    \Log::debug('Tentative de décrémentation du stock pour un gain', [
+                        'prize_id' => $prizeId,
+                        'distribution_id' => $distributionId
+                    ]);
+                    
+                    // DÉCRÉMENTATION DU STOCK DU PRIX DIRECTEMENT - Stratégie 1
                     $prize = Prize::find($prizeId);
                     if ($prize) {
-                        $prize->stock = $prize->stock - 1;
-                        $prize->save();
+                        \Log::info('Prix trouvé en base, vérification du stock', [
+                            'prize_id' => $prizeId,
+                            'prize_name' => $prize->name,
+                            'current_stock' => $prize->stock
+                        ]);
+                        
+                        if ($prize->stock > 0) {
+                            $prize->stock -= 1;
+                            $prize->save();
+                            
+                            \Log::info('Stock du prix décrémenté directement', [
+                                'prize_id' => $prizeId,
+                                'prize_name' => $prize->name,
+                                'new_stock' => $prize->stock
+                            ]);
+                        }
+                    }
+                    
+                    // DÉCRÉMENTATION DU STOCK DE LA DISTRIBUTION - Stratégie 2
+                    // Si on a un distribution_id, essayer de l'utiliser directement
+                    if ($distributionId) {
+                        $distribution = PrizeDistribution::find($distributionId);
+                        if ($distribution) {
+                            \Log::debug('Distribution trouvée avec ID fourni', [
+                                'distribution_id' => $distributionId,
+                                'prize_id' => $distribution->prize_id,
+                                'current_remaining' => $distribution->remaining 
+                            ]);
+                            
+                            if ($distribution->remaining > 0) {
+                                $distribution->remaining -= 1;
+                                $distribution->save();
+                                
+                                \Log::info('Stock de distribution décrémenté avec ID fourni', [
+                                    'distribution_id' => $distributionId,
+                                    'new_remaining' => $distribution->remaining
+                                ]);
+                            }
+                        }
+                    } 
+                    // Sinon, chercher des distributions liées au prix
+                    else {
+                        \Log::debug('Aucun distribution_id fourni, recherche de distributions pour le prix', [
+                            'prize_id' => $prizeId
+                        ]);
+                        
+                        // Chercher une distribution pour ce prix dans le concours actuel
+                        $matchingDistribution = PrizeDistribution::where('prize_id', $prizeId)
+                            ->where('contest_id', $contest->id)
+                            ->where('remaining', '>', 0)
+                            ->first();
+                            
+                        if ($matchingDistribution) {
+                            \Log::info('Distribution trouvée par recherche', [
+                                'distribution_id' => $matchingDistribution->id,
+                                'prize_id' => $prizeId,
+                                'current_remaining' => $matchingDistribution->remaining
+                            ]);
+                            
+                            $matchingDistribution->remaining -= 1;
+                            $matchingDistribution->save();
+                            
+                            \Log::info('Stock de distribution décrémenté après recherche', [
+                                'distribution_id' => $matchingDistribution->id,
+                                'new_remaining' => $matchingDistribution->remaining
+                            ]);
+                        } else {
+                            \Log::warning('Aucune distribution trouvée pour ce prix dans ce concours', [
+                                'prize_id' => $prizeId,
+                                'contest_id' => $contest->id
+                            ]);
+                        }
                     }
                 }
 
