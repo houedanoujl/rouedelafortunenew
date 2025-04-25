@@ -52,14 +52,6 @@ class PrizeResource extends Resource
                             ->url('/gestion-images-prix', true)
                             ->icon('heroicon-m-photo')
                     ),
-                Forms\Components\FileUpload::make('image')
-                    ->label('Image du prix')
-                    ->directory('images/prizes')
-                    ->disk('public')
-                    ->image()
-                    ->imagePreviewHeight('100')
-                    ->maxSize(2048)
-                    ->required(),
                 Forms\Components\TextInput::make('stock')
                     ->required()
                     ->numeric()
