@@ -17,7 +17,7 @@
                 <div class="custom-accordion-content active">
                     <p>SANIA Cie, Société Anonyme avec Conseil d'Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d'Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01. Abidjan.</p>
                     <p>Ci-après dénommée « l'Organisateur »</p>
-                    <p>Organise une Tombola dénommée « Promo 70 ans de la marque DINOR ».</p>
+                    <p>Organise un jeu dénommée « Promo 70 ans de la marque DINOR ».</p>
                     <p>Ci-après désignée « le jeu ».</p>
                 </div>
             </div>
@@ -29,7 +29,7 @@
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
-                    <p>Cette Tombola a pour objet de valoriser la marque DINOR et de fidéliser les consommateurs à travers des gains exceptionnels.</p>
+                    <p>Ce Jeu a pour objet de valoriser la marque DINOR et de fidéliser les consommateurs à travers des gains exceptionnels.</p>
                 </div>
             </div>
             
@@ -82,7 +82,7 @@
                     <span class="custom-accordion-icon"></span>
                 </div>
                 <div class="custom-accordion-content">
-                    <p>Les lots à gagner dans le cadre de cette Tombola sont les suivants :</p>
+                    <p>Les lots à gagner dans le cadre de ce Jeu sont les suivants :</p>
                     <table>
                         <thead>
                             <tr>

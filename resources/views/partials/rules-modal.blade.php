@@ -61,7 +61,7 @@
                             <div class="accordion-body">
                                 SANIA Cie, Société Anonyme avec Conseil d’Administration au capital de 44.110.000.000 FCFA, immatriculé au Registre du Commerce et du Crédit Mobilier d’Abidjan sous le numéro CI-ABJ-2008-B14-3985, dont le siège social est sis à Abidjan, Zone industrielle de Vridi, rue du textile, 01 BP 2949 Abidjan 01, représentée par son Directeur Général, Monsieur Philippe RAYNAL ayant tous pouvoirs à l’effet des présentes ;<br>
                                 Ci-après dénommée « l’Organisateur »<br><br>
-                                Organise une Tombola dénommée « Promo 70 ans de la marque DINOR ».<br><br>
+                                Organise un jeu dénommée « Promo 70 ans de la marque DINOR ».<br><br>
                                 Ci-après désignée « le jeu ».
                             </div>
                         </div>
@@ -74,7 +74,7 @@
                         </h2>
                         <div id="collapseArt2" class="accordion-collapse collapse" aria-labelledby="headingArt2" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                La présente Tombola promotionnelle a pour objectif de commémorer les 70 ans de la marque DINOR.<br><br>
+                                La présent Jeu promotionnel a pour objectif de commémorer les 70 ans de la marque DINOR.<br><br>
                                 Ci-après « les Participants »<br><br>
                                 La participation à le jeu implique l’acceptation sans réserve par les participants du présent règlement dans son intégralité.<br><br>
                                 Ci-après « le Règlement ».
@@ -105,7 +105,7 @@
                                 le jeu « Promo 70 ans de la marque DINOR » se déroule conformément aux dispositions de la loi n°2020-480 du 27 Mai 2020 portant régime juridique des jeux de hasard en Côte d’Ivoire et du décret n°2023-946 du 06 décembre 2023 portant régime juridique des jeux de hasard soumis à autorisation.<br><br>
                                 Le présent règlement est authentifié par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l’Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.<br><br>
                                 <b>4-2 Conditions de participation</b><br>
-                                le jeu qui se déroulera sur toute l’étendue du territoire de la République de Côte d’Ivoire est destinée aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l’Application « Dinor App ». Cette Tombola est interdite aux mineurs de moins de 18 ans.<br><br>
+                                le jeu qui se déroulera sur toute l'étendue du territoire de la République de Côte d'Ivoire est destiné aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l'Application « Dinor App ». Ce Jeu est interdit aux mineurs de moins de 18 ans.<br><br>
                                 Lesdits Participants pourront via le  le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à le jeu, accéder à une roue qui leur permettra de gagner des lots immédiats.<br><br>
                                 La roue comporte les mentions « Gagné » et « Perdu ».<br><br>
                                 <b>En pratique, les Participants devront :</b><br>
@@ -138,7 +138,7 @@
                         </h2>
                         <div id="collapseArt6" class="accordion-collapse collapse" aria-labelledby="headingArt6" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                <b>Les lots mis en jeu dans cette Tombola sont :</b><br><br>
+                                <b>Les lots mis en jeu dans ce Jeu sont :</b><br><br>
                                 <ul>
                                     <li>TV</li>
                                     <li>Téléphone portable</li>
@@ -168,7 +168,7 @@
                         </h2>
                         <div id="collapseArt7" class="accordion-collapse collapse" aria-labelledby="headingArt7" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                Les promoteurs sont tenus, à l'occasion de tirage de loterie et autres tombolas de requérir la présence d'un Commissaire de Justice.<br>
+                                Les promoteurs sont tenus, à l'occasion de tirage de loterie et autres jeux de requérir la présence d'un Commissaire de Justice.<br>
                                 À l’issue de la campagne promotionnelle, des procès-verbaux seront dressés par Maitre SEKA Monney Lucien, Commissaire de Justice près la Cour d’Appel d’Abidjan et le Tribunal de Yopougon, dont l’étude est sise à Abidjan Yopougon, toits rouges, fin ruelle, Tél : 07 48 47 19 29.<br>
                                 Le procès-verbal de la campagne promotionnelle comporte la liste des gagnants ainsi que la liste des lots correspondants. Cette liste est publiée dans un journal d'annonces légales sept (07) jours au plus tard après la clôture de la campagne promotionnelle.<br>
                                 Le procès-verbal de paiement, établi au plus tard vingt-cinq jours après la date de publication officielle des résultats, comporte la liste des personnes gagnantes avec leur identité complète, les lots attribués, les lots non réclamés et/ou ceux gagnés par des titres de participation.<br>
@@ -184,7 +184,7 @@
                         </h2>
                         <div id="collapseArt8" class="accordion-collapse collapse" aria-labelledby="headingArt8" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                Les lots sont à retirer dans un délai maximum d’un (01) mois à compter de la date duur gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.<br>
+                                Les lots sont à retirer dans un délai maximum d’un (01) mois à compter de la date d'obtention du  gain, du lundi au vendredi, de 08 heures à 12 heures au siège de la société SANIA Cie.<br>
                                 Passé ce délai, les lots gagnés et non réclamés seront reversés à l’ARJH, au profit d’un organisme de bienfaisance désigné par le Conseil de régulation.<br><br>
                                 La remise des lots pourra être faite au représentant du lauréat muni de la coipe de la carte nationale d’identité ou du passeport du gagnant.
                             </div>
