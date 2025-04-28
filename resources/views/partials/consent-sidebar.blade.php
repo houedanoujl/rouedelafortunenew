@@ -76,17 +76,34 @@
         function scrollToIsidor() {
             var isidor = document.getElementById('isidor');
             if (isidor) {
-                var originalOverflow = document.body.style.overflow;
-                document.body.style.overflow = '';
-                setTimeout(function() {
-                    if (isidor.scrollIntoView) {
-                        isidor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                console.log('[DEBUG] Element #isidor found:', isidor);
+                
+                // Force le scroll directement avec une animation manuelle
+                var startPosition = window.pageYOffset;
+                var targetPosition = isidor.getBoundingClientRect().top + window.pageYOffset;
+                var distance = targetPosition - startPosition;
+                var startTime = null;
+                var duration = 500; // ms
+                
+                function animation(currentTime) {
+                    if (startTime === null) startTime = currentTime;
+                    var timeElapsed = currentTime - startTime;
+                    var progress = Math.min(timeElapsed / duration, 1);
+                    var ease = function(t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t }; // easeInOutQuad
+                    window.scrollTo(0, startPosition + distance * ease(progress));
+                    
+                    if (timeElapsed < duration) {
+                        window.requestAnimationFrame(animation);
                     } else {
-                        window.scrollTo(0, isidor.offsetTop);
+                        console.log('[DEBUG] Scroll to #isidor completed');
                     }
-                    document.body.style.overflow = originalOverflow;
-                    console.log('[DEBUG] Smooth scroll to #isidor (iOS compatible)');
-                }, 150);
+                }
+                
+                window.requestAnimationFrame(animation);
+            } else {
+                console.warn('[WARNING] #isidor element not found in the document');
+                // Tente de scroller vers le haut de la page comme solution de secours
+                window.scrollTo({top: 0, behavior: 'smooth'});
             }
         }
 
@@ -96,7 +113,9 @@
             sidebar.classList.add('active');
             document.body.style.overflow = 'hidden';
             centerConsentSidebar();
-            scrollToIsidor();
+            
+            // Donnons un peu plus de temps avant de scroller
+            setTimeout(scrollToIsidor, 500);
         };
 
         // Fonction pour fermer la sidebar

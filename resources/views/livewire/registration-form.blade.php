@@ -140,7 +140,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="consentCheckbox" wire:model="consentement" required>
                             <label class="form-check-label" for="consentCheckbox">
-                                J'accepte le <a href="#" data-bs-toggle="modal" data-bs-target="#consentModal" style="color: red;">recueil de consentement individuel</a> <span style="color: red;">*</span>
+                                J'accepte le <a href="#isidor" data-bs-toggle="modal" data-bs-target="#consentModal" style="color: red;" onclick="setTimeout(function() { window.scrollTo({top: document.getElementById('isidor').getBoundingClientRect().top + window.pageYOffset, behavior: 'smooth'}); }, 400);">recueil de consentement individuel</a> <span style="color: red;">*</span>
                             </label>
                         </div>
                         @error('consentement') <span class="text-danger">{{ $message }}</span> @enderror
@@ -176,13 +176,13 @@
 
     <!-- Modal pour le consentement individuel -->
     <div class="modal fade" id="consentModal" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true" style="z-index: 1060;" data-bs-backdrop="false">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="margin: 10px auto; max-width: 95%;">
+            <div class="modal-content" style="max-height: 90vh; margin: auto; position: relative; top: 0;">
                 <div class="modal-header">
                     <h5 class="modal-title" id="consentModalLabel">{{ $modalContents['consent']['title'] ?? 'Fiche de recueil de consentement' }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" style="text-align: center; font-weight: normal;">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 15px; text-align: center; font-weight: normal;">
                     @if(!empty($modalContents['consent']['content']))
                         @foreach($modalContents['consent']['content'] as $paragraph)
                             <p>{{ $paragraph }}</p>

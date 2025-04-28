@@ -68,7 +68,7 @@
                 <p><span class="font-medium dark:text-white">Concours :</span> {{ $scannedQrCode->entry->contest->name }}</p>
                 @if($scannedQrCode->entry->prize)
                 <p><span class="font-medium dark:text-white">Lot gagné :</span> {{ $scannedQrCode->entry->prize->name }}</p>
-                <p><span class="font-medium dark:text-white">Valeur :</span> {{ $scannedQrCode->entry->prize->value }} €</p>
+                <p><span class="font-medium dark:text-white">Valeur :</span> {{ \App\Helpers\FormatHelper::fcfa($scannedQrCode->entry->prize->value) }}</p>
                 @endif
                 <p><span class="font-medium dark:text-white">Statut :</span> <span class="px-2 py-1 text-xs font-semibold text-white bg-green-500 rounded-full">Réclamé</span></p>
                 <p><span class="font-medium dark:text-white">Réclamé le :</span> {{ $scannedQrCode->entry->claimed_at->format('d/m/Y à H:i') }}</p>
@@ -91,7 +91,7 @@
                 <p><span class="font-medium dark:text-white">Concours :</span> {{ $scannedQrCode->entry->contest->name }}</p>
                 @if($scannedQrCode->entry->prize)
                 <p><span class="font-medium dark:text-white">Lot gagné :</span> {{ $scannedQrCode->entry->prize->name }}</p>
-                <p><span class="font-medium dark:text-white">Valeur :</span> {{ $scannedQrCode->entry->prize->value }} €</p>
+                <p><span class="font-medium dark:text-white">Valeur :</span> {{ \App\Helpers\FormatHelper::fcfa($scannedQrCode->entry->prize->value) }}</p>
                 @endif
                 <p><span class="font-medium dark:text-white">Statut :</span> <span class="px-2 py-1 text-xs font-semibold text-white bg-yellow-500 rounded-full">Déjà réclamé</span></p>
                 <p><span class="font-medium dark:text-white">Scanné le :</span> {{ $scannedQrCode->scanned_at->format('d/m/Y à H:i') }}</p>

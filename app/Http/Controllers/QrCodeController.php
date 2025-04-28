@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\QrCode as QrCodeModel;
 use App\Models\Prize;
-use App\Services\WhatsAppService;
+use App\Services\GreenWhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Helpers\FormatHelper;
 
 class QrCodeController extends Controller
 {
@@ -43,36 +44,37 @@ class QrCodeController extends Controller
         }
 
         // ENVOI WHATSAPP SI GAGNANT ET NUMÉRO DISPONIBLE
+        // On n'envoie la notification que si elle n'a jamais été envoyée
         $whatsappMsg = null;
-        try {
-            if ($entry->has_won && $entry->participant && $entry->participant->phone && $qrCode) {
+        if ($entry->has_won && $entry->participant && $entry->participant->phone && $qrCode && !$qrCode->notification_sent) {
+            try {
                 $qrCodeDir = storage_path('app/public/qrcodes');
-                // Créer le répertoire s'il n'existe pas
                 if (!file_exists($qrCodeDir)) {
                     mkdir($qrCodeDir, 0755, true);
                 }
-                
                 $qrCodePath = $qrCodeDir . '/qrcode-' . $qrCode->code . '.png';
-                // Génère le QR code s'il n'existe pas déjà
                 if (!file_exists($qrCodePath)) {
                     \SimpleSoftwareIO\QrCode::format('png')
                         ->size(300)
                         ->margin(1)
                         ->generate(route('qrcode.result', ['code' => $qrCode->code]), $qrCodePath);
                 }
-                $whatsappService = app(WhatsAppService::class);
-                $formattedPhone = $this->formatPhoneDisplay($entry->participant->phone);
-                $result = $whatsappService->sendQrCodeToWinner($entry->participant->phone, $qrCodePath);
+                $whatsappService = app(GreenWhatsAppService::class);
+                $formattedPhone = $entry->participant->phone;
+                $prizeValue = FormatHelper::fcfa($prize->value ?? 0);
+                $message = "Félicitations ! Vous avez gagné {$prize->name} d'une valeur de {$prizeValue}.";
+                $result = $whatsappService->sendMessage($formattedPhone, $message);
                 Log::info('Envoi WhatsApp tenté', ['phone' => $formattedPhone, 'result' => $result]);
-                // Message détaillé pour l'alerte
+                $qrCode->notification_sent = true;
+                $qrCode->save();
                 $whatsappMsg = is_string($result) ? "Échec d'envoi à $formattedPhone : $result" : ($result ? "Succès: message WhatsApp envoyé à $formattedPhone." : "Échec: message WhatsApp non envoyé à $formattedPhone.");
+            } catch (\Exception $e) {
+                Log::error('Erreur lors de l\'envoi WhatsApp', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+                $whatsappMsg = 'Échec: ' . $e->getMessage();
             }
-        } catch (\Exception $e) {
-            Log::error('Erreur lors de l\'envoi WhatsApp', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            $whatsappMsg = 'Échec: ' . $e->getMessage();
-        }
-        if ($whatsappMsg) {
-            session()->flash('whatsapp_result', $whatsappMsg);
+            if ($whatsappMsg) {
+                session()->flash('whatsapp_result', $whatsappMsg);
+            }
         }
 
         return view('qrcode-result', [

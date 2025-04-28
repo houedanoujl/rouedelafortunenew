@@ -54,8 +54,33 @@ class FortuneWheel extends Component
 
         $this->spinning = true;
 
-        // Réduire les chances de gagner à 5% (1 sur 20) au lieu de 20%
-        $isWinning = rand(1, 20) <= 1;
+        // Vérifier s'il y a des prix en stock disponibles
+        $contest = $this->entry->contest;
+        $hasPrizesInStock = false;
+        
+        // Recherche de distributions de prix avec stock > 0
+        $distributions = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
+            ->where('remaining', '>', 0)
+            ->with(['prize' => function($query) {
+                $query->where('stock', '>', 0);
+            }])
+            ->get()
+            ->filter(function($distribution) {
+                return $distribution->prize !== null;
+            });
+            
+        if(count($distributions) > 0) {
+            $hasPrizesInStock = true;
+        }
+        
+        // Journaliser l'état du stock
+        Log::info('Vérification du stock', [
+            'has_prizes_in_stock' => $hasPrizesInStock ? 'oui' : 'non',
+            'email' => $this->entry->participant->email ?? 'inconnu'
+        ]);
+
+        // Si aucun prix en stock, forcer le résultat à "perdant"
+        $isWinning = $hasPrizesInStock && (rand(1, 20) <= 1);
         
         // Déterminer le secteur et l'angle final en fonction du résultat souhaité
         $sectorInfo = $this->determineSector($isWinning);
@@ -265,7 +290,7 @@ class FortuneWheel extends Component
                 'angle' => $finalAngle,
                 'sector_id' => $sectorId,
                 'sector_class' => $isWinning ? 'secteur-gagne' : 'secteur-perdu',
-                'result' => $isWinning ? 'win' : 'lose',
+                'result' => $entry->has_won ? 'win' : 'lose', // Utiliser la valeur réelle en BDD plutôt que l'angle visuel
                 'has_won_in_db' => $entry->has_won,
                 'ip_address' => $ip
             ];
@@ -290,7 +315,7 @@ class FortuneWheel extends Component
                 'entry_id' => $entry->id,
                 'angle' => $finalAngle,
                 'sector_id' => $sectorId,
-                'result' => $isWinning ? 'win' : 'lose',
+                'result' => $entry->has_won ? 'win' : 'lose',
                 'ip_address' => $ip,
                 'file_path' => $historyFile
             ]);

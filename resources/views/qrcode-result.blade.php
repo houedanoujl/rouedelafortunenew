@@ -15,7 +15,11 @@
                         <div class="prize-details">
                             <h4 class="mb-3" style="color: var(--primary-red);">🎁 {{ $prize->name }} 🎉</h4>
                             <p class="lead">{{ $prize->description }}</p>
-                            
+                            <div class="prize-value">
+                                @if(isset($prize) && isset($prize->value))
+                                    <strong>Valeur :</strong> {{ \App\Helpers\FormatHelper::fcfa($prize->value) }}
+                                @endif
+                            </div>
                             @if($prize->image)
                                 <div class="mt-4">
                                     <img src="{{ asset('storage/' . $prize->image) }}" 

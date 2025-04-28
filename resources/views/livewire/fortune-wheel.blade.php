@@ -127,6 +127,22 @@
             }
         }
 
+        // Vérification système des résultats
+        function verifyWinningResult(isWinning) {
+            // Cette fonction aide à déterminer le bon segment basé sur l'état des stocks
+            // Plutôt que de forcer une nouvelle rotation (ce qui cause des erreurs),
+            // on va simplement retourner le type de segment à utiliser
+            
+            console.log('Vérification du résultat attendu:', isWinning ? 'GAGNÉ' : 'PERDU');
+            
+            // Si le backend indique perdant à cause du stock épuisé
+            if (!isWinning) {
+                console.log('Le stock est épuisé ou le hasard a déterminé une perte');
+            }
+            
+            return isWinning;
+        }
+
         // Callback lorsque la roue s'arrête
         function finishedSpinning() {
             isSpinning = false;
@@ -134,12 +150,30 @@
             // Obtenez le segment final indiqué par le pointeur
             const winningSegment = theWheel.getIndicatedSegment();
 
+            // Vérifier si c'est un segment gagnant (fond jaune)
+            const isWinningSegment = winningSegment.fillStyle === '#F7DB15';
+            
+            // Double vérification des données du serveur
+            const serverHasWon = {{ $entry->has_won ? 'true' : 'false' }};
+            
+            console.log('Segment final:', winningSegment.text);
+            console.log('Est gagnant?', isWinningSegment ? 'OUI' : 'NON');
+            console.log('État en BDD:', serverHasWon ? 'Gagné' : 'Perdu');
+            
+            // S'assurer que le résultat visuel correspond à l'état en base de données
+            // Si le stock est à 0, personne ne devrait gagner, même si la roue indique un segment gagnant
+            if (isWinningSegment && !serverHasWon) {
+                console.log('ALERTE: Incohérence entre le résultat visuel et la BDD. Stock probablement à 0.');
+                // On simule un segment perdant pour l'animation
+                isWinningSegment = false;
+            }
+
             // Afficher les résultats
             console.log("Segment final:", winningSegment);
             console.log("Texte du segment:", winningSegment.text);
 
             // Déterminer si c'est un segment gagnant basé sur le texte réel du segment
-            const isWinningSegment = winningSegment.text === 'GAGNÉ';
+            const isWinningSegmentFinal = winningSegment.text === 'GAGNÉ';
 
             // Mettre en avant le segment obtenu
             if (winningSegment) {
@@ -156,7 +190,7 @@
 
             setTimeout(() => {
                 // Jouer le son correspondant
-                if (isWinningSegment) {
+                if (isWinningSegmentFinal) {
                     console.log("Jouer le son de victoire");
                     if (winSound) {
                         winSound.currentTime = 0;
@@ -176,7 +210,7 @@
             // Envoyer le résultat réel au serveur via une requête AJAX sécurisée
             console.log('Envoi du résultat au serveur via AJAX...');
             console.log('Segment obtenu:', winningSegment.text);
-            console.log('Résultat à enregistrer:', isWinningSegment ? 'win' : 'lose');
+            console.log('Résultat à enregistrer:', isWinningSegmentFinal ? 'win' : 'lose');
 
             fetch('{{ route('spin.record-result') }}', {
                 method: 'POST',
@@ -186,7 +220,7 @@
                 },
                 body: JSON.stringify({
                     entry_id: {{ $entry->id }},
-                    displayed_result: isWinningSegment ? 'win' : 'lose',
+                    displayed_result: isWinningSegmentFinal ? 'win' : 'lose',
                     segment_text: winningSegment.text
                 })
             })
@@ -228,30 +262,18 @@
             console.log('Données reçues du serveur:', data);
             const isWinning = data.isWinning === 1;
 
-            // Générer un angle d'arrêt aléatoire qui respecte le résultat gagné/perdu
-            let stopAngle;
-
-            if (isWinning) {
-                // Choisir aléatoirement un secteur gagnant (secteurs pairs: 0, 2, 4, 6, 8)
-                const winningSectors = [0, 2, 4, 6, 8];
-                const randomWinningSector = winningSectors[Math.floor(Math.random() * winningSectors.length)];
-
-                // Calculer un angle aléatoire dans ce secteur (36 degrés par secteur)
-                const sectorStart = randomWinningSector * 36;
-                stopAngle = sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
-
-                console.log('Secteur gagnant sélectionné:', randomWinningSector, 'Angle d\'arrêt:', stopAngle);
+            // Vérification du résultat
+            if (!verifyWinningResult(isWinning)) {
+                console.log('Résultat non valide, ajustement de la rotation...');
+                // Ne pas appeler spinWheel récursivement - uniquement s'assurer que nous allons sur un secteur perdant
+                stopAngle = determineLosingAngle();
+                console.log('Angle perdu choisi:', stopAngle);
             } else {
-                // Choisir aléatoirement un secteur perdant (secteurs impairs: 1, 3, 5, 7, 9)
-                const losingSectors = [1, 3, 5, 7, 9];
-                const randomLosingSector = losingSectors[Math.floor(Math.random() * losingSectors.length)];
-
-                // Calculer un angle aléatoire dans ce secteur
-                const sectorStart = randomLosingSector * 36;
-                stopAngle = sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
-
-                console.log('Secteur perdant sélectionné:', randomLosingSector, 'Angle d\'arrêt:', stopAngle);
+                // Générer un angle d'arrêt aléatoire qui respecte le résultat gagné/perdu
+                stopAngle = determineStopAngle(isWinning);
             }
+
+            console.log('Angle d\'arrêt final:', stopAngle);
 
             // Réinitialiser la roue avant une nouvelle rotation
             theWheel.rotationAngle = 0;
@@ -276,6 +298,38 @@
 
             // Démarrer l'animation
             theWheel.startAnimation();
+        }
+
+        // Déterminer l'angle d'arrêt pour un résultat gagnant
+        function determineStopAngle(isWinning) {
+            if (isWinning) {
+                // Choisir aléatoirement un secteur gagnant (secteurs pairs: 0, 2, 4, 6, 8)
+                const winningSectors = [0, 2, 4, 6, 8];
+                const randomWinningSector = winningSectors[Math.floor(Math.random() * winningSectors.length)];
+
+                // Calculer un angle aléatoire dans ce secteur (36 degrés par secteur)
+                const sectorStart = randomWinningSector * 36;
+                return sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
+            } else {
+                // Choisir aléatoirement un secteur perdant (secteurs impairs: 1, 3, 5, 7, 9)
+                const losingSectors = [1, 3, 5, 7, 9];
+                const randomLosingSector = losingSectors[Math.floor(Math.random() * losingSectors.length)];
+
+                // Calculer un angle aléatoire dans ce secteur
+                const sectorStart = randomLosingSector * 36;
+                return sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
+            }
+        }
+
+        // Déterminer l'angle d'arrêt pour un résultat perdant
+        function determineLosingAngle() {
+            // Choisir aléatoirement un secteur perdant (secteurs impairs: 1, 3, 5, 7, 9)
+            const losingSectors = [1, 3, 5, 7, 9];
+            const randomLosingSector = losingSectors[Math.floor(Math.random() * losingSectors.length)];
+
+            // Calculer un angle aléatoire dans ce secteur
+            const sectorStart = randomLosingSector * 36;
+            return sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
         }
 
         // Écouter les événements Livewire

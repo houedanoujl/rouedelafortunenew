@@ -33,6 +33,10 @@
         visibility: visible !important;
         font-size: 1.1rem !important;
     }
+    
+    #accordionReglement .accordion-body {
+        padding-bottom: 4em !important;
+    }
 
     /* Assurer que le contenu est toujours visible */
     #collapseArt1, #collapseArt2, #collapseArt3, #collapseArt4,
@@ -76,7 +80,7 @@
                             <div class="accordion-body">
                                 La présent Jeu promotionnel a pour objectif de commémorer les 70 ans de la marque DINOR.<br><br>
                                 Ci-après « les Participants »<br><br>
-                                La participation à le jeu implique l’acceptation sans réserve par les participants du présent règlement dans son intégralité.<br><br>
+                                La participation au jeu implique l’acceptation sans réserve par les participants du présent règlement dans son intégralité.<br><br>
                                 Ci-après « le Règlement ».
                             </div>
                         </div>
@@ -89,7 +93,7 @@
                         </h2>
                         <div id="collapseArt3" class="accordion-collapse collapse" aria-labelledby="headingArt3" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
-                                le jeu se déroulera du 1er avril au 30 juin 2025 inclus.
+                                le jeu se déroulera du 1er mai au 31 juillet 2025 inclus.
                             </div>
                         </div>
                     </div>
@@ -106,15 +110,17 @@
                                 Le présent règlement est authentifié par Maitre Diamilatou SIDIBE AKA-ANGHUI, Notaire, dont l’Etude est située à Abidjan Cocody, Route du Lycée Technique, villa n°4, Immeuble SIKA - Danga - 06 BP 2438 Abidjan 06. Abidjan.<br><br>
                                 <b>4-2 Conditions de participation</b><br>
                                 le jeu qui se déroulera sur toute l'étendue du territoire de la République de Côte d'Ivoire est destiné aux consommateurs majeurs des produits de la marque DINOR et/ou aux utilisateurs majeurs de l'Application « Dinor App ». Ce Jeu est interdit aux mineurs de moins de 18 ans.<br><br>
-                                Lesdits Participants pourront via le  le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié à le jeu, accéder à une roue qui leur permettra de gagner des lots immédiats.<br><br>
+                                Les dits participants pourront via le  le Quick Response Code (QR Code), visible sur les étiquettes des produits de la marque DINOR et dédié au jeu, accéder à une roue qui leur permettra de gagner des lots immédiats.<br><br>
                                 La roue comporte les mentions « Gagné » et « Perdu ».<br><br>
                                 <b>En pratique, les Participants devront :</b><br>
-                                Scanner le QR Code sur les produits DINOR achetés. Ils seront redirigés sur l’application DINOR App ou invités à la télécharger pour accéder à la landing page ;<br>
-                                Remplir le formulaire avec leurs informations personnelles requises ;<br>
-                                Tourner la Roue pour tenter de gagner un lot ;<br>
-                                Retirer le lot au siège social de Sania Cie, sis à Abidjan Vridi, rue des Textiles ;<br>
-                                Tenter de rejouer une semaine après la précédente tentative.<br><br>
-                                L’organisateur se réserve le droit de procéder à toute vérification relative au respect du règlement qu’il jugera utile, notamment pour écarter tout participant ayant effectué une déclaration inexacte ou mensongère ou frauduleuse.
+                                <ul class="rules-list" style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 10px;">
+                                    <li>Scanner le QR Code sur les produits DINOR achetés. Ils seront redirigés sur l'application DINOR App ou invités à la télécharger pour accéder à la landing page ;</li>
+                                    <li>Remplir le formulaire avec leurs informations personnelles requises ;</li>
+                                    <li>Tourner la Roue pour tenter de gagner un lot ;</li>
+                                    <li>Retirer le lot au siège social de Sania Cie, sis à Abidjan Vridi, rue des Textiles ;</li>
+                                    <li>Tenter de rejouer une semaine après la précédente tentative.</li>
+                                </ul>
+                                L'organisateur se réserve le droit de procéder à toute vérification relative au respect du règlement qu'il jugera utile, notamment pour écarter tout participant ayant effectué une déclaration inexacte ou mensongère ou frauduleuse.
                             </div>
                         </div>
                     </div>
@@ -150,9 +156,9 @@
                                     <li>Micro onde</li>
                                     <li>Gazinière 4 feux four</li>
                                     <li>Lot de poêle</li>
-                                    <li>Cartons de 5L Huile Dinor</li>
-                                    <li>Sacs de riz 18KG Dinor</li>
-                                    <li>Packs de mayonnaise de 430G Dinor</li>
+                                    <li>Cartons de d'huile Dinor</li>
+                                    <li>Sacs de riz Dinor</li>
+                                    <li>Packs de mayonnaise Dinor</li>
                                     <li>Scooters électriques</li>
                                     <li>Voitures</li>
                                 </ul>
@@ -169,7 +175,7 @@
                         <div id="collapseArt7" class="accordion-collapse collapse" aria-labelledby="headingArt7" data-bs-parent="#accordionReglement">
                             <div class="accordion-body">
                                 Les promoteurs sont tenus, à l'occasion de tirage de loterie et autres jeux de requérir la présence d'un Commissaire de Justice.<br>
-                                À l’issue de la campagne promotionnelle, des procès-verbaux seront dressés par Maitre SEKA Monney Lucien, Commissaire de Justice près la Cour d’Appel d’Abidjan et le Tribunal de Yopougon, dont l’étude est sise à Abidjan Yopougon, toits rouges, fin ruelle, Tél : 07 48 47 19 29.<br>
+                                À l’issue de la campagne promotionnelle, des procès-verbaux seront dressés par Maitre SEKA Monney Lucien, Commissaire de Justice près la Cour d’Appel d’Abidjan et le Tribunal de Yopougon, dont l’étude est sise à Abidjan Yopougon, Toits rouges, fin ruelle, Tél : 07 48 47 19 29.<br>
                                 Le procès-verbal de la campagne promotionnelle comporte la liste des gagnants ainsi que la liste des lots correspondants. Cette liste est publiée dans un journal d'annonces légales sept (07) jours au plus tard après la clôture de la campagne promotionnelle.<br>
                                 Le procès-verbal de paiement, établi au plus tard vingt-cinq jours après la date de publication officielle des résultats, comporte la liste des personnes gagnantes avec leur identité complète, les lots attribués, les lots non réclamés et/ou ceux gagnés par des titres de participation.<br>
                                 Un exemplaire des procès-verbaux susvisés dûment enregistrés, est transmis à l’ARJH, dans un délai de dix jours après les opérations constatées par le Commissaire de Justice cité aux alinéas précédents.
@@ -201,7 +207,7 @@
                                 Dans le cadre uniquement de la communication des résultats de la présente loterie promotionnelle, les gagnants acceptent que leurs noms, prénoms, images et voix soient utilisés par SANIA Cie à des fins publicitaires ou promotionnelles sans contrepartie financière. Les enregistrements pouvant être diffusés en tout ou partie sur des supports tels que : la presse-magazine et/ou les réseaux sociaux.<br>
                                 Le consentement desdits gagnants est exprès et donné par écrit sur une fiche de recueil de consentement prévue en annexe.<br>
                                 Les données personnelles des participants sont collectées et traitées conformément à la règlementation en vigueur. Elles ne seront utilisées uniquement que pour les besoins du jeu et ne seront pas transmises à des tiers.<br>
-                                Conformément à la loi n°2013-450 relative à la protection des données à caractère personnel, les gagnants disposent d’un droit d’accès, de modification, de rectification et de suppression des données les concernant. S’ils souhaitent l’exercer, ils peuvent adresser leur demande à l’adresse mail :   .
+                                Conformément à la loi n°2013-450 relative à la protection des données à caractère personnel, les gagnants disposent d’un droit d’accès, de modification, de rectification et de suppression des données les concernant. S’ils souhaitent l’exercer, ils peuvent adresser leur demande à l’adresse mail : KOUAKOUJP@sifca.ci
                             </div>
                         </div>
                     </div>

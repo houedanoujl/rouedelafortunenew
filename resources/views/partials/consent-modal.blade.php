@@ -1,12 +1,12 @@
 <!-- Modal pour le consentement individuel -->
-<div class="modal fade" id="consentModal" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+<div class="modal fade" id="consentModal" tabindex="-1" aria-labelledby="consentModalLabel" aria-hidden="true" style="z-index: 1060;" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="max-height: 90vh; margin: auto;">
             <div class="modal-header">
                 <h5 class="modal-title" id="consentModalLabel">Fiche de recueil de consentement</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 15px; text-align: center; font-weight: normal;">
             <p>Dans le cadre uniquement de la communication des résultats du jeu dénommé « Promo 70 ans de la marque DINOR  », la société SANIA  est amenée à collecter des informations personnelles vous concernant à savoir vos nom, prénom(s), numéro de téléphone, adresse e-mail et image.</p>
         <p>Les destinataires de vos données sont les services concernés de la société SANIA </p>
         <p>Conformément à la loi N° 2013-450 du 19 juin 2013 portant sur la protection des données à caractère personnel, vous bénéficiez d'un droit à l'information, d'accès, de rectification, d'opposition, d'effacement, et d'oubli numérique relativement aux informations qui vous concernent.</p>

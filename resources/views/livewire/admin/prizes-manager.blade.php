@@ -24,7 +24,7 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="value">Valeur (€)</label>
+                            <label for="value">Valeur (FCFA)</label>
                             <input type="number" class="form-control" id="value" wire:model="value" min="0" step="0.01">
                             @error('value') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
@@ -111,7 +111,7 @@
                                                 <span class="badge bg-info">Service</span>
                                             @endif
                                         </td>
-                                        <td>{{ number_format($prize->value, 2, ',', ' ') }} €</td>
+                                        <td>{{ \App\Helpers\FormatHelper::fcfa($prize->value) }}</td>
                                         <td>{{ $prize->stock }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" wire:click="editPrize({{ $prize->id }})">

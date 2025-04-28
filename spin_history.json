@@ -1471,5 +1471,158 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:19:26+00:00",
+        "entry_id": 22,
+        "participant": {
+            "id": 22,
+            "name": "Tintin  les tintaux",
+            "email": "testqaz@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1154,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:20:23+00:00",
+        "entry_id": 23,
+        "participant": {
+            "id": 23,
+            "name": "bet dsp",
+            "email": "testdqdsd@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1175,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:22:02+00:00",
+        "entry_id": 24,
+        "participant": {
+            "id": 24,
+            "name": "op\u0302k pl\u0302",
+            "email": "dsfd@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1387,
+        "sector_id": "secteur-1",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:37:14+00:00",
+        "entry_id": 25,
+        "participant": {
+            "id": 25,
+            "name": "Les ignames Defo",
+            "email": "teestz@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1353,
+        "sector_id": "secteur-2",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:46:20+00:00",
+        "entry_id": 26,
+        "participant": {
+            "id": 26,
+            "name": "dqs mkqsdsq",
+            "email": "rzgrzsds@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1304,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:47:23+00:00",
+        "entry_id": 27,
+        "participant": {
+            "id": 27,
+            "name": "qsdqsdqs qsdqsdqs",
+            "email": "qsdqsdqsdqs@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1671,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:49:33+00:00",
+        "entry_id": 28,
+        "participant": {
+            "id": 28,
+            "name": "Mike  Jordan",
+            "email": "jordan@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1603,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:53:38+00:00",
+        "entry_id": 29,
+        "participant": {
+            "id": 29,
+            "name": "qsqsdqsd qsdqsdqsdqsdq",
+            "email": "srgqssdg@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 2099,
+        "sector_id": "secteur-1",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T10:54:50+00:00",
+        "entry_id": 30,
+        "participant": {
+            "id": 30,
+            "name": "dsfdsfds dsfdsfs",
+            "email": "qfqfqsfqfqfqfqfqfq@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1098,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
     }
 ]
