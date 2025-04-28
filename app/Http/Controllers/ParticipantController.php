@@ -465,8 +465,8 @@ class ParticipantController extends Controller
             
             // Si c'est un compte de test, garantir la victoire
             if (session('is_test_account')) {
-                \Log::info('Compte de test détecté, garantie de victoire activée');
-                $chanceToWin = 1.0; // 100% de chance de gagner pour les comptes test
+                \Log::info('Compte de test détecté, chances de gain de 20% configurées');
+                $chanceToWin = 0.2; // 20% de chance de gagner pour les comptes test
             }
 
             // Créer 20 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance

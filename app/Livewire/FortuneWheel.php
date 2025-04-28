@@ -79,14 +79,6 @@ class FortuneWheel extends Component
                 ];
             })->toArray()
         ];
-        
-        // Spécial pour utilisateurs test - toujours afficher la roue et forcer stock disponible
-        if (session('is_test_account')) {
-            Log::info('Compte test détecté - affichage forcé de la roue', [
-                'email' => $this->entry->participant->email ?? 'inconnu'
-            ]);
-            $this->hasStock = true;
-        }
     }
     
     /**
@@ -269,18 +261,18 @@ class FortuneWheel extends Component
         // LOGIQUE WINWHEEL STANDARD
         // Déterminer si l'utilisateur gagne en fonction du stock et des probabilités
         
-        // Si c'est un compte de test, 100% de chance de gagner
+        // Si c'est un compte de test, 5% de chance de gagner
         if ($isTestAccount) {
-            $isWinning = true;
-            Log::info('Compte test: 100% de chance de gagner', [
+            $isWinning = rand(1, 20) === 1; 
+            Log::info('Compte test: 5% de chance de gagner', [
                 'email' => $this->entry->participant->email
             ]);
         }
         // Si des lots sont disponibles, appliquer la probabilité normale
         else if ($validDistributions->count() > 0) {
-            // 20% de chance de gagner (1 chance sur 5)
-            $isWinning = rand(1, 5) === 1; 
-            Log::info('Stock disponible: Probabilité standard de gain (20%)', [
+            // 5% de chance de gagner (1 chance sur 20)
+            $isWinning = rand(1, 20) === 1; 
+            Log::info('Stock disponible: Probabilité standard de gain (5%)', [
                 'isWinning' => $isWinning ? 'OUI' : 'NON'
             ]);
         }
@@ -318,11 +310,6 @@ class FortuneWheel extends Component
         // Enregistrer le résultat dans l'historique JSON
         $this->saveSpinHistory($finalAngle, $isResultWinning, $sectorId, $this->entry);
         
-        // Si gagné, créer un QR code et envoyer une notification WhatsApp
-        if ($isResultWinning) {
-            $this->handleWinning();
-        }
-
         // Déclencher l'animation de la roue
         $this->dispatch('startSpinWithSound', [
             'angle' => $finalAngle,
@@ -331,10 +318,12 @@ class FortuneWheel extends Component
             'sectorIndex' => $sectorIndex
         ]);
         
-        // Si gagné, déclencher les confettis
-        if ($isResultWinning) {
-            $this->dispatch('victory');
-        }
+        // Stocke le résultat pour traitement après la fin de l'animation
+        session()->put('wheel_result', [
+            'entry_id' => $this->entry->id,
+            'isWinning' => $isResultWinning,
+            'processed' => false
+        ]);
 
         // Rediriger après la fin de l'animation
         // Augmentation du délai à 20 secondes pour tenir compte de l'animation plus longue (12-16 secondes)
@@ -422,26 +411,15 @@ class FortuneWheel extends Component
             'code' => $qrCode,
         ]);
         
-        // Décrémenter le stock dans la distribution de prix active
+        // NOTE: La décrémentation des stocks a été déplacée vers SpinController
+        // pour éviter la double décrémentation
         $contest = $this->entry->contest;
         if ($contest) {
-            // Chercher une distribution de prix active pour ce concours
-            $prizeDistribution = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
-                ->where('remaining', '>', 0)
-                ->first();
-            
-            // Décrémenter le stock restant
-            if ($prizeDistribution) {
-                $prizeDistribution->decrementRemaining();
-                
-                // Journaliser la mise à jour du stock
-                Log::info('Stock décrémenté pour la distribution', [
-                    'prize_distribution_id' => $prizeDistribution->id,
-                    'remaining' => $prizeDistribution->remaining,
-                ]);
-            }
+            // Journaliser l'information que nous n'effectuons plus la décrémentation ici
+            Log::info('Décrémentation des stocks désactivée dans handleWinning() pour éviter les doubles décrements', [
+                'entry_id' => $this->entry->id,
+                'contest_id' => $contest->id
+            ]);
         }
         
         // Récupérer le participant pour obtenir son numéro de téléphone

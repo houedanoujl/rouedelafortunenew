@@ -307,10 +307,10 @@ document.addEventListener('DOMContentLoaded', function() {
         qrCodeLink.style.cursor = 'pointer';
     }
 
-    // Only launch confetti if we came from a win
-    if({{ $showWinResult ? 'true' : 'false' }}) {
+    @if(session('show_confetti'))
         setTimeout(launchConfetti, 300);
-    }
+        {{ session()->forget('show_confetti') }}
+    @endif
     
     function launchConfetti() {
         const count = 300; // Plus de confettis

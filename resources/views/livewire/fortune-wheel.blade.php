@@ -10,43 +10,47 @@
         <a href="{{ route('home') }}" class="btn btn-primary btn-lg">Retour à l'accueil</a>
     </div>
 
-    <div id="wheelContent" class="container-fluid my-4">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-10 text-center">
-                <!--<div class="mt-3">
-                    <h2 class="fw-bold">Bienvenue {{ $participantName }}</h2>
-                    <p class="lead">Tournez la roue pour tenter de gagner un prix!</p>
-                </div>-->
+    @if(!$hasStock)
+        @include('no-stock')
+    @else
+        <div id="wheelContent" class="container-fluid my-4">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-10 text-center">
+                    <!--<div class="mt-3">
+                        <h2 class="fw-bold">Bienvenue {{ $participantName }}</h2>
+                        <p class="lead">Tournez la roue pour tenter de gagner un prix!</p>
+                    </div>-->
 
-                <div class="d-flex justify-content-center">
-                    <div class="position-relative wheel-container fortune-wheel-container">
+                    <div class="d-flex justify-content-center">
+                        <div class="position-relative wheel-container fortune-wheel-container">
 
-                        <div class="wheel-and-pointer position-relative">
-                            <!-- Indicateur de la roue -->
-                            <div id="pointer" class="position-absolute">
-                                <svg width="40" height="40" viewBox="0 0 60 60">
-                                    <polygon points="30,0 5,55 55,55" fill="#333" />
-                                </svg>
+                            <div class="wheel-and-pointer position-relative">
+                                <!-- Indicateur de la roue -->
+                                <div id="pointer" class="position-absolute">
+                                    <svg width="40" height="40" viewBox="0 0 60 60">
+                                        <polygon points="30,0 5,55 55,55" fill="#333" />
+                                    </svg>
+                                </div>
+
+                                <!-- La roue -->
+                                <canvas id="wheel" width="320" height="320" class="responsive-wheel"></canvas>
                             </div>
 
-                            <!-- La roue -->
-                            <canvas id="wheel" width="320" height="320" class="responsive-wheel"></canvas>
+                            <!-- Bouton pour tourner -->
+                            <button id="spinBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20;" @if($spinning) disabled @endif>
+                                @if($spinning)
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    En cours...
+                                @else
+                                    Tourner la roue
+                                @endif
+                            </button>
                         </div>
-
-                        <!-- Bouton pour tourner -->
-                        <button id="spinBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20;" @if($spinning) disabled @endif>
-                            @if($spinning)
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                En cours...
-                            @else
-                                Tourner la roue
-                            @endif
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 
     <!-- Sons -->
     <audio id="wheelSound" src="{{ asset('sounds/wheel-spinning.mp3') }}" preload="auto"></audio>
