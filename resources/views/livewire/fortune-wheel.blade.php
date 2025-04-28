@@ -3,7 +3,14 @@
         $participantName = $entry->participant ? $entry->participant->first_name . ' ' . $entry->participant->last_name : 'Participant inconnu';
     @endphp
 
-    <div class="container-fluid my-4">
+    <!-- Message pour stock épuisé (caché par défaut) -->
+    <div id="noStockMessage" class="alert alert-warning text-center p-4 my-5" style="display: none;">
+        <h3 class="mb-3"><i class="fas fa-exclamation-triangle"></i> Plus de lots disponibles</h3>
+        <p class="mb-4">Tous les lots de ce concours ont été gagnés. Revenez la semaine prochaine pour de nouvelles chances !</p>
+        <a href="{{ route('home') }}" class="btn btn-primary btn-lg">Retour à l'accueil</a>
+    </div>
+
+    <div id="wheelContent" class="container-fluid my-4">
         <div class="row justify-content-center">
             <div class="col-12 col-md-10 text-center">
                 <!--<div class="mt-3">
@@ -12,7 +19,7 @@
                 </div>-->
 
                 <div class="d-flex justify-content-center">
-                    <div class="position-relative wheel-container">
+                    <div class="position-relative wheel-container fortune-wheel-container">
 
                         <div class="wheel-and-pointer position-relative">
                             <!-- Indicateur de la roue -->
@@ -128,16 +135,19 @@
         }
 
         // Vérification système des résultats
-        function verifyWinningResult(isWinning) {
-            // Cette fonction aide à déterminer le bon segment basé sur l'état des stocks
-            // Plutôt que de forcer une nouvelle rotation (ce qui cause des erreurs),
-            // on va simplement retourner le type de segment à utiliser
+        function checkExpectedOutcome(isWinning, payload) {
             
-            console.log('Vérification du résultat attendu:', isWinning ? 'GAGNÉ' : 'PERDU');
-            
-            // Si le backend indique perdant à cause du stock épuisé
+            // Logique cohérente avec le backend
             if (!isWinning) {
-                console.log('Le stock est épuisé ou le hasard a déterminé une perte');
+                // Si il y a des prix valides, c'est le hasard qui a déterminé une perte
+                if (payload && payload.valid_count > 0) {
+                    
+                } else {
+                    // Sinon c'est l'absence de stock qui force la perte
+                    
+                }
+            } else {
+                
             }
             
             return isWinning;
@@ -151,27 +161,20 @@
             const winningSegment = theWheel.getIndicatedSegment();
 
             // Vérifier si c'est un segment gagnant (fond jaune)
-            const isWinningSegment = winningSegment.fillStyle === '#F7DB15';
+            let isWinningSegment = winningSegment.fillStyle === '#F7DB15';
             
             // Double vérification des données du serveur
             const serverHasWon = {{ $entry->has_won ? 'true' : 'false' }};
             
-            console.log('Segment final:', winningSegment.text);
-            console.log('Est gagnant?', isWinningSegment ? 'OUI' : 'NON');
-            console.log('État en BDD:', serverHasWon ? 'Gagné' : 'Perdu');
-            
             // S'assurer que le résultat visuel correspond à l'état en base de données
             // Si le stock est à 0, personne ne devrait gagner, même si la roue indique un segment gagnant
             if (isWinningSegment && !serverHasWon) {
-                console.log('ALERTE: Incohérence entre le résultat visuel et la BDD. Stock probablement à 0.');
+                
                 // On simule un segment perdant pour l'animation
                 isWinningSegment = false;
             }
 
             // Afficher les résultats
-            console.log("Segment final:", winningSegment);
-            console.log("Texte du segment:", winningSegment.text);
-
             // Déterminer si c'est un segment gagnant basé sur le texte réel du segment
             const isWinningSegmentFinal = winningSegment.text === 'GAGNÉ';
 
@@ -191,15 +194,13 @@
             setTimeout(() => {
                 // Jouer le son correspondant
                 if (isWinningSegmentFinal) {
-                    console.log("Jouer le son de victoire");
+                    
                     if (winSound) {
                         winSound.currentTime = 0;
                         winSound.play();
                     }
-                    // Afficher les confettis
-                    launchConfetti();
                 } else {
-                    console.log("Jouer le son de défaite");
+                    
                     if (loseSound) {
                         loseSound.currentTime = 0;
                         loseSound.play();
@@ -208,10 +209,7 @@
             }, 1000);
 
             // Envoyer le résultat réel au serveur via une requête AJAX sécurisée
-            console.log('Envoi du résultat au serveur via AJAX...');
-            console.log('Segment obtenu:', winningSegment.text);
-            console.log('Résultat à enregistrer:', isWinningSegmentFinal ? 'win' : 'lose');
-
+            
             fetch('{{ route('spin.record-result') }}', {
                 method: 'POST',
                 headers: {
@@ -226,19 +224,15 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Résultat enregistré avec succès:', data);
-                console.log('ID de session PHP:', data.session_id);
-                console.log('La session est stockée côté serveur et sécurisée par un cookie de session');
-
+                
                 // Redirection vers la page de résultat après un court délai
                 setTimeout(() => {
-                    console.log('Redirection vers la page de résultat...');
+                    
                     window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
                 }, 2000);
             })
             .catch(error => {
-                console.error('Erreur lors de l\'enregistrement du résultat:', error);
-
+                
                 // En cas d'erreur, rediriger quand même
                 setTimeout(() => {
                     window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
@@ -246,6 +240,40 @@
             });
         }
 
+        // Fonction pour déterminer les angles de segments gagnants et perdants
+        function getWinningSegments() {
+            // Les segments gagnants sont les segments pairs (0, 2, 4, 6, 8)
+            const winningSegments = [];
+            for (let i = 0; i < 10; i += 2) {
+                const startAngle = i * 36;
+                const endAngle = startAngle + 36;
+                const midAngle = startAngle + 18;
+                winningSegments.push({ start: startAngle, end: endAngle, mid: midAngle });
+            }
+            return winningSegments;
+        }
+        
+        function getLosingSegments() {
+            // Les segments perdants sont les segments impairs (1, 3, 5, 7, 9)
+            const losingSegments = [];
+            for (let i = 1; i < 10; i += 2) {
+                const startAngle = i * 36;
+                const endAngle = startAngle + 36;
+                const midAngle = startAngle + 18;
+                losingSegments.push({ start: startAngle, end: endAngle, mid: midAngle });
+            }
+            return losingSegments;
+        }
+        
+        // Fonction pour choisir un angle basé sur le résultat souhaité
+        function chooseTargetAngle(shouldWin) {
+            const segments = shouldWin ? getWinningSegments() : getLosingSegments();
+            const randomIndex = Math.floor(Math.random() * segments.length);
+            // Utiliser l'angle central du segment avec une légère variation
+            const variation = Math.random() * 10 - 5; // Variation de -5 à +5 degrés
+            return segments[randomIndex].mid + variation;
+        }
+        
         // Faire tourner la roue avec un résultat aléatoire mais respectant le résultat gagné/perdu
         function spinWheel(data) {
             if (isSpinning) return;
@@ -259,21 +287,19 @@
             }
 
             // Extraire les informations envoyées par le backend
-            console.log('Données reçues du serveur:', data);
+            
             const isWinning = data.isWinning === 1;
 
             // Vérification du résultat
-            if (!verifyWinningResult(isWinning)) {
-                console.log('Résultat non valide, ajustement de la rotation...');
+            if (!checkExpectedOutcome(isWinning, data)) {
+                
                 // Ne pas appeler spinWheel récursivement - uniquement s'assurer que nous allons sur un secteur perdant
-                stopAngle = determineLosingAngle();
-                console.log('Angle perdu choisi:', stopAngle);
+                stopAngle = chooseTargetAngle(false);
+                
             } else {
-                // Générer un angle d'arrêt aléatoire qui respecte le résultat gagné/perdu
-                stopAngle = determineStopAngle(isWinning);
+                // Choisir un angle cible basé sur le résultat du serveur
+                stopAngle = chooseTargetAngle(true);
             }
-
-            console.log('Angle d\'arrêt final:', stopAngle);
 
             // Réinitialiser la roue avant une nouvelle rotation
             theWheel.rotationAngle = 0;
@@ -300,90 +326,114 @@
             theWheel.startAnimation();
         }
 
-        // Déterminer l'angle d'arrêt pour un résultat gagnant
-        function determineStopAngle(isWinning) {
-            if (isWinning) {
-                // Choisir aléatoirement un secteur gagnant (secteurs pairs: 0, 2, 4, 6, 8)
-                const winningSectors = [0, 2, 4, 6, 8];
-                const randomWinningSector = winningSectors[Math.floor(Math.random() * winningSectors.length)];
-
-                // Calculer un angle aléatoire dans ce secteur (36 degrés par secteur)
-                const sectorStart = randomWinningSector * 36;
-                return sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
-            } else {
-                // Choisir aléatoirement un secteur perdant (secteurs impairs: 1, 3, 5, 7, 9)
-                const losingSectors = [1, 3, 5, 7, 9];
-                const randomLosingSector = losingSectors[Math.floor(Math.random() * losingSectors.length)];
-
-                // Calculer un angle aléatoire dans ce secteur
-                const sectorStart = randomLosingSector * 36;
-                return sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
+        // Fonction pour démarrer le tour de roue
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            // Obtenir le statut de victoire du serveur
+            
+            const serverShouldWin = {{ $entry->has_won ? 'true' : 'false' }};
+            
+            // Choisir un angle cible basé sur le résultat du serveur
+            const targetAngle = chooseTargetAngle(serverShouldWin);
+            
+            // Calculer les tours complets + l'angle cible
+            const stopAt = 360 * 5 + targetAngle;
+            
+            // Démarrer la roue avec les paramètres calculés
+            theWheel.animation.stopAngle = stopAt;
+            theWheel.startAnimation();
+            
+            // Audio feedback
+            if (finalSound) {
+                finalSound.play();
             }
-        }
-
-        // Déterminer l'angle d'arrêt pour un résultat perdant
-        function determineLosingAngle() {
-            // Choisir aléatoirement un secteur perdant (secteurs impairs: 1, 3, 5, 7, 9)
-            const losingSectors = [1, 3, 5, 7, 9];
-            const randomLosingSector = losingSectors[Math.floor(Math.random() * losingSectors.length)];
-
-            // Calculer un angle aléatoire dans ce secteur
-            const sectorStart = randomLosingSector * 36;
-            return sectorStart + Math.random() * 35; // Angle aléatoire dans le secteur
         }
 
         // Écouter les événements Livewire
         document.addEventListener('livewire:initialized', () => {
             @this.on('startSpinWithSound', (data) => {
-                console.log('Données reçues du serveur:', data);
-
+                
                 // Vérifier que les données sont valides
                 if (data) {
                     spinWheel(data);
                 } else {
-                    console.error("Erreur: Données invalides reçues du serveur:", data);
+                    
                 }
             });
 
             @this.on('victory', () => {
                 setTimeout(launchConfetti, 1000);
             });
+
+            // Afficher les informations de stock à l'initialisation
+            @this.on('stock-status-init', (data) => {
+                
+            });
+            
+            // Afficher les erreurs de vérification de stock
+            @this.on('stock-status-error', (data) => {
+                
+            });
+
+            // Écouter l'événement de vérification de stock (Livewire v3)
+            @this.on('stock-check', (data) => {
+                // Correction : si data est un tableau, on prend le premier élément
+                const payload = Array.isArray(data) ? data[0] : data;
+                // Vérifier que les distributions existent avant d'accéder à leurs propriétés
+                const distributions = payload.distributions || [];
+                const validCount = payload.valid_count || 0;
+                
+                console.log('📊 ÉTAT DES STOCKS:', {
+                    validCount: validCount,
+                    hasPrizesInStock: validCount > 0 ? 'OUI' : 'NON',
+                    distributions: distributions
+                });
+            });
+            
+            // Écouter l'événement de vérification de stock (Livewire v3)
+            @this.on('stock-check', (data) => {
+                
+            });
+        });
+
+        // Ajout d'un listener JS pour voir ce que le backend envoie au frontend
+        window.addEventListener('DOMContentLoaded', function() {
+            if (window.Livewire) {
+                // Pour Livewire v3
+                
+            }
+            // Pour compatibilité custom event (si utilisé)
+            
         });
 
         // Confettis pour les gagnants
         function launchConfetti() {
-            if (typeof confetti !== 'function') {
-                console.warn("La fonction confetti n'est pas disponible");
-                return;
+            if (typeof confetti !== 'function') return;
+            // Plusieurs explosions pour un effet "victoire"
+            const duration = 1.5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 3000 };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(200 * particleRatio)
+                }));
             }
-
-            try {
-                var count = 200;
-                var defaults = {
-                    origin: { y: 0.7 }
-                };
-
-                function fire(particleRatio, opts) {
-                    confetti(Object.assign({}, defaults, opts, {
-                        particleCount: Math.floor(count * particleRatio)
-                    }));
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+            // Relancer des confettis pendant la durée
+            const interval = setInterval(function() {
+                if (Date.now() > animationEnd) {
+                    clearInterval(interval);
+                } else {
+                    fire(0.05, { spread: 360 });
                 }
-
-                fire(0.25, {
-                    spread: 26,
-                    startVelocity: 55,
-                });
-                fire(0.2, {
-                    spread: 60,
-                });
-                fire(0.35, {
-                    spread: 100,
-                    decay: 0.91,
-                    scalar: 0.8,
-                });
-            } catch (e) {
-                console.error("Erreur lors du lancement des confettis:", e);
-            }
+            }, 250);
         }
 
         // Clic sur le bouton
@@ -398,7 +448,7 @@
                 try {
                     @this.spin();
                 } catch (e) {
-                    console.error("Erreur lors de l'appel à spin():", e);
+                    
                     this.disabled = false;
                     this.innerText = "Tourner la roue";
                 }

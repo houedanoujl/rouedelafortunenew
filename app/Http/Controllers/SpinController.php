@@ -20,6 +20,40 @@ class SpinController extends Controller
             abort(404);
         }
 
+        // Vérifier si l'entrée a déjà été jouée
+        if ($entry->has_played) {
+            return redirect()->route('spin.result', ['entry' => $entry->id]);
+        }
+        
+        // Vérifier si des lots sont disponibles
+        $contest = $entry->contest;
+        $hasStock = false;
+        
+        if ($contest) {
+            // Chercher les distributions avec stock disponible
+            $distributions = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
+                ->where('remaining', '>', 0)
+                ->with('prize')
+                ->get();
+                
+            $validDistributions = $distributions->filter(function($dist) {
+                return $dist->prize !== null;
+            });
+            
+            $hasStock = $validDistributions->count() > 0;
+            
+            // Mode test - forcer l'affichage de la roue
+            if (session('is_test_account')) {
+                \Log::info('Compte test détecté dans SpinController - affichage forcé de la roue');
+                $hasStock = true;
+            }
+        }
+        
+        // Si aucun stock, rediriger vers page "stock épuisé"
+        if (!$hasStock) {
+            return view('no-stock', ['entry' => $entry, 'contest' => $contest]);
+        }
+
         // Vérifier si c'est un compte de test qui peut rejouer sans restriction
         $isTestAccount = false;
         if ($entry->participant && $entry->participant->email) {
@@ -33,16 +67,18 @@ class SpinController extends Controller
             }
         }
         
-        // Si l'entrée a déjà été jouée et que ce n'est PAS un compte de test, rediriger vers la page de résultat
-        if ($entry->has_played && !$isTestAccount) {
-            return redirect()->route('spin.result', ['entry' => $entry->id]);
-        }
-
         return view('wheel', compact('entry'));
     }
 
     public function result(Entry $entry, Request $request)
     {
+        // Début de la session de la page de résultat
+        Log::info('=== DÉBUT DE LA SESSION - PAGE RÉSULTAT ===', [
+            'entry_id' => $entry->id,
+            'timestamp' => now()->toDateTimeString(),
+            'has_won' => $entry->has_won ? 'Oui' : 'Non'
+        ]);
+        
         if (!$entry->participant) {
             abort(404);
         }
@@ -74,290 +110,153 @@ class SpinController extends Controller
             'timestamp' => now()->toDateTimeString()
         ]);
         
-        // CORRECTION: Toujours vérifier et décrémenter les stocks si l'entrée est gagnante
-        if ($entry->has_won) {
-            // Vérifier si la page est bien celle d'une entrée gagnante avec QR Code
-            if (!$entry->prize_id) {
-                // CORRECTION: Chercher le prix dans les distributions du concours actif
-                $contest_id = $entry->contest_id;
-                
-                // Récupérer une distribution aléatoire avec stock disponible
-                $distribution = \App\Models\PrizeDistribution::where('contest_id', $contest_id)
-                    ->where('remaining', '>', 0)
-                    ->with('prize') // Charger la relation prize
-                    ->inRandomOrder()
-                    ->first();
-                
-                // Si aucune distribution n'est disponible en stock mais que c'est un compte test
-                if (!$distribution && $isTestAccount) {
-                    // Trouver n'importe quelle distribution même sans stock
-                    $distribution = \App\Models\PrizeDistribution::where('contest_id', $contest_id)
+        // Pour éviter les doubles envois de messages WhatsApp, vérifier si cette entrée a déjà été visitée
+        $resultVisitKey = 'result_visited_'.$entry->id;
+        $alreadyVisited = $request->session()->has($resultVisitKey);
+        
+        if (!$alreadyVisited) {
+            // Marquer cette entrée comme visitée
+            $request->session()->put($resultVisitKey, now()->toDateTimeString());
+            Log::info('Première visite de la page de résultat', ['entry_id' => $entry->id]);
+        } else {
+            Log::info('Page de résultat déjà visitée', [
+                'entry_id' => $entry->id, 
+                'first_visit' => $request->session()->get($resultVisitKey),
+                'current_visit' => now()->toDateTimeString()
+            ]);
+            
+            // Envoyer une notification WhatsApp lors de chaque actualisation de la page de résultat
+            if ($entry->has_won && $entry->participant && $entry->participant->phone) {
+                try {
+                    $participant = $entry->participant;
+                    $greenWhatsApp = new GreenWhatsAppService();
+                    
+                    // Récupérer ou créer le QR code
+                    $qrCodeObj = null;
+                    if ($entry->qr_code) {
+                        // Rechercher le QR code dans la base de données
+                        $qrCodeObj = \App\Models\QrCode::where('code', $entry->qr_code)
+                            ->orWhere('entry_id', $entry->id)
+                            ->first();
+                    }
+                    
+                    if (!$qrCodeObj) {
+                        $code = 'DNR70-' . strtoupper(substr(md5($entry->id . time()), 0, 8));
+                        $qrCodeObj = \App\Models\QrCode::create([
+                            'entry_id' => $entry->id,
+                            'code' => $code,
+                        ]);
+                        
+                        // Mettre à jour l'entrée avec le QR code
+                        $entry->qr_code = $code;
+                        $entry->save();
+                    }
+                    
+                    // Générer l'image du QR code si nécessaire
+                    $qrCodePath = storage_path('app/public/qrcodes/qrcode-' . $qrCodeObj->code . '.png');
+                    if (!file_exists($qrCodePath)) {
+                        $qrCodeImage = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(300)
+                            ->format('png')
+                            ->generate($qrCodeObj->code);
+                            
+                        if (!file_exists(dirname($qrCodePath))) {
+                            mkdir(dirname($qrCodePath), 0755, true);
+                        }
+                        file_put_contents($qrCodePath, $qrCodeImage);
+                    }
+                    
+                    // Message personnalisé pour l'actualisation de la page de résultat
+                    $message = "Félicitations {$participant->first_name}! Vous avez gagné " . 
+                              ($entry->prize ? $entry->prize->name : "un lot") . 
+                              ". Voici votre QR code pour récupérer votre gain [Page actualisée à " . 
+                              now()->format('H:i') . "]. Conservez-le précieusement!\n\nNuméro du QR code : ".$qrCodeObj->code;
+                    
+                    // Envoyer via Green API
+                    $result = $greenWhatsApp->sendQrCodeToWinner($participant->phone, $qrCodePath, $message);
+                    
+                    Log::info('Notification WhatsApp envoyée suite à actualisation de la page de résultat', [
+                        'entry_id' => $entry->id,
+                        'phone' => $participant->phone,
+                        'qr_code' => $qrCodeObj->code
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur lors de l\'envoi WhatsApp après actualisation', [
+                        'error' => $e->getMessage(),
+                        'entry_id' => $entry->id
+                    ]);
+                }
+            }
+        }
+        
+        // =====================================================================
+        // IMPORTANT : NE PAS DÉCRÉMENTER LE STOCK ICI
+        // Le stock est déjà décrémenté dans le composant FortuneWheel.php 
+        // lors de l'appel à la méthode handleWinning() pendant le spin
+        // =====================================================================
+        
+        // Récupérer le prix si l'entrée est gagnante
+        $prize = null;
+        $qrCode = null;
+        
+        try {
+            // Récupérer les données du participant
+            $participant = $entry->participant;
+            
+            // Si l'entrée est gagnante
+            if ($entry->has_won) {
+                // S'assurer que prize_id est défini
+                if ($entry->prize_id) {
+                    $prize = $entry->prize;
+                } else {
+                    // Si prize_id manquant mais entrée marquée comme gagnante, attribuer un prix
+                    Log::warning('Entrée marquée comme gagnante sans prix attribué - Recherche d\'un prix', [
+                        'entry_id' => $entry->id
+                    ]);
+                    
+                    // Chercher une distribution avec un prix
+                    $distribution = \App\Models\PrizeDistribution::where('contest_id', $entry->contest_id)
                         ->with('prize')
                         ->first();
+                        
+                    if ($distribution && $distribution->prize) {
+                        $prize = $distribution->prize;
+                        
+                        // Assigner le prix à l'entrée (SANS décrémenter)
+                        $entry->prize_id = $prize->id;
+                        $entry->distribution_id = $distribution->id;
+                        $entry->save();
+                        
+                        Log::info('Prix attribué à une entrée gagnante sans prix', [
+                            'entry_id' => $entry->id,
+                            'prize_id' => $prize->id,
+                            'prize_name' => $prize->name
+                        ]);
+                    }
                 }
                 
-                if ($distribution && $distribution->prize) {
-                    $prize = $distribution->prize;
+                // Récupérer le code QR s'il existe
+                if ($entry->qr_code) {
+                    $qrCode = $entry->qr_code;
+                } else {
+                    // Créer un QR code si manquant
+                    $code = 'DNR70-' . strtoupper(substr(md5($entry->id . time()), 0, 8));
+                    $qrCode = \App\Models\QrCode::create([
+                        'entry_id' => $entry->id,
+                        'code' => $code,
+                    ]);
                     
-                    // Enregistrer le prix dans l'entrée
-                    $entry->prize_id = $prize->id;
-                    $entry->distribution_id = $distribution->id; // Ajouter la référence à la distribution
+                    // Mettre à jour l'entrée avec le QR code
+                    $entry->qr_code = $code;
                     $entry->save();
                     
-                    // Décrémenter à la fois le stock du prix et celui de la distribution
-                    Log::info('Décrémentation du stock pour une nouvelle entrée gagnante', [
+                    Log::info('QR code créé pour une entrée gagnante', [
                         'entry_id' => $entry->id,
-                        'prize_id' => $prize->id,
-                        'prize_name' => $prize->name,
-                        'distribution_id' => $distribution->id,
-                        'stock_before' => $prize->stock,
-                        'remaining_before' => $distribution->remaining,
-                        'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
-                    ]);
-                    
-                    // Vérifier si la table existe avant de l'utiliser
-                    if (Schema::hasTable('stock_decremented_logs')) {
-                        // Vérifier si déjà décrémenté
-                        $stockDecremented = \DB::table('stock_decremented_logs')
-                            ->where('entry_id', $entry->id)
-                            ->exists();
-                    } else {
-                        // Fallback si la table n'existe pas encore
-                        $stockDecremented = false;
-                        Log::warning('Table stock_decremented_logs n\'existe pas encore, migration requise');
-                    }
-                    
-                    // Ne décrémenter que si ce n'est pas déjà fait
-                    if (!$stockDecremented) {
-                        $prize->stock--;
-                        $prize->save();
-                        
-                        $distribution->remaining--;
-                        $distribution->save();
-                        
-                        Log::info('Stock décrémenté avec succès', [
-                            'prize_id' => $prize->id,
-                            'prize_name' => $prize->name,
-                            'stock_after' => $prize->stock,
-                            'distribution_id' => $distribution->id,
-                            'remaining_after' => $distribution->remaining
-                        ]);
-                        
-                        // Enregistrer dans la base de données que le stock a été décrémenté
-                        if (Schema::hasTable('stock_decremented_logs')) {
-                            \DB::table('stock_decremented_logs')->insert([
-                                'entry_id' => $entry->id,
-                                'prize_id' => $prize->id,
-                                'decremented_at' => now(),
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
-                        }
-                    }
-                }
-            } 
-            // Si un prix a déjà été attribué mais que le stock n'a pas été décrémenté
-            else {
-                // Vérifier si le prix existe
-                $prize = Prize::find($entry->prize_id);
-                
-                if ($prize) {
-                    // Vérifie si la session indique que le stock a déjà été décrémenté
-                    if ($request->session()->get('decrement_stock_' . $entry->id, false)) {
-                        Log::info('Pas de décrémentation du stock (déjà fait)', [
-                            'entry_id' => $entry->id,
-                            'prize_id' => $prize->id,
-                            'prize_name' => $prize->name,
-                            'current_stock' => $prize->stock,
-                            'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
-                        ]);
-                    } else {
-                        // Vérification supplémentaire dans la base de données
-                        $stockDecremented = \DB::table('stock_decremented_logs')
-                            ->where('entry_id', $entry->id)
-                            ->exists();
-                            
-                        if ($stockDecremented) {
-                            Log::info('Pas de décrémentation du stock (déjà fait selon la base de données)', [
-                                'entry_id' => $entry->id,
-                                'prize_id' => $prize->id,
-                                'prize_name' => $prize->name
-                            ]);
-                            
-                            // Mettre à jour la session également
-                            $request->session()->put('decrement_stock_' . $entry->id, true);
-                        } else {
-                            // Stock pas encore décrémenté pour cette entrée
-                            Log::info('Décrémentation automatique du stock pour une entrée existante', [
-                                'entry_id' => $entry->id,
-                                'prize_id' => $prize->id,
-                                'prize_name' => $prize->name,
-                                'stock_before' => $prize->stock,
-                                'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
-                            ]);
-                            
-                            $prize->stock--;
-                            $prize->save();
-                            
-                            // Marquer dans la session que le stock a été décrémenté pour cette entrée
-                            $request->session()->put('decrement_stock_' . $entry->id, true);
-                            
-                            Log::info('Stock du prix décrémenté avec succès (première visite après attribution)', [
-                                'prize_id' => $prize->id,
-                                'prize_name' => $prize->name,
-                                'stock_after' => $prize->stock
-                            ]);
-                            
-                            // AJOUT: Chercher et décrémenter aussi le stock dans la distribution correspondante
-                            $distributions = \App\Models\PrizeDistribution::where('prize_id', $prize->id)
-                                ->where('contest_id', $entry->contest_id)
-                                ->where('remaining', '>', 0)
-                                ->get();
-                                
-                            if ($distributions->isNotEmpty()) {
-                                // Prendre la première distribution avec du stock
-                                $distribution = $distributions->first();
-                                $oldRemaining = $distribution->remaining;
-                                
-                                if ($distribution->decrementRemaining()) {
-                                    Log::info('Stock de distribution décrémenté avec succès (première visite après attribution)', [
-                                        'distribution_id' => $distribution->id,
-                                        'prize_id' => $prize->id, 
-                                        'remaining_before' => $oldRemaining,
-                                        'remaining_after' => $distribution->remaining
-                                    ]);
-                                }
-                            } else {
-                                Log::warning('Aucune distribution avec stock disponible pour ce prix (première visite après attribution)', [
-                                    'prize_id' => $prize->id,
-                                    'contest_id' => $entry->contest_id
-                                ]);
-                            }
-                            
-                            // Enregistrer dans la base de données que le stock a été décrémenté
-                            \DB::table('stock_decremented_logs')->insert([
-                                'entry_id' => $entry->id,
-                                'prize_id' => $prize->id,
-                                'decremented_at' => now(),
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
-                        }
-                    }
-                } else {
-                    Log::warning('Prix non trouvé pour l\'entrée gagnante', [
-                        'entry_id' => $entry->id,
-                        'prize_id' => $entry->prize_id
+                        'qr_code' => $code
                     ]);
                 }
-            }
-        } else {
-            Log::info('Entrée non gagnante, pas de décrémentation de stock', [
-                'entry_id' => $entry->id,
-                'has_won' => 'Non'
-            ]);
-        }
-
-        // Récupérer ou créer le QR code
-        $qrCode = $entry->qrCode;
-        
-        // Initialiser la variable $prize pour éviter l'erreur
-        $prize = $entry->prize;
-        
-        // ENVOI WHATSAPP SI GAGNANT ET NUMÉRO DISPONIBLE
-        $whatsappMsg = null;
-        try {
-            // Vérifier si participant existe avec un numéro de téléphone valide
-            if ($entry->participant && $entry->participant->phone) {
-                $formattedPhone = $this->formatPhoneDisplay($entry->participant->phone);
-                
-                // Envoyer des messages WhatsApp UNIQUEMENT aux gagnants
-                // Même pour les comptes test, on respecte la règle d'envoyer uniquement en cas de victoire
-                if ($entry->has_won) {
-                    $qrCodeDir = storage_path('app/public/qrcodes');
-                    // Créer le répertoire s'il n'existe pas
-                    if (!file_exists($qrCodeDir)) {
-                        mkdir($qrCodeDir, 0755, true);
-                    }
-                    
-                    // S'assurer que le QR code existe
-                    if (!$qrCode) {
-                        $code = 'QR-' . \Illuminate\Support\Str::random(8);
-                        $qrCode = \App\Models\QrCode::create([
-                            'code' => $code,
-                            'entry_id' => $entry->id
-                        ]);
-                        
-                        Log::info('Nouveau QR code généré pour envoi WhatsApp', [
-                            'code' => $code,
-                            'entry_id' => $entry->id,
-                            'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
-                        ]);
-                    }
-                    
-                    $qrCodePath = $qrCodeDir . '/qrcode-' . $qrCode->code . '.png';
-                    // Génère le QR code s'il n'existe pas déjà
-                    if (!file_exists($qrCodePath)) {
-                        QrCode::format('png')
-                            ->size(300)
-                            ->margin(1)
-                            ->generate(route('qrcode.result', ['code' => $qrCode->code]), $qrCodePath);
-                    }
-                    
-                    // Logs détaillés avant tentative d'envoi
-                    Log::debug('Avant envoi WhatsApp à '.$formattedPhone, [
-                        'entry_id' => $entry->id,
-                        'participant_id' => $entry->participant->id,
-                        'phone_raw' => $entry->participant->phone,
-                        'has_won' => 'Oui',
-                        'is_test_account' => $isTestAccount ? 'Oui' : 'Non',
-                        'qr_code' => $qrCode->code,
-                        'qr_path' => $qrCodePath,
-                        'timestamp' => now()->toDateTimeString()
-                    ]);
-                    
-                    // Utiliser Green API pour l'envoi WhatsApp
-                    $greenWhatsAppService = new GreenWhatsAppService();
-                    
-                    // Message pour les gagnants
-                    $prizeText = $entry->prize ? $entry->prize->name : "un prix";
-                    $customMessage = "Félicitations ! Vous avez gagné {$prizeText}. Voici votre QR code pour récupérer votre gain. Conservez-le précieusement !";
-                    
-                    // Envoyer le message à chaque affichage/rafraîchissement
-                    $result = $greenWhatsAppService->sendQrCodeToWinner($entry->participant->phone, $qrCodePath, $customMessage);
-                    
-                    Log::info('Résultat envoi WhatsApp via Green API', [
-                        'phone' => $formattedPhone, 
-                        'result' => is_string($result) ? $result : ($result ? 'Succès' : 'Échec'),
-                        'is_test_account' => $isTestAccount ? 'Oui' : 'Non',
-                        'has_won' => 'Oui',
-                        'page' => 'spin/result',
-                        'timestamp' => now()->toDateTimeString()
-                    ]);
-                    
-                    // Message pour l'interface utilisateur
-                    $whatsappMsg = is_string($result) 
-                        ? "Échec d'envoi WhatsApp à {$formattedPhone} : {$result}" 
-                        : ($result ? "Succès: message WhatsApp envoyé à {$formattedPhone}." : "Échec: message WhatsApp non envoyé à {$formattedPhone}.");
-                } else {
-                    // Utilisateur qui n'a pas gagné - Pas d'envoi WhatsApp
-                    Log::info('Pas d\'envoi WhatsApp - utilisateur non gagnant', [
-                        'entry_id' => $entry->id,
-                        'phone' => $formattedPhone,
-                        'has_won' => 'Non',
-                        'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
-                    ]);
-                }
-            } else {
-                // Cas où le participant ou son numéro n'existe pas
-                Log::warning('Impossible d\'envoyer un message WhatsApp - participant ou numéro manquant', [
-                    'entry_id' => $entry->id,
-                    'participant_exists' => $entry->participant ? 'Oui' : 'Non',
-                    'phone_exists' => ($entry->participant && $entry->participant->phone) ? 'Oui' : 'Non'
-                ]);
             }
         } catch (\Exception $e) {
-            Log::error('Exception lors de l\'envoi WhatsApp', [
+            Log::error('Exception lors de la récupération des données', [
                 'error' => $e->getMessage(), 
                 'trace' => $e->getTraceAsString(),
                 'entry_id' => $entry->id,
@@ -366,10 +265,6 @@ class SpinController extends Controller
             ]);
         }
         
-        if ($whatsappMsg) {
-            session()->flash('whatsapp_result', $whatsappMsg);
-        }
-
         // Générer une clé unique pour le localStorage (à des fins de vérification côté client)
         $localStorageKey = 'contest_played_' . $entry->contest_id;
         $request->session()->put('localStorageKey', $localStorageKey);

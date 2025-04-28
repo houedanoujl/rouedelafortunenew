@@ -149,6 +149,66 @@ class GreenWhatsAppService
     }
     
     /**
+     * Envoie un message texte simple via Green API WhatsApp
+     *
+     * @param string $recipientPhone Le numéro du destinataire
+     * @param string $message Message à envoyer
+     * @return mixed True si succès, message d'erreur sinon
+     */
+    public function sendTextMessage($recipientPhone, $message)
+    {
+        $idInstance = config('services.greenapi.id_instance');
+        $apiTokenInstance = config('services.greenapi.api_token');
+        $apiUrl = config('services.greenapi.api_url');
+
+        if (!$idInstance || !$apiTokenInstance || !$apiUrl) {
+            Log::error('Configuration Green API manquante', [
+                'id_instance_exists' => !empty($idInstance),
+                'api_token_exists' => !empty($apiTokenInstance),
+                'api_url_exists' => !empty($apiUrl)
+            ]);
+            return "Erreur: Configuration Green API incomplète";
+        }
+
+        $recipientPhone = $this->formatPhoneNumber($recipientPhone);
+        $chatIdNumber = ltrim($recipientPhone, '+');
+        $formattedChatId = $chatIdNumber . '@c.us';
+
+        try {
+            $sendTextUrl = "{$apiUrl}/waInstance{$idInstance}/sendMessage/{$apiTokenInstance}";
+            $client = new Client();
+            $textResponse = $client->post($sendTextUrl, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'chatId' => $formattedChatId,
+                    'message' => $message
+                ],
+            ]);
+
+            $textResult = json_decode($textResponse->getBody(), true);
+            Log::info('Message texte WhatsApp envoyé via Green API', [
+                'recipient' => $recipientPhone,
+                'response' => $textResult
+            ]);
+            if (isset($textResult['idMessage'])) {
+                return true;
+            } else {
+                return "Erreur: échec de l'envoi du message texte";
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception lors de l\'envoi du message texte WhatsApp via Green API', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+            return "Exception: " . $e->getMessage();
+        }
+    }
+    
+    /**
      * Formate un numéro de téléphone pour Green API
      * 
      * @param string $phoneNumber Numéro à formater
@@ -156,15 +216,22 @@ class GreenWhatsAppService
      */
     private function formatPhoneNumber($phoneNumber)
     {
-        // Supprimer tout sauf les chiffres
+        // Supprimer tous les caractères non numériques
         $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
         
-        // Ne garder que les 8 derniers chiffres
-        if (strlen($phone) > 8) {
-            $phone = substr($phone, -8);
+        // Si le numéro commence par "07", supprimer ces deux premiers chiffres 
+        if (substr($phone, 0, 2) === '07') {
+            $phone = substr($phone, 2);
         }
         
-        // Ajouter le préfixe +225 (Côte d'Ivoire)
+        // Log pour le débogage du formatage
+        \Illuminate\Support\Facades\Log::info('Formatage du numéro pour WhatsApp', [
+            'numero_original' => $phoneNumber,
+            'apres_nettoyage' => $phone,
+            'numero_final' => '+225' . $phone
+        ]);
+        
+        // Ajouter l'indicatif pays
         return '+225' . $phone;
     }
 }

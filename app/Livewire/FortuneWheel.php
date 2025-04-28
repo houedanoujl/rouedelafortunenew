@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Entry;
 use App\Models\QrCode;
+use App\Models\PrizeDistribution;
 use App\Services\InfobipService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,8 @@ class FortuneWheel extends Component
     public Entry $entry;
     public bool $spinning = false;
     public bool $showWheel = true;
+    public bool $hasStock = false; // Nouvelle propriété pour stocker l'état des stocks
+    public array $stockInfo = []; // Information sur les stocks disponibles
 
     // Constantes pour la roue 
     const SECTORS_COUNT = 10; // Nombre total de secteurs
@@ -27,60 +30,267 @@ class FortuneWheel extends Component
     {
         $this->entry = $entry;
         $this->showWheel = !$entry->has_played;
+        
+        // Vérifier les stocks AVANT l'affichage de la roue
+        $this->checkStocksBeforeRender();
+        
+        // Journaliser l'état des stocks au chargement de la page
+        $this->logStockStatus();
+        
+        // Vérifier l'état des stocks et passer l'information au frontend
+        $this->checkStockAvailability();
     }
-
+    
+    /**
+     * Vérifie l'état des stocks avant le rendu de la page
+     */
+    private function checkStocksBeforeRender()
+    {
+        // Récupérer le concours actif
+        $contest = $this->entry->contest;
+        if (!$contest) {
+            $this->hasStock = false;
+            return;
+        }
+        
+        // Chercher les distributions de prix pour ce concours avec des prix disponibles
+        $distributions = PrizeDistribution::where('contest_id', $contest->id)
+            ->where('remaining', '>', 0)
+            ->with('prize')
+            ->get();
+        
+        $validDistributions = $distributions->filter(function($dist) {
+            return $dist->prize !== null;
+        });
+        
+        // Stocker l'état des stocks
+        $this->hasStock = $validDistributions->count() > 0;
+        
+        // Stocker des informations sur les stocks pour le frontend
+        $this->stockInfo = [
+            'has_stock' => $this->hasStock,
+            'valid_count' => $validDistributions->count(),
+            'distributions' => $validDistributions->map(function($dist) {
+                return [
+                    'id' => $dist->id,
+                    'prize_id' => $dist->prize_id,
+                    'prize_name' => $dist->prize ? $dist->prize->name : 'Inconnu',
+                    'remaining' => $dist->remaining
+                ];
+            })->toArray()
+        ];
+        
+        // Spécial pour utilisateurs test - toujours afficher la roue et forcer stock disponible
+        if (session('is_test_account')) {
+            Log::info('Compte test détecté - affichage forcé de la roue', [
+                'email' => $this->entry->participant->email ?? 'inconnu'
+            ]);
+            $this->hasStock = true;
+        }
+    }
+    
+    /**
+     * Vérifie l'état des stocks et passer l'information au frontend
+     */
+    private function checkStockAvailability()
+    {
+        // Récupérer le concours actif
+        $contest = $this->entry->contest;
+        if (!$contest) {
+            // Si pas de concours, pas de stock
+            $this->dispatch('stock-status', [
+                'has_stock' => false,
+                'message' => 'Aucun concours actif'
+            ]);
+            return;
+        }
+        
+        // Chercher les distributions de prix pour ce concours avec des prix disponibles
+        $distributions = PrizeDistribution::where('contest_id', $contest->id)
+            ->where('remaining', '>', 0)
+            ->with('prize')
+            ->get();
+        
+        $validDistributions = $distributions->filter(function($dist) {
+            return $dist->prize !== null;
+        });
+        
+        // Envoyer l'état au frontend
+        $this->dispatch('stock-status', [
+            'has_stock' => $validDistributions->count() > 0,
+            'valid_count' => $validDistributions->count(),
+            'distributions' => $validDistributions->map(function($dist) {
+                return [
+                    'id' => $dist->id,
+                    'prize_id' => $dist->prize_id,
+                    'prize_name' => $dist->prize ? $dist->prize->name : 'Inconnu',
+                    'remaining' => $dist->remaining,
+                    'valid' => true
+                ];
+            })
+        ]);
+    }
+    
+    /**
+     * Vérifie et journaliser l'état de tous les stocks disponibles
+     */
+    private function logStockStatus()
+    {
+        try {
+            // Récupérer tous les concours actifs
+            $activeContests = \App\Models\Contest::where('status', 'active')->get();
+            
+            Log::info('====== VÉRIFICATION DES STOCKS AU DÉMARRAGE ======');
+            Log::info('Nombre de concours actifs: ' . count($activeContests));
+            
+            $allStockData = [];
+            
+            foreach ($activeContests as $contest) {
+                Log::info("Vérification des stocks pour le concours: {$contest->name} (ID: {$contest->id})");
+                
+                // Récupérer toutes les distributions de prix pour ce concours
+                $distributions = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
+                    ->with('prize')
+                    ->get();
+                
+                if ($distributions->isEmpty()) {
+                    Log::warning("Aucune distribution de prix trouvée pour le concours {$contest->name}");
+                    continue;
+                }
+                
+                $contestStockData = [
+                    'contest_name' => $contest->name,
+                    'contest_id' => $contest->id,
+                    'distributions' => []
+                ];
+                
+                // Journaliser chaque distribution
+                foreach ($distributions as $dist) {
+                    $distData = [
+                        'distribution_id' => $dist->id,
+                        'prize_name' => $dist->prize ? $dist->prize->name : 'Prix NULL',
+                        'quantite_totale' => $dist->quantity,
+                        'restant' => $dist->remaining,
+                        'prix_id' => $dist->prize_id,
+                        'prix_stock' => $dist->prize ? $dist->prize->stock : 'N/A',
+                        'statut' => $dist->remaining > 0 ? 'DISPONIBLE' : 'ÉPUISÉ'
+                    ];
+                    
+                    $contestStockData['distributions'][] = $distData;
+                    
+                    Log::info("Distribution #{$dist->id}: " . ($dist->prize ? $dist->prize->name : 'Prix NULL'), $distData);
+                }
+                
+                // Compter les distributions disponibles
+                $availableDistributions = $distributions->filter(function($dist) {
+                    return $dist->prize !== null && $dist->remaining > 0;
+                });
+                
+                $contestStockData['available_count'] = count($availableDistributions);
+                $contestStockData['total_count'] = count($distributions);
+                
+                $allStockData[] = $contestStockData;
+                
+                Log::info("Résumé pour le concours {$contest->name}: " . count($availableDistributions) . " prix disponibles sur " . count($distributions) . " distributions");
+            }
+            
+            // Envoyer les données à la console du navigateur
+            $this->dispatch('stock-status-init', [
+                'contests' => $allStockData,
+                'timestamp' => now()->format('Y-m-d H:i:s')
+            ]);
+            
+            Log::info('====== FIN DE LA VÉRIFICATION DES STOCKS ======');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la vérification des stocks', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Envoyer l'erreur à la console également
+            $this->dispatch('stock-status-error', [
+                'message' => $e->getMessage(),
+                'timestamp' => now()->format('Y-m-d H:i:s')
+            ]);
+        }
+    }
+    
     /**
      * Fait tourner la roue et traite le résultat
      */
     public function spin()
     {
         // Vérifier si c'est un utilisateur de test autorisé à rejouer
-        $isTestUser = false;
+        $isTestAccount = false;
         
-        if ($this->entry->participant && $this->entry->participant->email === 'noob@saibot.com') {
-            $isTestUser = true;
+        if ($this->entry->participant && session('is_test_account')) {
+            $isTestAccount = true;
             // Réinitialiser l'entrée pour permettre de rejouer
             if ($this->entry->has_played) {
-                // On ne retourne pas, on continue l'exécution
                 Log::info('Utilisateur test autorisé à rejouer', [
                     'email' => $this->entry->participant->email,
-                    'entry_id' => $this->entry->id
                 ]);
             }
-        } else if ($this->entry->has_played) {
-            // Pour tous les autres utilisateurs, on ne peut pas rejouer
+        }
+        
+        // Vérifier si la participation a déjà été jouée (sauf pour les comptes de test)
+        if ($this->entry->has_played && !$isTestAccount) {
+            return;
+        }
+        
+        // Récupérer le concours actif
+        $contest = $this->entry->contest;
+        if (!$contest) {
             return;
         }
 
-        $this->spinning = true;
-
-        // Vérifier s'il y a des prix en stock disponibles
-        $contest = $this->entry->contest;
-        $hasPrizesInStock = false;
+        // Chercher les distributions pour le concours actif
+        $distributions = PrizeDistribution::where('contest_id', $contest->id)
+            ->with('prize')
+            ->get();
         
-        // Recherche de distributions de prix avec stock > 0
-        $distributions = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
-            ->where('remaining', '>', 0)
-            ->with(['prize' => function($query) {
-                $query->where('stock', '>', 0);
-            }])
-            ->get()
-            ->filter(function($distribution) {
-                return $distribution->prize !== null;
-            });
-            
-        if(count($distributions) > 0) {
-            $hasPrizesInStock = true;
-        }
+        // Filtrer les distributions valides (avec prix non null et stock > 0)
+        $validDistributions = $distributions->filter(function($dist) {
+            return $dist->prize !== null && $dist->remaining > 0;
+        });
         
-        // Journaliser l'état du stock
-        Log::info('Vérification du stock', [
-            'has_prizes_in_stock' => $hasPrizesInStock ? 'oui' : 'non',
-            'email' => $this->entry->participant->email ?? 'inconnu'
+        Log::info('Distributions valides (prix non null et remaining > 0)', [
+            'count' => $validDistributions->count(),
+            'distributions' => $validDistributions->map(function($dist) {
+                return [
+                    'id' => $dist->id,
+                    'prize_id' => $dist->prize_id,
+                    'prize_name' => $dist->prize ? $dist->prize->name : null,
+                    'remaining' => $dist->remaining
+                ];
+            })
         ]);
-
-        // Si aucun prix en stock, forcer le résultat à "perdant"
-        $isWinning = $hasPrizesInStock && (rand(1, 20) <= 1);
+        
+        // LOGIQUE WINWHEEL STANDARD
+        // Déterminer si l'utilisateur gagne en fonction du stock et des probabilités
+        
+        // Si c'est un compte de test, 100% de chance de gagner
+        if ($isTestAccount) {
+            $isWinning = true;
+            Log::info('Compte test: 100% de chance de gagner', [
+                'email' => $this->entry->participant->email
+            ]);
+        }
+        // Si des lots sont disponibles, appliquer la probabilité normale
+        else if ($validDistributions->count() > 0) {
+            // 20% de chance de gagner (1 chance sur 5)
+            $isWinning = rand(1, 5) === 1; 
+            Log::info('Stock disponible: Probabilité standard de gain (20%)', [
+                'isWinning' => $isWinning ? 'OUI' : 'NON'
+            ]);
+        }
+        // Si aucun lot n'est disponible, perte assurée
+        else {
+            $isWinning = false;
+            Log::info('Aucun lot disponible: Perte assurée', [
+                'validDistributions' => 0
+            ]);
+        }
         
         // Déterminer le secteur et l'angle final en fonction du résultat souhaité
         $sectorInfo = $this->determineSector($isWinning);
@@ -129,6 +339,16 @@ class FortuneWheel extends Component
         // Rediriger après la fin de l'animation
         // Augmentation du délai à 20 secondes pour tenir compte de l'animation plus longue (12-16 secondes)
         $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 20000)");
+    }
+    
+    /**
+     * Calcule la probabilité de gain selon la règle du jeu
+     * @return bool
+     */
+    private function calculateWinChance(): bool
+    {
+        // Exemple : 1 chance sur 5 (20%)
+        return rand(1, 5) === 1;
     }
     
     /**

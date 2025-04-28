@@ -5,7 +5,7 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use App\Models\QrCode;
 use App\Models\PrizeDistribution;
-use App\Services\InfobipService;
+use App\Services\GreenWhatsAppService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
 use Filament\Notifications\Notification;
@@ -120,12 +120,33 @@ class QrCodeScanner extends Component
             $participant = $entry->participant;
             if ($participant && $participant->phone) {
                 try {
-                    $infobipService = new InfobipService();
-                    $infobipService->sendWhatsAppNotification(
-                        $participant->phone,
-                        $participant->first_name . ' ' . $participant->last_name,
-                        $qrCode->code
-                    );
+                    $greenWhatsApp = new GreenWhatsAppService();
+                    
+                    // Message personnalisé pour la confirmation de scan
+                    $message = "Bonjour " . $participant->first_name . ", votre lot \"" . 
+                              ($entry->prize ? $entry->prize->name : "Lot gagnant") . 
+                              "\" a été scanné et validé avec succès à " . 
+                              now()->format('H:i') . " le " . now()->format('d/m/Y') . 
+                              ". Merci de votre participation!\n\nNuméro du QR code : " . $qrCode->code;
+                    
+                    // Générer une image de QR code à inclure dans le message
+                    $qrCodeImagePath = storage_path('app/public/qrcodes/qrcode-' . $qrCode->code . '.png');
+                    
+                    // Envoyer via Green API
+                    $result = $greenWhatsApp->sendQrCodeToWinner($participant->phone, $qrCodeImagePath, $message);
+                    
+                    // Nouveau message WhatsApp de contrôle (scan)
+                    $scanMessage = "Votre QR code {$qrCode->code} a été scanné à ".now()->format('H:i')." le ".now()->format('d/m/Y').". Vous pouvez retirer votre gain.";
+                    $greenWhatsApp->sendTextMessage($participant->phone, $scanMessage);
+
+                    // Journaliser le résultat de l'envoi
+                    \Illuminate\Support\Facades\Log::info('Notification WhatsApp de scan envoyée', [
+                        'phone' => $participant->phone,
+                        'qr_code' => $qrCode->code,
+                        'participant_name' => $participant->first_name . ' ' . $participant->last_name,
+                        'prize' => $entry->prize ? $entry->prize->name : 'Non spécifié'
+                    ]);
+                    
                     // Ajout d'un message indiquant l'envoi de la notification
                     $this->result = 'QR code validé avec succès et notification WhatsApp envoyée';
                 } catch (\Exception $e) {

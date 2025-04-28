@@ -1624,5 +1624,532 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T12:58:58+00:00",
+        "entry_id": 31,
+        "participant": {
+            "id": 31,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1900,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T13:04:01+00:00",
+        "entry_id": 32,
+        "participant": {
+            "id": 32,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1230,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T13:07:04+00:00",
+        "entry_id": 33,
+        "participant": {
+            "id": 33,
+            "name": "Jean Luc Houedanou",
+            "email": "jeanluc@jan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1232,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T13:48:13+00:00",
+        "entry_id": 34,
+        "participant": {
+            "id": 34,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1245,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T13:51:44+00:00",
+        "entry_id": 35,
+        "participant": {
+            "id": 35,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1675,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T13:56:57+00:00",
+        "entry_id": 36,
+        "participant": {
+            "id": 36,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1322,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:02:50+00:00",
+        "entry_id": 37,
+        "participant": {
+            "id": 37,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1664,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:06:32+00:00",
+        "entry_id": 38,
+        "participant": {
+            "id": 38,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 2106,
+        "sector_id": "secteur-1",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:09:49+00:00",
+        "entry_id": 39,
+        "participant": {
+            "id": 39,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1331,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:13:51+00:00",
+        "entry_id": 40,
+        "participant": {
+            "id": 40,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1808,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:18:30+00:00",
+        "entry_id": 41,
+        "participant": {
+            "id": 41,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1831,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:19:35+00:00",
+        "entry_id": 42,
+        "participant": {
+            "id": 42,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1514,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:21:55+00:00",
+        "entry_id": 43,
+        "participant": {
+            "id": 43,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1163,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:24:52+00:00",
+        "entry_id": 44,
+        "participant": {
+            "id": 44,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1822,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:27:38+00:00",
+        "entry_id": 45,
+        "participant": {
+            "id": 45,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1531,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:31:38+00:00",
+        "entry_id": 46,
+        "participant": {
+            "id": 46,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1890,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:42:48+00:00",
+        "entry_id": 47,
+        "participant": {
+            "id": 47,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 2020,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:52:38+00:00",
+        "entry_id": 50,
+        "participant": {
+            "id": 50,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1617,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T14:55:56+00:00",
+        "entry_id": 51,
+        "participant": {
+            "id": 51,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1632,
+        "sector_id": "secteur-4",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:01:29+00:00",
+        "entry_id": 53,
+        "participant": {
+            "id": 53,
+            "name": "Jean Hou\u00e9danou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 2141,
+        "sector_id": "secteur-0",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:02:44+00:00",
+        "entry_id": 54,
+        "participant": {
+            "id": 54,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "cvb@sifca.ci",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1696,
+        "sector_id": "secteur-2",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:08:09+00:00",
+        "entry_id": 55,
+        "participant": {
+            "id": 55,
+            "name": "dfxbvb cxwv",
+            "email": "dfsfsdfs@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1411,
+        "sector_id": "secteur-0",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:11:11+00:00",
+        "entry_id": 56,
+        "participant": {
+            "id": 56,
+            "name": "dsfdsf fdsfdsf",
+            "email": "dfdfsfdsdf@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1627,
+        "sector_id": "secteur-4",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:12:20+00:00",
+        "entry_id": 57,
+        "participant": {
+            "id": 57,
+            "name": "dsdsFDQFQDFQDF sdvsdfv",
+            "email": "sdfqfdqfqs@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1207,
+        "sector_id": "secteur-6",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:16:33+00:00",
+        "entry_id": 58,
+        "participant": {
+            "id": 58,
+            "name": "sqdqdqsdqsd qsdqsdqsdqsdqs",
+            "email": "ghjgh@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 2138,
+        "sector_id": "secteur-0",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:17:24+00:00",
+        "entry_id": 59,
+        "participant": {
+            "id": 59,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1693,
+        "sector_id": "secteur-2",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:22:14+00:00",
+        "entry_id": 60,
+        "participant": {
+            "id": 60,
+            "name": "Jean luc Hou\u00e9danou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1938,
+        "sector_id": "secteur-6",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:27:04+00:00",
+        "entry_id": 61,
+        "participant": {
+            "id": 61,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1555,
+        "sector_id": "secteur-6",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:36:06+00:00",
+        "entry_id": 62,
+        "participant": {
+            "id": 62,
+            "name": "Jean Hou\u00e9danou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1641,
+        "sector_id": "secteur-4",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:53:20+00:00",
+        "entry_id": 63,
+        "participant": {
+            "id": 63,
+            "name": "Jean Hou\u00e9danou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1845,
+        "sector_id": "secteur-8",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-28T15:54:01+00:00",
+        "entry_id": 64,
+        "participant": {
+            "id": 64,
+            "name": "Jean Hou\u00e9danou",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1995,
+        "sector_id": "secteur-4",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
     }
 ]

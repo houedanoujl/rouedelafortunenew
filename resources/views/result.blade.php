@@ -32,17 +32,21 @@ if ($displayedResult !== null) {
                             @if($qrCode)
                                 <div class="qr-code-container mt-4 d-flex justify-content-center align-items-center">
                                     <a href="javascript:void(0)" class="qr-code-link" title="Cliquez pour voir votre lot" aria-label="Voir les détails de votre lot gagné" role="button">
-                                        {!! QrCode::size(200)->generate(route('qrcode.result', ['code' => $qrCode->code])) !!}
+                                        @php
+                                            // Vérifier si $qrCode est un objet ou une chaîne
+                                            $codeValue = is_object($qrCode) ? $qrCode->code : $qrCode;
+                                        @endphp
+                                        {!! QrCode::size(200)->generate(route('qrcode.result', ['code' => $codeValue])) !!}
                                         <span class="sr-only">Cliquez sur le QR code pour voir votre lot</span>
                                     </a>
                                 </div>
-                                <p class="mt-4">Code : {{ $qrCode->code }}</p>
+                                <p class="mt-4">Code : {{ is_object($qrCode) ? $qrCode->code : $qrCode }}</p>
                                 
                                 <div class="mt-3 d-flex justify-content-center gap-2">
-                                    <a href="{{ route('qrcode.download.pdf', ['code' => $qrCode->code]) }}" class="btn btn-danger">
+                                    <a href="{{ route('qrcode.download.pdf', ['code' => is_object($qrCode) ? $qrCode->code : $qrCode]) }}" class="btn btn-danger">
                                         <i class="bi bi-file-earmark-pdf"></i> Télécharger en PDF
                                     </a>
-                                    <a href="{{ route('qrcode.download.png', ['code' => $qrCode->code]) }}" class="btn btn-info">
+                                    <a href="{{ route('qrcode.download.png', ['code' => is_object($qrCode) ? $qrCode->code : $qrCode]) }}" class="btn btn-info">
                                         <i class="bi bi-file-earmark-image"></i> Télécharger en PNG
                                     </a>
                                 </div>
@@ -304,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Only launch confetti if we came from a win
-    if(window.location.href.includes('spin.result')) {
+    if({{ $showWinResult ? 'true' : 'false' }}) {
         setTimeout(launchConfetti, 300);
     }
     
@@ -355,6 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
             startVelocity: 45,
         });
     }
+    console.log('Page result.blade.php chargée avec succès');
 });
 </script>
 @endif

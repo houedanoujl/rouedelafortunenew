@@ -68,15 +68,32 @@ class PrizeDistribution extends Model
     }
     
     /**
-     * Décrémenter la quantité restante d'une unité
-     * 
-     * @return bool True si le stock a pu être décrémenté, false si le stock est déjà à 0
+     * Décrémente le nombre de prix restants
+     * - Ne décrémente que si remaining > 0
+     * - Si remaining n'est pas défini, l'initialise avec quantity
      */
-    public function decrementRemaining(): bool
+    public function decrementRemaining()
     {
+        // Si remaining est null, l'initialiser avec quantity
+        if ($this->remaining === null) {
+            $this->remaining = $this->quantity;
+        }
+        
+        // Ne décrémenter que si remaining > 0
         if ($this->remaining > 0) {
-            $this->remaining--;
+            // Décrémenter une seule unité à la fois
+            $this->remaining -= 1;
             $this->save();
+            
+            // Log pour déboguer le problème de double décrémentation
+            \Illuminate\Support\Facades\Log::info('Décrémentation du stock pour la distribution #' . $this->id, [
+                'distribution_id' => $this->id,
+                'prize_id' => $this->prize_id,
+                'remaining_before' => $this->remaining + 1,
+                'remaining_after' => $this->remaining,
+                'caller' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? 'inconnu'
+            ]);
+            
             return true;
         }
         
