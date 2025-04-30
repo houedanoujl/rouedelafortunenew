@@ -176,7 +176,8 @@ class SpinController extends Controller
                     $message = "Félicitations {$participant->first_name}! Vous avez gagné " . 
                               ($entry->prize ? $entry->prize->name : "un lot") . 
                               ". Voici votre QR code pour récupérer votre gain [Page actualisée à " . 
-                              now()->format('H:i') . "]. Conservez-le précieusement!\n\nNuméro du QR code : ".$qrCodeObj->code;
+                              now()->format('H:i') . "]. Conservez-le précieusement!\n\nNuméro du QR code : ".$qrCodeObj->code.
+                              "\n\nPour toute question, contactez le 07 19 04 87 28";
                     
                     // Envoyer via Green API
                     $result = $greenWhatsApp->sendQrCodeToWinner($participant->phone, $qrCodePath, $message);

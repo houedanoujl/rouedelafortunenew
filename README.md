@@ -1,199 +1,185 @@
-# Jeu dinor 70 ans - Application 70 ans Dinor avec Docker pour le développement local
+# Jeu dinor 70 ans - Roue de la Fortune
 
 [![Site Deployment Status](https://img.shields.io/badge/70%20ans%20Dinor-Déployé-success)](https://github.com/jhouedanou/rouedelafortune)
 
+Application "Roue de la Fortune" pour les 70 ans de Dinor, utilisant Laravel avec Filament comme panneau d'administration, configurée pour fonctionner avec Docker.
 
-Cette application "Jeu dinor 70 ans" pour les 70 ans de Dinor est configurée pour fonctionner avec Docker, ce qui facilite le déploiement et le développement.
+## 📋 Structure de l'application
 
-## Prérequis
+L'application est basée sur Laravel et utilise Filament pour l'interface d'administration. Elle comprend :
+
+- **Contest** : Concours (nom, dates, statut, description)
+- **Prize** : Prix (nom, description, type, valeur, image, stock)
+- **Participant** : Participants (prénom, nom, téléphone, email)
+- **Entry** : Participations (lien vers participant, concours, prix, résultat, date de jeu, code QR, réclamation)
+- **QrCode** : Codes QR (lié à une participation, code, statut de scan)
+- **PrizeDistribution** : Distribution des prix
+
+## 🚀 Guide de déploiement local
+
+### Prérequis
 
 - Docker et Docker Compose installés sur votre machine
+- Git pour cloner le dépôt
 
-## Installation et démarrage
+### Instructions de déploiement en un seul bloc
 
-1. Clonez ce dépôt :
+Pour déployer rapidement l'application en une seule opération :
+
+```bash
+# Cloner le dépôt (si pas déjà fait)
+git clone https://github.com/jhouedanou/rouedelafortune.git
+cd rouedelafortune
+
+# Démarrer les conteneurs Docker
+docker compose up -d
+
+# Attendre que les conteneurs soient prêts (MySQL doit être accessible)
+echo "Attente de l'initialisation de MySQL..."
+while ! docker exec rouedelafortune-mysql mysqladmin ping -h localhost --silent; do
+    sleep 2
+done
+echo "MySQL est prêt!"
+
+# Exécuter les migrations et créer l'utilisateur admin
+docker exec rouedelafortune-app php artisan migrate --force
+docker exec rouedelafortune-app php artisan tinker --execute="\$user = \App\Models\User::where('email', 'houedanou@example.com')->first(); if(!\$user) { \App\Models\User::create(['name' => 'houedanou', 'email' => 'houedanou@example.com', 'password' => bcrypt('nouveaumdp123')]); echo 'Utilisateur admin créé avec succès!'; }"
+
+# Installer les dépendances frontend et compiler les assets
+docker exec rouedelafortune-app npm ci
+docker exec rouedelafortune-app npm run build
+
+# Nettoyage des caches et optimisations
+docker exec rouedelafortune-app php artisan optimize:clear
+docker exec rouedelafortune-app php artisan filament:assets
+docker exec rouedelafortune-app php artisan storage:link
+
+echo "✅ Déploiement terminé! Accédez à l'application sur http://localhost:8888"
+```
+
+### Instructions étape par étape
+
+1. **Cloner le dépôt** :
    ```bash
    git clone https://github.com/jhouedanou/rouedelafortune.git
    cd rouedelafortune
    ```
 
-2. Créez et configurez le fichier .env :
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Lancez l'application avec Docker Compose :
+2. **Lancer les conteneurs Docker** :
    ```bash
    docker compose up -d
    ```
 
-4. Installez les dépendances PHP :
+3. **Exécuter les migrations de base de données** :
    ```bash
-   docker compose exec app composer install
+   docker exec rouedelafortune-app php artisan migrate --force
    ```
 
-5. Générez la clé d'application :
+4. **Créer l'utilisateur administrateur** :
    ```bash
-   docker compose exec app php artisan key:generate
+   docker exec rouedelafortune-app php artisan tinker --execute="\$user = \App\Models\User::where('email', 'houedanou@example.com')->first(); if(!\$user) { \App\Models\User::create(['name' => 'houedanou', 'email' => 'houedanou@example.com', 'password' => bcrypt('nouveaumdp123')]); echo 'Utilisateur admin créé avec succès!'; }"
    ```
 
-6. Exécutez les migrations de base de données :
+5. **Installer les dépendances frontend** :
    ```bash
-   docker compose exec app php artisan migrate
+   docker exec rouedelafortune-app npm ci
    ```
 
-7. Remplissez la base de données avec des données de test :
+6. **Compiler les assets** :
    ```bash
-   docker compose exec app php artisan db:seed
+   docker exec rouedelafortune-app npm run build
    ```
 
-8. Installez les dépendances NPM :
+7. **Nettoyer les caches** :
    ```bash
-   docker compose exec app npm install
+   docker exec rouedelafortune-app php artisan optimize:clear
    ```
 
-9. Compilez les assets frontend :
+8. **Publier les assets Filament** :
    ```bash
-   docker compose exec app npm run build
+   docker exec rouedelafortune-app php artisan filament:assets
    ```
 
-10. Définissez les permissions des répertoires de stockage :
-    ```bash
-    docker compose exec app chmod -R 777 storage bootstrap/cache
-    ```
+9. **Créer le lien symbolique pour le stockage** :
+   ```bash
+   docker exec rouedelafortune-app php artisan storage:link
+   ```
 
-11. Nettoyez les caches de configuration :
-    ```bash
-    docker compose exec app php artisan config:clear
-    docker compose exec app php artisan cache:clear
-    docker compose exec app php artisan view:clear
-    ```
+## 🖥️ Accès à l'application
 
-12. L'application sera accessible aux adresses suivantes :
-    - Application principale : http://localhost:8888
-    - Interface d'administration : http://localhost:8888/admin
-    - Interface phpMyAdmin : http://localhost:8081
+Une fois déployée, l'application est accessible aux adresses suivantes :
 
-## Résolution des problèmes courants
+- **Application principale** : [http://localhost:8888](http://localhost:8888)
+- **Interface d'administration** : [http://localhost:8888/admin](http://localhost:8888/admin)
+  - **Identifiants** : houedanou@example.com / nouveaumdp123
+- **Interface phpMyAdmin** : [http://localhost:8081](http://localhost:8081)
+  - **Identifiants** : user / password
 
-### Erreur 502 Bad Gateway
+## 📱 Configuration des notifications WhatsApp
 
-Si vous rencontrez une erreur 502 Bad Gateway, vérifiez que la configuration Nginx est correcte :
+L'application utilise le service Green API pour envoyer des notifications WhatsApp aux gagnants. Les participants recevront un message contenant :
+- Les félicitations personnalisées
+- Le nom du prix gagné
+- Le QR code à présenter
+- Le numéro de contact : **07 19 04 87 28**
+
+## 🛠️ Maintenance et dépannage
+
+### Commandes utiles
 
 ```bash
-docker compose exec nginx bash -c "cat > /etc/nginx/nginx.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
+# Voir les logs des conteneurs
+docker logs -f rouedelafortune-app
+docker logs -f rouedelafortune-nginx
+docker logs -f rouedelafortune-mysql
 
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-    
-    server {
-        listen 8888;
-        root /var/www/html/public;
-        index index.php;
-        
-        location / {
-            try_files $uri $uri/ /index.php?$query_string;
-        }
-        
-        location ~ \.php$ {
-            fastcgi_pass app:9000;
-            fastcgi_index index.php;
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            include fastcgi_params;
-        }
-    }
-}
-EOF"
+# Redémarrer les services
+docker compose restart
+
+# Accéder au shell du conteneur
+docker exec -it rouedelafortune-app bash
+
+# Correction migration problématique
+docker exec rouedelafortune-app php artisan tinker --execute="DB::table('migrations')->where('migration', '2025_04_03_164500_add_prize_id_to_entries_table')->delete();"
 ```
 
-Puis redémarrez Nginx :
+### Résolution des problèmes courants
+
+#### Erreur 502 Bad Gateway
+Redémarrez le conteneur Nginx :
 ```bash
 docker compose restart nginx
 ```
 
-### Erreur Vite Manifest Not Found
-
-Si vous rencontrez une erreur concernant le manifeste Vite, assurez-vous d'avoir bien exécuté les commandes pour compiler les assets frontend (étapes 8 et 9).
-
-
-## Commandes Docker utiles
-
-### Afficher les logs des conteneurs
+#### Problème avec les migrations
+Si vous rencontrez des problèmes avec les migrations, essayez de neutraliser la migration problématique :
 ```bash
-docker compose logs app
-docker compose logs nginx
-docker compose logs mysql
+docker exec rouedelafortune-app php artisan tinker --execute="DB::table('migrations')->where('migration', '2025_04_03_164500_add_prize_id_to_entries_table')->delete();"
 ```
 
-### Redémarrer tous les services
+#### Problème avec les assets
+Si Vite Manifest n'est pas trouvé, réinstallez et recompilez les assets :
 ```bash
-docker compose restart
+docker exec rouedelafortune-app npm ci
+docker exec rouedelafortune-app npm run build
 ```
 
-### Arrêter l'application
-```bash
-docker compose down
-```
+## 📚 Documentation supplémentaire
 
-### Reconstruire les conteneurs
-```bash
-docker compose build
-docker compose up -d
-```
+Pour plus d'informations sur le développement et l'extension de l'application :
 
-### Accéder au shell du conteneur de l'application
-```bash
-docker compose exec app bash
-```
-
-## Structure de l'application
-
-L'application "Jeu dinor 70 ans" est basée sur Laravel et utilise Filament pour l'interface d'administration. Elle comprend les modèles suivants :
-
-- **Contest** : Gestion des concours
-- **Prize** : Gestion des prix
-- **Participant** : Gestion des participants
-- **Entry** : Gestion des participations
-- **QrCode** : Gestion des codes QR
-- **PrizeDistribution** : Gestion de la distribution des prix
-
-## Développement
-
-### Création des ressources Filament
-
-Si vous souhaitez créer ou recréer les ressources Filament pour les modèles existants, vous pouvez utiliser les commandes suivantes :
+### Création de ressources Filament
 
 ```bash
-# Installation de Filament (si ce n'est pas déjà fait)
-docker compose exec app php artisan filament:install --panels
-
-# Création des ressources pour chaque modèle
-docker compose exec app php artisan make:filament-resource Contest
-docker compose exec app php artisan make:filament-resource Prize
-docker compose exec app php artisan make:filament-resource Participant
-docker compose exec app php artisan make:filament-resource Entry
-docker compose exec app php artisan make:filament-resource QrCode
-docker compose exec app php artisan make:filament-resource PrizeDistribution
+docker exec rouedelafortune-app php artisan make:filament-resource NomDuModele
 ```
 
 ### Création de nouveaux modèles
 
-Si vous souhaitez créer de nouveaux modèles avec leurs migrations :
-
 ```bash
-docker compose exec app php artisan make:model NomDuModele -m
+docker exec rouedelafortune-app php artisan make:model NomDuModele -m
 ```
 
-Puis créez la ressource Filament correspondante :
-
-```bash
-docker compose exec app php artisan make:filament-resource NomDuModele
-```
-
-## Licence
+## 📄 Licence
 
 Ce projet est sous licence MIT.
