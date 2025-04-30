@@ -70,7 +70,7 @@ class GreenWhatsAppService
             // 1. Envoyer un message texte avant l'image
             if ($message === null) {
                 $prize = session('prize_name') ?? 'un prix';
-                $message = "Félicitations ! Vous avez gagné {$prize}. Voici votre QR code pour récupérer votre gain.";
+                $message = "Félicitations ! Vous avez gagné ce prix : {$prize}. Voici votre QR code pour récupérer votre gain.";
             }
             
             // Appel de l'API pour envoyer le message texte

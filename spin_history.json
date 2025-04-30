@@ -389,5 +389,39 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T19:20:26+00:00",
+        "entry_id": 1,
+        "participant": {
+            "id": 1,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 2041,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T19:21:40+00:00",
+        "entry_id": 2,
+        "participant": {
+            "id": 2,
+            "name": "wx sqdsq",
+            "email": "qsqs@slqjd.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1171,
+        "sector_id": "secteur-7",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
     }
 ]
