@@ -111,9 +111,7 @@ Une fois déployée, l'application est accessible aux adresses suivantes :
 
 - **Application principale** : [http://localhost:8888](http://localhost:8888)
 - **Interface d'administration** : [http://localhost:8888/admin](http://localhost:8888/admin)
-  - **Identifiants** : houedanou@example.com / nouveaumdp123
 - **Interface phpMyAdmin** : [http://localhost:8081](http://localhost:8081)
-  - **Identifiants** : user / password
 
 ## 📱 Configuration des notifications WhatsApp
 
