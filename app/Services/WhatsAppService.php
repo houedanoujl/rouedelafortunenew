@@ -123,7 +123,7 @@ class WhatsAppService
             'type' => 'image',
             'image' => [
                 'id' => $mediaId,
-                'caption' => "Félicitations ! Vous avez gagné à la Roue de la Fortune. Veuillez présenter ce QR code lors de la remise de votre prix."
+                'caption' => "Félicitations ! Vous avez gagné au Jeu dinor 70 ans. Veuillez présenter ce QR code lors de la remise de votre prix."
             ]
         ];
         

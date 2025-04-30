@@ -372,5 +372,22 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T08:41:41+00:00",
+        "entry_id": 89,
+        "participant": {
+            "id": 89,
+            "name": "Jean Luc HOU\u00c9DANOU",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1816,
+        "sector_id": "secteur-9",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
     }
 ]

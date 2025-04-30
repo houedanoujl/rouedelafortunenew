@@ -6,7 +6,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SpinController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\SpinResultController;
-use App\Http\Controllers\TestModeController;
 use App\Http\Controllers\CookieController;
 use App\Http\Controllers\WhatsappTestController;
 use App\Http\Controllers\MetaWhatsappTestController;
@@ -72,12 +71,6 @@ Route::get('/dashboard', function () {
 Route::get('/rules', function () {
     return view('rules');
 })->name('rules');
-
-// Route pour vider les cookies (mode test)
-Route::get('/clear-cookies', [TestModeController::class, 'clearAllCookies'])->name('clear.cookies');
-
-// Route pour sortir du mode test et nettoyer toutes les données
-Route::get('/exit-test-mode', [TestModeController::class, 'exitTestMode'])->name('exit.test.mode');
 
 // Routes pour le gestionnaire d'images des prix
 Route::get('/gestion-images-prix', [PrizeUploadController::class, 'showUploadForm'])->name('prizes.upload.form');

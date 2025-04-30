@@ -55,7 +55,7 @@ if [ ! -f ".env" ]; then
   # Si le fichier .env n'existe pas, créer un fichier par défaut
   if [ ! -f ".env" ]; then
     cat > .env << EOF
-APP_NAME="Roue de la Fortune"
+APP_NAME="Jeu dinor 70 ans"
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true

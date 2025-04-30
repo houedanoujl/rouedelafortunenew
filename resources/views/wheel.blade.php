@@ -6,7 +6,7 @@
         <div class="col-md-10">
             <div class="card wheel-card">
                 <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">🎯 Roue de la Fortune 🎉</h2>
+                    <h2 class="mb-0">🎯 Jeu dinor 70 ans 🎉</h2>
                 </div>
                 <div class="card-body text-center">
                     <!-- Identifiant du concours pour le système localStorage -->

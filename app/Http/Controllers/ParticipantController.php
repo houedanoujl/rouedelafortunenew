@@ -33,36 +33,30 @@ class ParticipantController extends Controller
         $cookieName = 'contest_played_' . $activeContest->id;
         $hasPlayed = $request->cookie($cookieName) !== null || \Session::has($cookieName);
 
-        // Pour les utilisateurs en mode test, ignorer la vérification de participation antérieure
-        if (session('is_test_account')) {
-            \Log::info('Mode test détecté : formulaire d\'inscription toujours affiché');
-            $hasPlayed = false; // Forcer l'affichage du formulaire pour les comptes test
-        } else {
-            // Vérifier aussi via localStorage en injectant du script JavaScript
-            $localStorageKey = 'contest_played_' . $activeContest->id;
+        // Vérifier aussi via localStorage en injectant du script JavaScript
+        $localStorageKey = 'contest_played_' . $activeContest->id;
 
-            // Vérifier aussi si une entrée existe déjà pour l'utilisateur dans ce concours
-            // (vérification spécifique au concours actif uniquement)
-            $ipAddress = $request->ip();
-            $userAgent = $request->header('User-Agent');
-            $userIdentifier = $request->cookie('user_identifier');
+        // Vérifier aussi si une entrée existe déjà pour l'utilisateur dans ce concours
+        // (vérification spécifique au concours actif uniquement)
+        $ipAddress = $request->ip();
+        $userAgent = $request->header('User-Agent');
+        $userIdentifier = $request->cookie('user_identifier');
 
-            // Si un identifiant utilisateur existe, vérifier directement dans la base de données
-            $existingEntry = null;
-            if ($userIdentifier) {
-                $existingEntry = Entry::where('participant_id', $userIdentifier)
-                                     ->where('contest_id', $activeContest->id)
-                                     ->first();
-                if ($existingEntry) {
-                    $hasPlayed = true;
-                }
+        // Si un identifiant utilisateur existe, vérifier directement dans la base de données
+        $existingEntry = null;
+        if ($userIdentifier) {
+            $existingEntry = Entry::where('participant_id', $userIdentifier)
+                                 ->where('contest_id', $activeContest->id)
+                                 ->first();
+            if ($existingEntry) {
+                $hasPlayed = true;
             }
         }
 
         if ($hasPlayed) {
             // S'assurer que le cookie est défini pour renforcer la limitation
             // Même si l'utilisateur est détecté par session ou BD, ajouter le cookie pour renforcer
-            if (!$request->cookie($cookieName) && !session('is_test_account')) {
+            if (!$request->cookie($cookieName)) {
                 $cookieExpiry = 60 * 24 * 30; // 30 jours en minutes par défaut
 
                 // Si le concours a une date de fin, utiliser cette date pour l'expiration
@@ -73,28 +67,23 @@ class ParticipantController extends Controller
                     $cookieExpiry = $minutesUntilEnd;
                 }
 
-                // Ne pas créer de cookie pour les utilisateurs en mode test
-                if (!session('is_test_account')) {
-                    \Cookie::queue(cookie(
-                        $cookieName,         // nom du cookie
-                        'played',            // valeur
-                        $cookieExpiry,       // durée de vie en minutes
-                        '/',                 // chemin
-                        null,                // domaine (null = domaine actuel)
-                        false,               // secure (https uniquement)
-                        false,               // httpOnly (non accessible par JavaScript)
-                        false,               // raw
-                        'lax'                // sameSite
-                    ));
-                    
-                    // Journaliser la création du cookie (pour débogage)
-                    \Log::info("Cookie {$cookieName} créé pour un utilisateur normal", [
-                        'cookie_name' => $cookieName,
-                        'expiry_minutes' => $cookieExpiry
-                    ]);
-                } else {
-                    \Log::info("Création du cookie {$cookieName} ÉVITÉE pour un utilisateur en mode test");
-                }
+                \Cookie::queue(cookie(
+                    $cookieName,         // nom du cookie
+                    'played',            // valeur
+                    $cookieExpiry,       // durée de vie en minutes
+                    '/',                 // chemin
+                    null,                // domaine (null = domaine actuel)
+                    false,               // secure (https uniquement)
+                    false,               // httpOnly (non accessible par JavaScript)
+                    false,               // raw
+                    'lax'                // sameSite
+                ));
+                
+                // Journaliser la création du cookie (pour débogage)
+                \Log::info("Cookie {$cookieName} créé pour un utilisateur normal", [
+                    'cookie_name' => $cookieName,
+                    'expiry_minutes' => $cookieExpiry
+                ]);
             }
 
             // Stocker aussi en session comme sauvegarde
@@ -183,7 +172,7 @@ class ParticipantController extends Controller
         // 3. LocalStorage (vérifié dans JavaScript côté client)
 
         // Si détecté par cookie ou session, empêcher la participation
-        if (($request->cookie($cookieName) !== null || \Session::has($sessionKey)) && !session('is_test_account')) {
+        if (($request->cookie($cookieName) !== null || \Session::has($sessionKey))) {
             \Log::info('Participation bloquée - Déjà joué au concours ' . $contest->id, [
                 'detection_method' => $request->cookie($cookieName) ? 'cookie' : 'session',
                 'ip' => $request->ip(),
@@ -234,7 +223,7 @@ class ParticipantController extends Controller
             ->where('contest_id', $request->contestId)
             ->first();
 
-        if ($existingEntry && !session('is_test_account')) {
+        if ($existingEntry) {
             // Définir les cookies pour empêcher les participations multiples
             // 1. Cookie HTTP côté serveur
             $cookieName = 'contest_played_' . $request->contestId;
@@ -277,21 +266,6 @@ class ParticipantController extends Controller
             return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
         }
         
-        // Si c'est un compte de test avec une entrée existante, supprimer cette entrée pour permettre de rejouer
-        if ($existingEntry && session('is_test_account')) {
-            \Log::info('Mode test: suppression de la participation existante pour permettre de rejouer', [
-                'participant_id' => $participant->id,
-                'contest_id' => $request->contestId,
-                'email' => $participant->email ?? 'non défini'
-            ]);
-            
-            // Option 1: Supprimer complètement l'entrée existante (plus radical)
-            // $existingEntry->delete();
-            
-            // Option 2: Réutiliser l'entrée existante (préservation des données)
-            // Le code ci-dessous va simplement continuer avec une nouvelle entrée sans supprimer l'ancienne
-        }
-
         // Créer une nouvelle participation
         $entry = Entry::create([
             'participant_id' => $participant->id,
@@ -390,24 +364,11 @@ class ParticipantController extends Controller
             }
 
             // Vérifier si la roue a déjà été tournée pour cette entrée
-            // Pour les comptes en mode test, on ignore cette vérification pour permettre de jouer plusieurs fois
-            if ($entry->has_played && !session('is_test_account')) {
+            if ($entry->has_played) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette roue a déjà été tournée. Vous ne pouvez pas jouer à nouveau.'
                 ]);
-            }
-
-            // Si c'est un compte de test et que l'entrée a déjà été jouée, 
-            // on réinitialise l'entrée pour permettre de jouer à nouveau
-            if ($entry->has_played && session('is_test_account')) {
-                \Log::info('Mode test: permettre de tourner la roue à nouveau', [
-                    'entry_id' => $entry->id,
-                    'email' => $entry->participant->email ?? 'non défini'
-                ]);
-                
-                // On ne réinitialise pas has_played pour conserver le fonctionnement normal
-                // du reste du code. Le problème est résolu uniquement lors de la vérification.
             }
 
             // Récupérer le concours et vérifier s'il est actif
@@ -463,12 +424,6 @@ class ParticipantController extends Controller
             // Définir des probabilités de gagner (5% chance de gagner par défaut)
             $chanceToWin = 0.05; // 5% de chance de gagner
             
-            // Si c'est un compte de test, garantir la victoire
-            if (session('is_test_account')) {
-                \Log::info('Compte de test détecté, chances de gain de 20% configurées');
-                $chanceToWin = 0.2; // 20% de chance de gagner pour les comptes test
-            }
-
             // Créer 20 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance
             $sectors = [];
 
@@ -736,28 +691,6 @@ class ParticipantController extends Controller
                         } catch (\Exception $innerEx) {
                             \Log::error('Erreur lors de l\'envoi WhatsApp (fallback également échoué)', ['error' => $innerEx->getMessage()]);
                         }
-                    }
-                }
-
-                // Pour les utilisateurs en mode test, réinitialiser l'entrée pour permettre de jouer à nouveau
-                if (session('is_test_account') && isset($entry) && $entry) {
-                    try {
-                        DB::beginTransaction();
-                        
-                        // Réinitialiser l'entrée pour pouvoir jouer à nouveau
-                        $entry->has_played = false;
-                        $entry->save();
-                        
-                        \Log::info('Mode test: entrée réinitialisée pour permettre de jouer à nouveau', [
-                            'entry_id' => $entry->id
-                        ]);
-                        
-                        DB::commit();
-                    } catch (\Exception $e) {
-                        DB::rollback();
-                        \Log::error('Erreur lors de la réinitialisation de l\'entrée en mode test', [
-                            'error' => $e->getMessage()
-                        ]);
                     }
                 }
 

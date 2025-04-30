@@ -7,14 +7,8 @@
     <script>
         // Stocker l'information dans localStorage pour renforcer la limitation
         document.addEventListener('DOMContentLoaded', function() {
-            // Vérifier si nous sommes en mode test (avec le flag dans sessionStorage)
-            // et ne sauvegarder dans localStorage que si ce n'est pas le cas
-            if (!sessionStorage.getItem('prevent_localstorage_recreation')) {
-                localStorage.setItem('{{ $localStorageKey }}', 'played');
-                console.log('Participation enregistrée dans localStorage: {{ $localStorageKey }}');
-            } else {
-                console.log('Mode test détecté, localStorage non créé');
-            }
+            localStorage.setItem('{{ $localStorageKey }}', 'played');
+            console.log('Participation enregistrée dans localStorage: {{ $localStorageKey }}');
         });
     </script>
     @endif
@@ -34,7 +28,6 @@
                             <p class="mt-2">🎁 Chaque participant ne peut tenter sa chance qu'une seule fois par semaine !</p>
                             @if(isset($contest_end_date))
                                 <!--<p class="mt-3">📅 Ce concours se termine le <span style="color: var(--primary-red);">{{ $contest_end_date }}</span>.</p>-->
-                                <p>✨ Un nouveau concours avec de nouveaux lots incroyables sera peut-être disponible après cette date. 🎉</p>
                                 <p class="mt-3">📱 Gardez un œil sur notre application pour ne rien manquer !</p>
                             @endif
                         @endif

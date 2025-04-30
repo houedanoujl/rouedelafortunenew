@@ -157,7 +157,7 @@
             if (resultMessage && resultTitle && resultText) {
                 resultMessage.className = 'alert alert-danger my-3';
                 resultTitle.innerHTML = '<i class="fas fa-times-circle"></i> Dommage !';
-                resultText.innerHTML = 'Vous avez perdu cette fois-ci. La roue s\'est arrêtée sur un segment PERDU.';
+                resultText.innerHTML = 'Perdu. Merci de revenir la semaine prochaine pour tenter à nouveau votre chance.';
                 resultMessage.style.display = 'block';
             }
 
@@ -203,7 +203,7 @@
                 if (resultMessage && resultTitle && resultText) {
                     resultMessage.className = 'alert alert-danger my-3';
                     resultTitle.innerHTML = '<i class="fas fa-times-circle"></i> Dommage !';
-                    resultText.innerHTML = 'Vous avez perdu cette fois-ci. La roue s\'est arrêtée sur un segment PERDU.<br>Merci de revenir la semaine prochaine pour tenter à nouveau votre chance.';
+                    resultText.innerHTML = 'Perdu.<br>Merci de revenir la semaine prochaine pour tenter à nouveau votre chance.';
                     resultMessage.style.display = 'block';
                 }
                 

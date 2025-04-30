@@ -212,122 +212,76 @@ class FortuneWheel extends Component
      */
     public function spin()
     {
-        // Vérifier si c'est un utilisateur de test autorisé à rejouer
-        $isTestAccount = false;
-        
-        if ($this->entry->participant && session('is_test_account')) {
-            $isTestAccount = true;
-            // Réinitialiser l'entrée pour permettre de rejouer
+        try {
+            // Définir l'état de tournage à vrai
+            $this->spinning = true;
+            
+            // Si la roue a déjà été tournée, on ne permet pas de tourner à nouveau
             if ($this->entry->has_played) {
-                Log::info('Utilisateur test autorisé à rejouer', [
-                    'email' => $this->entry->participant->email,
-                ]);
+                return redirect()->route('spin.result', ['entry' => $this->entry->id]);
             }
-        }
-        
-        // Vérifier si la participation a déjà été jouée (sauf pour les comptes de test)
-        if ($this->entry->has_played && !$isTestAccount) {
-            return;
-        }
-        
-        // Récupérer le concours actif
-        $contest = $this->entry->contest;
-        if (!$contest) {
-            return;
-        }
 
-        // Chercher les distributions pour le concours actif
-        $distributions = PrizeDistribution::where('contest_id', $contest->id)
-            ->with('prize')
-            ->get();
-        
-        // Filtrer les distributions valides (avec prix non null et stock > 0)
-        $validDistributions = $distributions->filter(function($dist) {
-            return $dist->prize !== null && $dist->remaining > 0;
-        });
-        
-        Log::info('Distributions valides (prix non null et remaining > 0)', [
-            'count' => $validDistributions->count(),
-            'distributions' => $validDistributions->map(function($dist) {
-                return [
-                    'id' => $dist->id,
-                    'prize_id' => $dist->prize_id,
-                    'prize_name' => $dist->prize ? $dist->prize->name : null,
-                    'remaining' => $dist->remaining
-                ];
-            })
-        ]);
-        
-        // LOGIQUE WINWHEEL STANDARD
-        // Déterminer si l'utilisateur gagne en fonction du stock et des probabilités
-        
-        // Si c'est un compte de test, 5% de chance de gagner
-        if ($isTestAccount) {
-            $isWinning = rand(1, 20) === 1; 
-            Log::info('Compte test: 5% de chance de gagner', [
-                'email' => $this->entry->participant->email
+            // Vérifier les stocks encore une fois (double vérification) pour éviter les manipulations
+            $this->checkStocksBeforeRender();
+            
+            if (!$this->hasStock) {
+                // Rediriger vers une page indiquant qu'il n'y a plus de stock
+                $this->dispatch('no-stock');
+                return;
+            }
+            
+            // Générer un résultat (gagné/perdu) basé sur la probabilité
+            $isWinning = $this->calculateWinChance();
+            
+            // Déterminer le secteur et l'angle final
+            $result = $this->determineSector($isWinning);
+            $finalAngle = $result['angle'];
+            $sectorIndex = $result['index'];
+            $sectorId = $result['id'];
+            
+            // Journaliser la décision
+            Log::info('Décision de spin générée', [
+                'entry_id' => $this->entry->id,
+                'is_winning' => $isWinning ? 'Oui' : 'Non',
+                'final_angle' => $finalAngle,
+                'sector_id' => $sectorId
             ]);
-        }
-        // Si des lots sont disponibles, appliquer la probabilité normale
-        else if ($validDistributions->count() > 0) {
-            // 5% de chance de gagner (1 chance sur 20)
-            $isWinning = rand(1, 20) === 1; 
-            Log::info('Stock disponible: Probabilité standard de gain (5%)', [
-                'isWinning' => $isWinning ? 'OUI' : 'NON'
+            
+            // Est-ce un secteur gagnant ? (Les secteurs pairs sont gagnants)
+            $isResultWinning = $sectorIndex % 2 === 0;
+            
+            // Utiliser le résultat déterminé par le secteur, pas par le tirage au sort
+            $this->entry->has_played = true;
+            $this->entry->has_won = $isResultWinning;
+            $this->entry->save();
+            
+            // Enregistrer le résultat dans l'historique JSON
+            $this->saveSpinHistory($finalAngle, $isResultWinning, $sectorId, $this->entry);
+            
+            // Déclencher l'animation de la roue
+            $this->dispatch('startSpinWithSound', [
+                'angle' => $finalAngle,
+                'isWinning' => $isResultWinning ? 1 : 0,
+                'sectorId' => $sectorId,
+                'sectorIndex' => $sectorIndex
             ]);
-        }
-        // Si aucun lot n'est disponible, perte assurée
-        else {
-            $isWinning = false;
-            Log::info('Aucun lot disponible: Perte assurée', [
-                'validDistributions' => 0
+            
+            // Stocke le résultat pour traitement après la fin de l'animation
+            session()->put('wheel_result', [
+                'entry_id' => $this->entry->id,
+                'isWinning' => $isResultWinning,
+                'processed' => false
             ]);
-        }
-        
-        // Déterminer le secteur et l'angle final en fonction du résultat souhaité
-        $sectorInfo = $this->determineSector($isWinning);
-        $finalAngle = $sectorInfo['angle'];
-        $sectorIndex = $sectorInfo['index'];
-        $sectorId = $sectorInfo['id'];
-        
-        // Est-ce un secteur gagnant ? (Les secteurs pairs sont gagnants)
-        $isResultWinning = $sectorIndex % 2 === 0;
-        
-        // Journaliser les informations du secteur et de l'angle
-        Log::info('Informations du secteur sélectionné', [
-            'angle' => $finalAngle,
-            'secteur_index' => $sectorIndex,
-            'secteur_id' => $sectorId,
-            'est_gagnant' => $isResultWinning ? 'oui' : 'non',
-            'classe' => $isResultWinning ? 'secteur-gagne' : 'secteur-perdu'
-        ]);
-        
-        // Utiliser le résultat déterminé par le secteur, pas par le tirage au sort
-        $this->entry->has_played = true;
-        $this->entry->has_won = $isResultWinning;
-        $this->entry->save();
-        
-        // Enregistrer le résultat dans l'historique JSON
-        $this->saveSpinHistory($finalAngle, $isResultWinning, $sectorId, $this->entry);
-        
-        // Déclencher l'animation de la roue
-        $this->dispatch('startSpinWithSound', [
-            'angle' => $finalAngle,
-            'isWinning' => $isResultWinning ? 1 : 0,
-            'sectorId' => $sectorId,
-            'sectorIndex' => $sectorIndex
-        ]);
-        
-        // Stocke le résultat pour traitement après la fin de l'animation
-        session()->put('wheel_result', [
-            'entry_id' => $this->entry->id,
-            'isWinning' => $isResultWinning,
-            'processed' => false
-        ]);
 
-        // Rediriger après la fin de l'animation
-        // Augmentation du délai à 20 secondes pour tenir compte de l'animation plus longue (12-16 secondes)
-        $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 20000)");
+            // Rediriger après la fin de l'animation
+            // Augmentation du délai à 20 secondes pour tenir compte de l'animation plus longue (12-16 secondes)
+            $this->js("setTimeout(() => { window.location.href = '" . route('spin.result', ['entry' => $this->entry->id]) . "' }, 20000)");
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du spin', [
+                'error' => $e->getMessage(),
+                'entry_id' => $this->entry->id
+            ]);
+        }
     }
     
     /**

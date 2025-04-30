@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Entry;
 use App\Models\Prize;
 use Illuminate\Http\Request;
-use App\Helpers\TestAccountHelper;
 use App\Helpers\LogHelper;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Log;
@@ -44,12 +43,6 @@ class SpinController extends Controller
             });
             
             $hasStock = $validDistributions->count() > 0;
-            
-            // Mode test - forcer l'affichage de la roue
-            if (session('is_test_account')) {
-                \Log::info('Compte test détecté dans SpinController - affichage forcé de la roue');
-                $hasStock = true;
-            }
         }
         
         // Si aucun stock, rediriger vers page "stock épuisé"
@@ -57,19 +50,6 @@ class SpinController extends Controller
             return view('no-stock', ['entry' => $entry, 'contest' => $contest]);
         }
 
-        // Vérifier si c'est un compte de test qui peut rejouer sans restriction
-        $isTestAccount = false;
-        if ($entry->participant && $entry->participant->email) {
-            $isTestAccount = TestAccountHelper::isTestAccount($entry->participant->email);
-            
-            // Stocker dans la session pour l'affichage de la bannière
-            if ($isTestAccount) {
-                $companyName = TestAccountHelper::getCompanyName($entry->participant->email);
-                $request->session()->put('is_test_account', true);
-                $request->session()->put('test_account_company', $companyName);
-            }
-        }
-        
         LogHelper::addSessionSeparator('END');
         return view('wheel', compact('entry'));
     }
@@ -89,27 +69,13 @@ class SpinController extends Controller
             abort(404);
         }
         
-        // Vérifier si c'est un compte de test
-        $isTestAccount = false;
-        if ($entry->participant && $entry->participant->email) {
-            $isTestAccount = TestAccountHelper::isTestAccount($entry->participant->email);
-            
-            // Stocker dans la session pour l'affichage de la bannière
-            if ($isTestAccount) {
-                $companyName = TestAccountHelper::getCompanyName($entry->participant->email);
-                $request->session()->put('is_test_account', true);
-                $request->session()->put('test_account_company', $companyName);
-            }
-        }
-        
-        // Log détaillé pour le débogage du mode test et des informations d'entrée
+        // Log détaillé pour le débogage des informations d'entrée
         Log::debug('SpinController@result - Informations initiales', [
             'entry_id' => $entry->id,
             'participant_id' => $entry->participant->id ?? 'Non défini',
             'email' => $entry->participant->email ?? 'Non défini',
             'phone' => $entry->participant->phone ?? 'Non défini',
-            'has_won' => $entry->has_won ? 'Oui' : 'Non',
-            'is_test_account' => $isTestAccount ? 'Oui' : 'Non'
+            'has_won' => $entry->has_won ? 'Oui' : 'Non'
         ]);
         
         // Traiter le résultat du spin s'il est stocké en session et pas encore traité

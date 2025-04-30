@@ -1,5 +1,5 @@
 /* 
- * Roue de la Fortune - Styles principaux
+ * Jeu dinor 70 ans - Styles principaux
  * Application Laravel avec Filament et Livewire
  */
 
@@ -198,13 +198,13 @@ body {
 }
 
 .page-item.active .page-link {
-    z-index: 3;
+    z-index: 1;
     color: #fff;
     background-color: var(--primary-color);
     border-color: var(--primary-color);
 }
 
-/* Roue de la fortune - styles spécifiques */
+/* Jeu dinor 70 ans - styles spécifiques */
 .fortune-wheel-container {
     padding: 2rem 0;
 }

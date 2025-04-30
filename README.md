@@ -1,9 +1,9 @@
-# Roue de la Fortune - Application 70 ans Dinor avec Docker pour le développement local
+# Jeu dinor 70 ans - Application 70 ans Dinor avec Docker pour le développement local
 
 [![Site Deployment Status](https://img.shields.io/badge/70%20ans%20Dinor-Déployé-success)](https://github.com/jhouedanou/rouedelafortune)
 
 
-Cette application "Roue de la Fortune" pour les 70 ans de Dinor est configurée pour fonctionner avec Docker, ce qui facilite le déploiement et le développement.
+Cette application "Jeu dinor 70 ans" pour les 70 ans de Dinor est configurée pour fonctionner avec Docker, ce qui facilite le déploiement et le développement.
 
 ## Prérequis
 
@@ -152,7 +152,7 @@ docker compose exec app bash
 
 ## Structure de l'application
 
-L'application "Roue de la Fortune" est basée sur Laravel et utilise Filament pour l'interface d'administration. Elle comprend les modèles suivants :
+L'application "Jeu dinor 70 ans" est basée sur Laravel et utilise Filament pour l'interface d'administration. Elle comprend les modèles suivants :
 
 - **Contest** : Gestion des concours
 - **Prize** : Gestion des prix

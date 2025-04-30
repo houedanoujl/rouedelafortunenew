@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roue de la Fortune - Connexion</title>
+    <title>Jeu dinor 70 ans - Connexion</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -152,7 +152,7 @@
             <div class="col-md-6">
                 <div class="login-container">
                     <div class="logo animate__animated animate__fadeIn" style="margin-bottom: 15px;">
-                        <h1>Roue de la Fortune</h1>
+                        <h1>Jeu dinor 70 ans</h1>
                         <p>Tentez votre chance</p>
                     </div>
                     

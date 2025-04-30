@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Roue de la Fortune') }} - Administration</title>
+    <title>{{ config('app.name', 'Jeu dinor 70 ans') }} - Administration</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -52,7 +52,7 @@
     <div class="login-card">
         <div class="login-header">
             <h2>Administration</h2>
-            <p>Roue de la Fortune</p>
+            <p>Jeu dinor 70 ans</p>
         </div>
 
         @if ($errors->any())

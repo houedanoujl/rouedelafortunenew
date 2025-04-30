@@ -47,7 +47,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Roue de la Fortune - Votre QR Code</h1>
+            <img src="{{ $logoPath }}" alt="Logo" class="logo">
+            <h1>Jeu dinor 70 ans - Votre QR Code</h1>
             <p>Félicitations pour votre gain !</p>
         </div>
 
@@ -71,7 +72,7 @@
         </div>
 
         <div class="footer">
-            <p>Roue de la Fortune &copy; {{ date('Y') }}. Tous droits réservés.</p>
+            <p>Jeu dinor 70 ans &copy; {{ date('Y') }}. Tous droits réservés.</p>
         </div>
     </div>
 </body>
