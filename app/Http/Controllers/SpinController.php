@@ -24,7 +24,29 @@ class SpinController extends Controller
 
         // Vérifier si l'entrée a déjà été jouée
         if ($entry->has_played) {
-            return redirect()->route('spin.result', ['entry' => $entry->id]);
+            // Vérifier si nous avons un jeton d'authentification pour cette entrée
+            $authToken = $request->session()->get('entry_auth_token_' . $entry->id);
+            
+            // Si aucun jeton n'existe, en générer un nouveau
+            if (!$authToken) {
+                $authToken = md5($entry->id . '_' . time() . '_' . rand(1000, 9999));
+                $request->session()->put('entry_auth_token_' . $entry->id, $authToken);
+            }
+            
+            // Marquer cette entrée comme ayant été consultée dans cette session
+            $request->session()->put('played_entry_' . $entry->id, true);
+            
+            // Capturer l'empreinte de l'appareil
+            $deviceFingerprint = $request->cookie('device_fingerprint');
+            if ($deviceFingerprint) {
+                $request->session()->put('device_fingerprint', $deviceFingerprint);
+            }
+            
+            // Rediriger vers la page de résultat avec le jeton d'authentification
+            return redirect()->route('spin.result', [
+                'entry' => $entry->id,
+                'token' => $authToken
+            ]);
         }
         
         // Vérifier si des lots sont disponibles
@@ -50,6 +72,23 @@ class SpinController extends Controller
             return view('no-stock', ['entry' => $entry, 'contest' => $contest]);
         }
 
+        // Générer un jeton d'authentification pour cette entrée
+        $authToken = md5($entry->id . '_' . time() . '_' . rand(1000, 9999));
+        $request->session()->put('entry_auth_token_' . $entry->id, $authToken);
+        
+        // Marquer cette entrée comme étant consultée dans cette session
+        $request->session()->put('played_entry_' . $entry->id, true);
+        
+        // Génération d'une empreinte d'appareil unique si elle n'existe pas déjà
+        $deviceFingerprint = $request->cookie('device_fingerprint');
+        if (!$deviceFingerprint) {
+            $deviceFingerprint = md5($request->ip() . '_' . $request->userAgent() . '_' . time());
+            cookie()->queue('device_fingerprint', $deviceFingerprint, 60 * 24 * 30); // 30 jours
+        }
+        
+        // Stocker l'empreinte dans la session
+        $request->session()->put('device_fingerprint', $deviceFingerprint);
+
         LogHelper::addSessionSeparator('END');
         return view('wheel', compact('entry'));
     }
@@ -68,6 +107,45 @@ class SpinController extends Controller
         if (!$entry->participant) {
             abort(404);
         }
+        
+        // === PROTECTION CONTRE LE PARTAGE D'URL ===
+        // Vérifier si cette entrée a été vue dans cette session
+        $sessionKey = 'played_entry_' . $entry->id;
+        $entryPlayed = $request->session()->has($sessionKey);
+        
+        // Vérifier le token d'authentification
+        $authToken = $request->session()->get('entry_auth_token_' . $entry->id);
+        $requestToken = $request->query('token');
+        $tokenValid = ($authToken && $requestToken && $authToken === $requestToken);
+        
+        // Vérifier l'empreinte du navigateur
+        $deviceFingerprint = $request->cookie('device_fingerprint');
+        $storedFingerprint = $request->session()->get('device_fingerprint');
+        $fingerprintValid = ($deviceFingerprint && $storedFingerprint && $deviceFingerprint === $storedFingerprint);
+        
+        // Si ni le token ni l'empreinte ne sont valides, rediriger
+        if (!$entryPlayed || (!$tokenValid && !$fingerprintValid)) {
+            Log::warning('Tentative d\'accès non autorisé à un résultat de spin', [
+                'entry_id' => $entry->id,
+                'token_valid' => $tokenValid,
+                'fingerprint_valid' => $fingerprintValid,
+                'session_has_played' => $entryPlayed,
+                'ip' => $request->ip()
+            ]);
+            
+            return redirect()->route('home')->with('error', 
+                'Accès non autorisé. Cette URL est personnelle et ne peut pas être partagée.');
+        }
+        // === FIN DE LA PROTECTION ===
+        
+        // Vérifier si le jeton d'authentification est valide (pour le débogage)
+        Log::debug('Vérification d\'authentification pour la page de résultat', [
+            'entry_id' => $entry->id,
+            'has_auth_token' => !empty($authToken),
+            'request_has_token' => !empty($requestToken),
+            'tokens_match' => (!empty($authToken) && !empty($requestToken) && $authToken === $requestToken),
+            'session_marked_played' => $request->session()->has('played_entry_' . $entry->id)
+        ]);
         
         // Log détaillé pour le débogage des informations d'entrée
         Log::debug('SpinController@result - Informations initiales', [

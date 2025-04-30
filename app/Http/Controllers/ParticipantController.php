@@ -421,26 +421,26 @@ class ParticipantController extends Controller
                 }
             }
 
-            // Définir des probabilités de gagner (5% chance de gagner par défaut)
-            $chanceToWin = 0.05; // 5% de chance de gagner
+            // Définir des probabilités de gagner (1% chance de gagner)
+            $chanceToWin = 0.01; // 1% de chance de gagner
             
-            // Créer 20 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance
+            // Créer 100 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance
             $sectors = [];
 
             // Si aucun prix en stock, tous les secteurs sont perdants
             if (!$hasPrizesInStock) {
-                // 20 secteurs perdants
-                for ($i = 0; $i < 20; $i++) {
+                // 100 secteurs perdants
+                for ($i = 0; $i < 100; $i++) {
                     $sectors[] = [
                         'id' => null,
                         'name' => 'Pas de chance',
                         'distribution_id' => null,
-                        'probability' => 1/20, // Probabilité égale
+                        'probability' => 1/100, // Probabilité égale
                         'is_winning' => false
                     ];
                 }
             } else {
-                // Ajouter 1 secteur gagnant (5% de chance de gagner, soit 1/20)
+                // Ajouter 1 secteur gagnant (1% de chance de gagner, soit 1/100)
                 $sectors[] = [
                     'id' => 'win', // Juste un marqueur, le vrai prix sera choisi aléatoirement
                     'name' => 'Gagné !',
@@ -449,13 +449,13 @@ class ParticipantController extends Controller
                     'is_winning' => true
                 ];
 
-                // Ajouter 19 secteurs perdants (95% de chance de perdre, soit 19/20)
-                for ($i = 0; $i < 19; $i++) {
+                // Ajouter 99 secteurs perdants (99% de chance de perdre, soit 99/100)
+                for ($i = 0; $i < 99; $i++) {
                     $sectors[] = [
                         'id' => null,
                         'name' => 'Pas de chance',
                         'distribution_id' => null,
-                        'probability' => (1 - $chanceToWin) / 19,
+                        'probability' => (1 - $chanceToWin) / 99,
                         'is_winning' => false
                     ];
                 }

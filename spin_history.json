@@ -423,5 +423,124 @@
         "result": "lose",
         "has_won_in_db": false,
         "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T21:43:56+00:00",
+        "entry_id": 3,
+        "participant": {
+            "id": 3,
+            "name": "ffsd s",
+            "email": "sqfqsfqs@qsmsq.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1244,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T21:45:19+00:00",
+        "entry_id": 4,
+        "participant": {
+            "id": 4,
+            "name": "qsdqd qsdqsdqs",
+            "email": "sdsqdqsdqs@sqksqdsq.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1972,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T21:46:18+00:00",
+        "entry_id": 5,
+        "participant": {
+            "id": 5,
+            "name": "qdqD Dqdqdqd",
+            "email": "qdskqdf@skmdhq.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1864,
+        "sector_id": "secteur-8",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T21:48:11+00:00",
+        "entry_id": 6,
+        "participant": {
+            "id": 6,
+            "name": "sgssgs sdsssq",
+            "email": "LQDFHQ@KMSQ.COM",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1241,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T21:54:14+00:00",
+        "entry_id": 7,
+        "participant": {
+            "id": 7,
+            "name": "Big Five Houedanou",
+            "email": "jhouedanou@gmail.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1254,
+        "sector_id": "secteur-5",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T21:57:26+00:00",
+        "entry_id": 8,
+        "participant": {
+            "id": 8,
+            "name": "Big Edition",
+            "email": "jeanluc@bigfiveabidjan.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1862,
+        "sector_id": "secteur-8",
+        "sector_class": "secteur-gagne",
+        "result": "win",
+        "has_won_in_db": true,
+        "ip_address": "192.168.65.1"
+    },
+    {
+        "timestamp": "2025-04-30T22:01:43+00:00",
+        "entry_id": 10,
+        "participant": {
+            "id": 10,
+            "name": "sdsdsd qsdqsdqs",
+            "email": "qqqfqd@sqdqd.com",
+            "ip_address": "192.168.65.1"
+        },
+        "contest_id": 1,
+        "angle": 1302,
+        "sector_id": "secteur-3",
+        "sector_class": "secteur-perdu",
+        "result": "lose",
+        "has_won_in_db": false,
+        "ip_address": "192.168.65.1"
     }
 ]

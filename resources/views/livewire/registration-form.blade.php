@@ -242,10 +242,18 @@
         if (!contestId) return;
         const key = `contest_played_${contestId}`;
         if (localStorage.getItem(key)) {
-            const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 300);
+            // Vérifier si on est déjà sur la page d'accueil avec already_played=true pour éviter les redirections en boucle
+            const urlParams = new URLSearchParams(window.location.search);
+            const alreadyOnAlreadyPlayedPage = urlParams.get('already_played') === 'true';
+            
+            // Ne rediriger que si on n'est pas déjà sur la page de redirection 
+            // ou si la session n'indique pas qu'on a déjà affiché la popup
+            if (!alreadyOnAlreadyPlayedPage && !sessionStorage.getItem('popup_shown')) {
+                const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 300);
+            }
         }
     }
 </script>
