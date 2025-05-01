@@ -81,12 +81,29 @@ class EntryResource extends Resource
                     ->label('Date de gain')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\IconColumn::make('has_won')
+                    ->label('Gagnant')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('participant.phone')
+                    ->label('Téléphone')
+                    ->searchable(),
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('winners')
+                    ->label('Seulement les gagnants')
+                    ->query(fn (Builder $query): Builder => $query->where('has_won', true))
+                    ->toggle()
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('send_whatsapp')
+                    ->label('Envoyer QR+PDF')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('success')
+                    ->url(fn (Entry $record): string => route('admin.whatsapp.send-documents', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Entry $record): bool => $record->has_won && $record->participant && $record->participant->phone)
+                    ->tooltip('Envoyer le QR code et le PDF par WhatsApp')
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

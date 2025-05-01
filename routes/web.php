@@ -94,4 +94,5 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/whatsapp-logs', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'index'])->name('admin.whatsapp.logs');
     Route::get('/whatsapp-logs/download', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'download'])->name('admin.whatsapp.logs.download');
     Route::get('/whatsapp-logs/clear', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'clear'])->name('admin.whatsapp.logs.clear');
+    Route::get('/whatsapp/send-documents/{entry}', [\App\Http\Controllers\Admin\WhatsAppDocumentController::class, 'sendDocuments'])->name('admin.whatsapp.send-documents');
 });

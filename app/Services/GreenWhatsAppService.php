@@ -264,13 +264,17 @@ class GreenWhatsAppService
      * @param string $phoneNumber Numéro à formater
      * @return string Numéro formaté
      */
-    private function formatPhoneNumber($phoneNumber)
+    public function formatPhoneNumber($phoneNumber)
     {
         // Supprimer tous les caractères non numériques
         $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
         
-        // Si le numéro commence par "07", supprimer ces deux premiers chiffres 
-        if (substr($phone, 0, 2) === '07') {
+        // Si le numéro a 10 chiffres, supprimer les deux premiers chiffres
+        if (strlen($phone) === 10) {
+            $phone = substr($phone, 2);
+        }
+        // Si le numéro commence par "07", supprimer ces deux premiers chiffres (ancienne logique, conservée par sécurité)
+        elseif (substr($phone, 0, 2) === '07') {
             $phone = substr($phone, 2);
         }
         
