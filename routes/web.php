@@ -88,3 +88,10 @@ Route::post('/meta-whatsapp-test', [MetaWhatsappTestController::class, 'sendMess
 // Page de test WhatsApp Green API
 Route::get('/green-api-whatsapp-test', [GreenApiWhatsappController::class, 'showForm'])->name('green.whatsapp.test');
 Route::post('/green-api-whatsapp-test', [GreenApiWhatsappController::class, 'sendMessage'])->name('green.whatsapp.send');
+
+// Routes pour les logs WhatsApp (admin)
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/whatsapp-logs', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'index'])->name('admin.whatsapp.logs');
+    Route::get('/whatsapp-logs/download', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'download'])->name('admin.whatsapp.logs.download');
+    Route::get('/whatsapp-logs/clear', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'clear'])->name('admin.whatsapp.logs.clear');
+});

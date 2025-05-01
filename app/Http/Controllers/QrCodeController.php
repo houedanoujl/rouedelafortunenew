@@ -96,14 +96,40 @@ class QrCodeController extends Controller
         $qrcodeUrl = route('qrcode.result', ['code' => $qrCode->code]);
         $qrcodeImage = base64_encode(QrCode::format('png')->size(300)->generate($qrcodeUrl));
         
-        $pdf = PDF::loadView('qrcodes.pdf', [
-            'qrCode' => $qrCode,
-            'entry' => $entry,
-            'prize' => $entry->prize,
-            'qrcodeImage' => $qrcodeImage
-        ]);
+        // Chemin du logo (public/images/logo.png par défaut)
+        $logoPath = public_path('images/logo.png');
         
-        return $pdf->download('qrcode-' . $code . '.pdf');
+        // Si le logo existe, l'encoder en base64
+        $logoBase64 = null;
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        } else {
+            // Utiliser un logo par défaut ou laisser null
+            Log::warning('Logo non trouvé pour PDF', ['path' => $logoPath]);
+        }
+        
+        try {
+            $pdf = PDF::loadView('qrcodes.pdf', [
+                'qrCode' => $qrCode,
+                'entry' => $entry,
+                'prize' => $entry->prize,
+                'qrcodeImage' => $qrcodeImage,
+                'logoPath' => $logoBase64
+            ]);
+            
+            return $pdf->download('qrcode-' . $code . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la génération du PDF', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'code' => $code
+            ]);
+            
+            // Renvoyer une page d'erreur plus explicite
+            return response()->view('errors.pdf-generation', [
+                'message' => 'Impossible de générer le PDF. Veuillez réessayer ou contacter l\'administrateur.'
+            ], 500);
+        }
     }
     
     public function downloadJpg($code)

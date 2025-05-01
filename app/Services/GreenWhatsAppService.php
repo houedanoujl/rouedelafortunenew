@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Client;
+use App\Helpers\WhatsAppLogger;
 
 class GreenWhatsAppService
 {
@@ -129,11 +130,28 @@ class GreenWhatsAppService
                     'recipient' => $recipientPhone, 
                     'message_id' => $fileResult['idMessage']
                 ]);
+                
+                // Logger dans le fichier dédié WhatsApp
+                WhatsAppLogger::success($recipientPhone, $message, [
+                    'message_id' => $fileResult['idMessage'],
+                    'type' => 'qrcode',
+                    'qrcode' => basename($qrCodePath)
+                ]);
+                
                 return true;
             } else {
                 Log::error('Échec de l\'envoi du QR code via Green API', [
                     'response' => json_encode($fileResult)
                 ]);
+                
+                // Logger l'échec dans le fichier dédié WhatsApp
+                WhatsAppLogger::error(
+                    $recipientPhone, 
+                    $message, 
+                    'Échec de l\'envoi du QR code: ' . json_encode($fileResult),
+                    ['type' => 'qrcode']
+                );
+                
                 return "Erreur: échec de l'envoi du QR code";
             }
             
@@ -144,6 +162,15 @@ class GreenWhatsAppService
                 'line' => $e->getLine(),
                 'file' => $e->getFile()
             ]);
+            
+            // Logger l'exception dans le fichier dédié WhatsApp
+            WhatsAppLogger::error(
+                $recipientPhone, 
+                $message ?? 'Message inconnu', 
+                'Exception: ' . $e->getMessage(),
+                ['type' => 'qrcode', 'exception' => true]
+            );
+            
             return "Exception: " . $e->getMessage();
         }
     }
@@ -193,8 +220,22 @@ class GreenWhatsAppService
                 'response' => $textResult
             ]);
             if (isset($textResult['idMessage'])) {
+                // Logger dans le fichier dédié WhatsApp
+                WhatsAppLogger::success($recipientPhone, $message, [
+                    'message_id' => $textResult['idMessage'],
+                    'type' => 'text'
+                ]);
+                
                 return true;
             } else {
+                // Logger l'échec dans le fichier dédié WhatsApp
+                WhatsAppLogger::error(
+                    $recipientPhone, 
+                    $message, 
+                    'Échec de l\'envoi du message texte: ' . json_encode($textResult),
+                    ['type' => 'text']
+                );
+                
                 return "Erreur: échec de l'envoi du message texte";
             }
         } catch (\Exception $e) {
@@ -204,6 +245,15 @@ class GreenWhatsAppService
                 'line' => $e->getLine(),
                 'file' => $e->getFile()
             ]);
+            
+            // Logger l'exception dans le fichier dédié WhatsApp
+            WhatsAppLogger::error(
+                $recipientPhone, 
+                $message, 
+                'Exception: ' . $e->getMessage(),
+                ['type' => 'text', 'exception' => true]
+            );
+            
             return "Exception: " . $e->getMessage();
         }
     }
