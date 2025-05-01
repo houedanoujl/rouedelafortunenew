@@ -30,10 +30,38 @@ class PrizeDistributionResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Informations concours')
+                    ->description('Les dates de distribution doivent être dans les limites du concours')
+                    ->schema([
+                        Forms\Components\Placeholder::make('contest_dates')
+                            ->label('Dates du concours sélectionné')
+                            ->content(function (callable $get) {
+                                $contestId = $get('contest_id');
+                                if (!$contestId) {
+                                    return 'Sélectionnez un concours pour voir ses dates';
+                                }
+                                
+                                $contest = \App\Models\Contest::find($contestId);
+                                if (!$contest) {
+                                    return 'Aucune information disponible';
+                                }
+                                
+                                return sprintf(
+                                    'Du %s au %s', 
+                                    $contest->start_date->format('d/m/Y H:i'), 
+                                    $contest->end_date->format('d/m/Y H:i')
+                                );
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->persistCollapsed(false),
                 Forms\Components\Select::make('contest_id')
                     ->relationship('contest', 'name')
                     ->label('Concours')
-                    ->required(),
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn () => $form->fill()),
                 Forms\Components\Select::make('prize_id')
                     ->relationship('prize', 'name')
                     ->label('Prix')
@@ -47,11 +75,51 @@ class PrizeDistributionResource extends Resource
                 Forms\Components\DateTimePicker::make('start_date')
                     ->label('Date de début')
                     ->required()
-                    ->default(now()),
+                    ->default(now())
+                    ->reactive()
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        // Si date de début est définie, automatiquement calculer fin à J+1 même heure
+                        if ($state) {
+                            $endDate = \Carbon\Carbon::parse($state)->addDay();
+                            
+                            // Vérifier si la date de fin calculée dépasse la fin du concours
+                            $contestId = $get('contest_id');
+                            if ($contestId) {
+                                $contest = \App\Models\Contest::find($contestId);
+                                if ($contest && $endDate->gt($contest->end_date)) {
+                                    // Si la date calculée dépasse la fin du concours, utiliser la fin du concours
+                                    $endDate = $contest->end_date;
+                                }
+                            }
+                            
+                            $set('end_date', $endDate);
+                        }
+                    })
+                    ->rules([
+                        function (Forms\Get $get, $state) {
+                            return function (string $attribute, $value, \Closure $fail) use ($get, $state) {
+                                $contestId = $get('contest_id');
+                                if (!$contestId || !$value) return;
+                                
+                                $contest = \App\Models\Contest::find($contestId);
+                                if (!$contest) return;
+                                
+                                $startDate = \Carbon\Carbon::parse($value);
+                                if ($startDate->lt($contest->start_date)) {
+                                    $fail("La distribution ne peut pas commencer avant le début du concours ({$contest->start_date->format('d/m/Y H:i:s')}).");
+                                }
+                            };
+                        },
+                    ]),
                 Forms\Components\DateTimePicker::make('end_date')
-                    ->label('Date de fin')
+                    ->label('Date de fin (auto-calculée: début + 24h)')
                     ->required()
-                    ->default(now()->addMonth()),
+                    ->default(now()->addDay())
+                    ->disabled() // Désactiver la modification manuelle
+                    ->dehydrated(true) // Mais toujours envoyer la valeur au serveur
+                    ->helperText('Cette valeur est calculée automatiquement (24h après la date de début)')
+                    ->id('end_date'),
                 Forms\Components\TextInput::make('remaining')
                     ->label('Quantité restante')
                     ->helperText('Laissez vide pour initialiser avec la quantité totale')

@@ -99,4 +99,61 @@ class PrizeDistribution extends Model
         
         return false;
     }
+    
+    /**
+     * Vérifie que l'intervalle de dates ne dépasse pas 1 jour.
+     *
+     * @param PrizeDistribution $prizeDistribution
+     * @throws \InvalidArgumentException
+     */
+    protected static function validateDateRange(PrizeDistribution $prizeDistribution)
+    {
+        if ($prizeDistribution->start_date && $prizeDistribution->end_date) {
+            $startDate = $prizeDistribution->start_date;
+            $endDate = $prizeDistribution->end_date;
+            
+            // Vérifier que la date de fin est après la date de début
+            if ($endDate->lt($startDate)) {
+                throw new \InvalidArgumentException('La date de fin doit être postérieure à la date de début.');
+            }
+            
+            // Vérifier que l'intervalle ne dépasse pas 24 heures (1 jour)
+            $diffInHours = $startDate->diffInHours($endDate);
+            if ($diffInHours > 48) {
+                throw new \InvalidArgumentException('La période de distribution ne peut pas excéder 48 heures (2 jours).');
+            }
+        }
+    }
+    
+    /**
+     * Vérifie que les dates sont dans les limites du concours.
+     *
+     * @param PrizeDistribution $prizeDistribution
+     * @throws \InvalidArgumentException
+     */
+    protected static function validateContestDates(PrizeDistribution $prizeDistribution)
+    {
+        if ($prizeDistribution->start_date && $prizeDistribution->end_date && $prizeDistribution->contest_id) {
+            // Récupérer le concours associé
+            $contest = Contest::find($prizeDistribution->contest_id);
+            
+            if ($contest) {
+                // Vérifier que la date de début est après ou égale à la date de début du concours
+                if ($prizeDistribution->start_date->lt($contest->start_date)) {
+                    throw new \InvalidArgumentException(
+                        'La distribution ne peut pas commencer avant le début du concours (' . 
+                        $contest->start_date->format('d/m/Y H:i:s') . ').'
+                    );
+                }
+                
+                // Vérifier que la date de fin est avant ou égale à la date de fin du concours
+                if ($prizeDistribution->end_date->gt($contest->end_date)) {
+                    throw new \InvalidArgumentException(
+                        'La distribution ne peut pas se terminer après la fin du concours (' . 
+                        $contest->end_date->format('d/m/Y H:i:s') . ').'
+                    );
+                }
+            }
+        }
+    }
 }
