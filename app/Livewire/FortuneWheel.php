@@ -6,6 +6,7 @@ use App\Models\Entry;
 use App\Models\QrCode;
 use App\Models\PrizeDistribution;
 use App\Services\InfobipService;
+use App\Services\WinLimitService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -255,6 +256,16 @@ class FortuneWheel extends Component
             $this->entry->has_won = $isResultWinning;
             $this->entry->save();
             
+            // Si c'est un gain, incrémenter le compteur quotidien
+            if ($isResultWinning) {
+                app(WinLimitService::class)->incrementTodayWinnersCount();
+                
+                Log::info('Compteur de gagnants incrémenté pour aujourd\'hui', [
+                    'entry_id' => $this->entry->id,
+                    'date' => Carbon::now()->toDateString()
+                ]);
+            }
+            
             // Enregistrer le résultat dans l'historique JSON
             $this->saveSpinHistory($finalAngle, $isResultWinning, $sectorId, $this->entry);
             
@@ -290,8 +301,23 @@ class FortuneWheel extends Component
      */
     private function calculateWinChance(): bool
     {
-        // Exemple : 1 chance sur 5 (20%)
-        return rand(1, 5) === 1;
+        // Instancier le service de limite de gains
+        $winLimitService = app(WinLimitService::class);
+        
+        // Vérifier si on a atteint la limite quotidienne de gagnants
+        if (!$winLimitService->canWinToday()) {
+            Log::info('Limite quotidienne de gagnants atteinte, résultat forcé à perdant', [
+                'entry_id' => $this->entry->id,
+                'date' => Carbon::now()->toDateString()
+            ]);
+            return false; // Forcer le résultat à perdant
+        }
+        
+        // Si la limite n'est pas atteinte, calculer normalement
+        // Ajustement de la probabilité pour atteindre environ 2 gagnants par jour
+        // Supposons qu'il y ait en moyenne 200 participants par jour
+        // 2 gagnants sur 200 = 1% de chance
+        return rand(1, 100) === 1; // 1% de chance de gagner (1/100)
     }
     
     /**
