@@ -199,18 +199,13 @@ class SpinController extends Controller
         $resultVisitKey = 'result_visited_'.$entry->id;
         $alreadyVisited = $request->session()->has($resultVisitKey);
         
+        // Marquer cette entrée comme visitée
+        $request->session()->put($resultVisitKey, now()->toDateTimeString());
+        
         if (!$alreadyVisited) {
-            // Marquer cette entrée comme visitée
-            $request->session()->put($resultVisitKey, now()->toDateTimeString());
             Log::info('Première visite de la page de résultat', ['entry_id' => $entry->id]);
-        } else {
-            Log::info('Page de résultat déjà visitée', [
-                'entry_id' => $entry->id, 
-                'first_visit' => $request->session()->get($resultVisitKey),
-                'current_visit' => now()->toDateTimeString()
-            ]);
             
-            // Envoyer une notification WhatsApp lors de chaque actualisation de la page de résultat
+            // Envoyer la notification WhatsApp lors de la première visite
             if ($entry->has_won && $entry->participant && $entry->participant->phone) {
                 try {
                     $participant = $entry->participant;
@@ -250,28 +245,43 @@ class SpinController extends Controller
                         file_put_contents($qrCodePath, $qrCodeImage);
                     }
                     
-                    // Message personnalisé pour l'actualisation de la page de résultat
+                    // Message personnalisé pour la première visite de la page de résultat
                     $message = "Félicitations {$participant->first_name}! Vous avez gagné " . 
                               ($entry->prize ? $entry->prize->name : "un lot") . 
-                              ". Voici votre QR code pour récupérer votre gain [Page actualisée à " . 
-                              now()->format('H:i') . "]. Conservez-le précieusement!\n\nNuméro du QR code : ".$qrCodeObj->code.
+                              ". Voici votre QR code pour récupérer votre gain. Conservez-le précieusement!\n\nNuméro du QR code : ".$qrCodeObj->code.
                               "\n\nPour le retrait de votre lot, contactez le 07 19 04 87 28";
                     
                     // Envoyer via Green API
                     $result = $greenWhatsApp->sendQrCodeToWinner($participant->phone, $qrCodePath, $message);
                     
-                    Log::info('Notification WhatsApp envoyée suite à actualisation de la page de résultat', [
-                        'entry_id' => $entry->id,
-                        'phone' => $participant->phone,
-                        'qr_code' => $qrCodeObj->code
-                    ]);
+                    // Journaliser le résultat de l'envoi
+                    if ($result === true) {
+                        Log::info('Notification WhatsApp envoyée avec succès', [
+                            'entry_id' => $entry->id,
+                            'phone' => $participant->phone,
+                            'qr_code' => $qrCodeObj->code
+                        ]);
+                    } else {
+                        Log::error('Échec de l\'envoi WhatsApp', [
+                            'entry_id' => $entry->id,
+                            'phone' => $participant->phone,
+                            'error' => $result
+                        ]);
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Erreur lors de l\'envoi WhatsApp après actualisation', [
+                    Log::error('Erreur lors de l\'envoi WhatsApp à la première visite', [
                         'error' => $e->getMessage(),
-                        'entry_id' => $entry->id
+                        'entry_id' => $entry->id,
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
+        } else {
+            Log::info('Page de résultat déjà visitée', [
+                'entry_id' => $entry->id, 
+                'first_visit' => $request->session()->get($resultVisitKey),
+                'current_visit' => now()->toDateTimeString()
+            ]);
         }
         
         // =====================================================================
