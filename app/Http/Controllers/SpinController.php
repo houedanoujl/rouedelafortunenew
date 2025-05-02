@@ -43,7 +43,7 @@ class SpinController extends Controller
                     // Rediriger vers une vue spéciale avec message d'avertissement
                     return view('restricted-access', [
                         'entry' => $entry,
-                        'reason' => 'Le jeu est interdit aux employés de SIFCA et Big Five.'
+                        'reason' => 'Le jeu est interdit aux employés et membres de la famille de SIFCA et Big Five.'
                     ]);
                 }
             }

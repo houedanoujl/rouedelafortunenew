@@ -16,66 +16,92 @@
 
     /* Le popup lui-même */
     .age-verification-popup {
-        background-color: white;
-        border-radius: 10px;
-        width: 90%;
-        max-width: 500px;
-        padding: 30px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 36px 40px 30px 40px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        max-width: 460px;
+        margin: auto;
         text-align: center;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        animation: popup-fade-in 0.5s ease-out;
-    }
-
-    @keyframes popup-fade-in {
-        from { opacity: 0; transform: scale(0.8); }
-        to { opacity: 1; transform: scale(1); }
+        font-family: 'Montserrat', Arial, sans-serif;
     }
 
     .age-verification-popup h2 {
-        color: #D03A2C;
-        margin-bottom: 20px;
-        font-size: 1.8rem;
+        color: #d9534f;
+        font-size: 2rem;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+        font-weight: 600;
     }
 
     .age-verification-popup p {
+        font-size: 1.15rem;
+        color: #444;
+        margin-bottom: 26px;
+    }
+
+    .age-verification-checkboxes {
         margin-bottom: 30px;
-        font-size: 1.2rem;
+    }
+
+    .verification-checkbox-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .verification-checkbox-item input[type="checkbox"] {
+        accent-color: #28a745;
+        margin-top: 2px;
+    }
+
+    .verification-checkbox-item label {
+        font-size: 1.09rem;
+        color: #222;
+        line-height: 1.5;
+        cursor: pointer;
     }
 
     .age-verification-buttons {
         display: flex;
         justify-content: center;
-        gap: 20px;
-    }
-
-    .age-verification-buttons button {
-        padding: 10px 30px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1.1rem;
-        font-weight: bold;
-        transition: all 0.2s;
+        gap: 18px;
+        margin-top: 10px;
     }
 
     .btn-age-yes {
-        background-color: #4CAF50;
-        color: white;
+        background: #28a745;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 11px 36px;
+        font-size: 1.12rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(40,167,69,0.11);
+        transition: background 0.2s;
+    }
+
+    .btn-age-yes:disabled {
+        background: #a5d6b2;
+        cursor: not-allowed;
     }
 
     .btn-age-no {
-        background-color: #D03A2C;
-        color: white;
-    }
-
-    .btn-age-yes:hover {
-        background-color: #3e8e41;
-        transform: translateY(-2px);
+        background: #d9534f;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 11px 36px;
+        font-size: 1.12rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(217,83,79,0.11);
+        transition: background 0.2s;
     }
 
     .btn-age-no:hover {
-        background-color: #b02a1d;
-        transform: translateY(-2px);
+        background: #b52d29;
     }
 
     .hidden {
@@ -85,11 +111,24 @@
 
 <div id="ageVerificationOverlay" class="age-verification-overlay hidden">
     <div class="age-verification-popup">
-        <h2>Vérification de l'âge</h2>
-        <p>Êtes-vous âgé(e) d'au moins 18 ans ?</p>
+        <h2>Conditions de participation</h2>
+        <p>Veuillez confirmer les conditions suivantes pour participer :</p>
+        
+        <div class="age-verification-checkboxes" style="text-align: left; margin-bottom: 25px;">
+            <div class="verification-checkbox-item" style="margin-bottom: 15px;">
+                <input type="checkbox" id="ageCheckbox" style="margin-right: 10px; transform: scale(1.3);">
+                <label for="ageCheckbox" style="font-size: 1.1rem;">J'ai au moins 18 ans</label>
+            </div>
+            
+            <div class="verification-checkbox-item">
+                <input type="checkbox" id="employeeCheckbox" style="margin-right: 10px; transform: scale(1.3);">
+                <label for="employeeCheckbox" style="font-size: 1.1rem;">Je ne suis pas employé(e) ni membre de la famille de SIFCA, SANIA ou Big Five</label>
+            </div>
+        </div>
+        
         <div class="age-verification-buttons">
-            <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
-            <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
+            <button id="verificationSubmitBtn" class="btn-age-yes" disabled onclick="submitVerification()">Confirmer</button>
+            <button class="btn-age-no" onclick="verifyAge(false)">Annuler</button>
         </div>
     </div>
 </div>
@@ -145,6 +184,15 @@
         } else {
             console.log('Participation détectée ou âge déjà vérifié, popup de vérification d\'âge non affiché');
         }
+        
+        // Ajouter les listeners pour les cases à cocher
+        const ageCheckbox = document.getElementById('ageCheckbox');
+        const employeeCheckbox = document.getElementById('employeeCheckbox');
+        
+        if (ageCheckbox && employeeCheckbox) {
+            ageCheckbox.addEventListener('change', checkVerificationStatus);
+            employeeCheckbox.addEventListener('change', checkVerificationStatus);
+        }
     });
 
     // Fonction pour vérifier l'âge
@@ -160,5 +208,20 @@
             // Si l'utilisateur a moins de 18 ans, rediriger vers Google
             window.location.href = 'https://www.google.com';
         }
+    }
+
+    // Fonction pour gérer les cases à cocher et activer/désactiver le bouton
+    function checkVerificationStatus() {
+        const ageChecked = document.getElementById('ageCheckbox').checked;
+        const employeeChecked = document.getElementById('employeeCheckbox').checked;
+        const submitButton = document.getElementById('verificationSubmitBtn');
+        
+        // Activer le bouton seulement si les deux cases sont cochées
+        submitButton.disabled = !(ageChecked && employeeChecked);
+    }
+
+    // Fonction pour soumettre la vérification
+    function submitVerification() {
+        verifyAge(true);
     }
 </script>

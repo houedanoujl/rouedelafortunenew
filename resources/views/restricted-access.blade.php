@@ -17,7 +17,7 @@
                     
                     <div class="alert alert-warning">
                         <p class="lead mb-0">
-                            {{ $reason ?? 'Le jeu est interdit aux employés de SIFCA et Big Five pour des raisons de transparence et d\'équité.' }}
+                            {{ $reason ?? 'Le jeu est interdit aux employés et membres de la famille de SIFCA et Big Five pour des raisons de transparence et d\'équité.' }}
                         </p>
                     </div>
                     

@@ -49,4 +49,14 @@ return [
         'default_message' => env('GREENAPI_DEFAULT_MESSAGE', "Félicitations ! Vous avez gagné ce prix : *{prize}*. Voici votre QR code pour récupérer votre gain.\n\n*Prière de ne pas répondre à ce message.*\n\nPour toute information, veuillez appeler le *+225 07 19 04 87 28*."),
     ],
 
+    'google' => [
+        'analytics' => [
+            'tracking_id' => env('GOOGLE_ANALYTICS_ID'),
+            'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID', env('GOOGLE_ANALYTICS_ID')),
+            'view_id' => env('GOOGLE_ANALYTICS_VIEW_ID'),
+            'service_account_credentials_json' => env('GOOGLE_ANALYTICS_CREDENTIALS_JSON', storage_path('app/google-analytics/service-account-credentials.json')),
+            'version' => 'ga4',
+        ],
+    ],
+
 ];
