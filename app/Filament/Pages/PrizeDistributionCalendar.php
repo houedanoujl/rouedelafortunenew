@@ -48,6 +48,8 @@ class PrizeDistributionCalendar extends Page
             ->map(function ($distribution) {
                 // Utiliser les champs start_date et end_date au lieu de created_at
                 return [
+                    'id' => $distribution->id,
+                    'prize_id' => $distribution->prize->id,
                     'title' => $distribution->prize->name,
                     'start' => $distribution->start_date->toDateString(),
                     'end' => $distribution->end_date->toDateString(),
@@ -56,6 +58,8 @@ class PrizeDistributionCalendar extends Page
                     'prize' => $distribution->prize->name,
                     'color' => $this->contestColors[$distribution->contest_id] ?? 'primary',
                     'is_active' => $distribution->remaining > 0 && $distribution->start_date <= now() && $distribution->end_date >= now(),
+                    'remaining' => (int) $distribution->remaining,
+                    'quantity' => (int) $distribution->quantity,
                 ];
             });
     }

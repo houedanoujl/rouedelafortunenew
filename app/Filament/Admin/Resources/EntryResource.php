@@ -101,19 +101,22 @@ class EntryResource extends Resource
                     ->label('ID')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('participant.first_name')
-                    ->label('Prénom')
-                    ->searchable()
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('participant.last_name')
-                    ->label('Nom')
-                    ->searchable()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('participant.full_name')
+                    ->label('Participant')
+                    ->searchable(['first_name', 'last_name'])
+                    ->sortable()
+                    ->toggleable()
+                    ->description(fn (Entry $record): ?string => $record->participant?->phone),
                     
                 Tables\Columns\TextColumn::make('contest.name')
                     ->label('Concours')
                     ->searchable()
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('played_at')
+                    ->label('Date de jeu')
+                    ->dateTime()
+                    ->toggleable()
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('result')
@@ -124,30 +127,39 @@ class EntryResource extends Resource
                         'lose' => 'danger',
                         default => 'warning',
                     })
-                    ->sortable(),
+                    ->toggleable(),
                     
                 Tables\Columns\TextColumn::make('prize.name')
-                    ->label('Prix gagné')
+                    ->label('Prix')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-')
+                    ->toggleable(),
+                    
+                Tables\Columns\IconColumn::make('claimed')
+                    ->label('Réclamé')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->toggleable(),
+                    
+                Tables\Columns\TextColumn::make('claimed_at')
+                    ->label('Réclamé le')
+                    ->dateTime()
+                    ->placeholder('-')
+                    ->toggleable()
+                    ->visible(fn ($record) => $record->claimed),
                     
                 Tables\Columns\TextColumn::make('qr_code')
                     ->label('Code QR')
-                    ->searchable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                     
                 Tables\Columns\ViewColumn::make('qr_code_image')
                     ->label('QR Code')
                     ->view('filament.tables.columns.qr-code')
                     ->visible(fn (Entry $record): bool => !empty($record->qr_code)),
-                    
-                Tables\Columns\IconColumn::make('claimed')
-                    ->label('Réclamé')
-                    ->boolean(),
-                    
-                Tables\Columns\TextColumn::make('played_at')
-                    ->label('Joué le')
-                    ->dateTime()
-                    ->sortable(),
                     
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Créé le')
