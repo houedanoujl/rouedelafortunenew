@@ -208,52 +208,64 @@
         </p>
     </div>
     @endif
+
+    <!-- Popup de vérification d'âge -->
+    <div id="ageVerificationOverlay" class="age-verification-overlay">
+        <div class="age-verification-popup">
+            <h2>Vérification de l'âge</h2>
+            <p>Êtes vous agé(e) d'au moins 18 ans ?</p>
+            <div class="age-verification-buttons">
+                <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
+                <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour vérifier l'âge
+        function verifyAge(isAdult) {
+            if (isAdult) {
+                document.getElementById('ageVerificationOverlay').classList.add('hidden');
+            } else {
+                window.location.href = 'https://www.google.com';
+            }
+        }
+
+        // Vérification de participation (sans bloquer en navigation privée)
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                checkForExistingParticipation();
+            } catch (e) {
+                console.error('Erreur lors de la vérification de participation:', e);
+            }
+        });
+
+        // Fonction pour vérifier la participation existante
+        function checkForExistingParticipation() {
+            let contestId = '{{ $contestId ?? '' }}';
+            if (!contestId) {
+                const contestIdInput = document.getElementById('contestId');
+                if (contestIdInput) {
+                    contestId = contestIdInput.value;
+                }
+            }
+            if (!contestId) return;
+            const key = `contest_played_${contestId}`;
+            if (localStorage.getItem(key)) {
+                // Vérifier si on est déjà sur la page d'accueil avec already_played=true pour éviter les redirections en boucle
+                const urlParams = new URLSearchParams(window.location.search);
+                const alreadyOnAlreadyPlayedPage = urlParams.get('already_played') === 'true';
+                
+                // Ne rediriger que si on n'est pas déjà sur la page de redirection 
+                // ou si la session n'indique pas qu'on a déjà affiché la popup
+                if (!alreadyOnAlreadyPlayedPage && !sessionStorage.getItem('popup_shown')) {
+                    const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 300);
+                }
+            }
+        }
+    </script>
+
 </div>
-
-<!-- Script de vérification d'âge et de participation (SANS détection navigation privée) -->
-<script>
-    // Fonction pour vérifier l'âge
-    function verifyAge(isAdult) {
-        if (isAdult) {
-            document.getElementById('ageVerificationOverlay').classList.add('hidden');
-        } else {
-            window.location.href = 'https://www.google.com';
-        }
-    }
-
-    // Vérification de participation (sans bloquer en navigation privée)
-    document.addEventListener('DOMContentLoaded', function() {
-        try {
-            checkForExistingParticipation();
-        } catch (e) {
-            console.error('Erreur lors de la vérification de participation:', e);
-        }
-    });
-
-    // Fonction pour vérifier la participation existante
-    function checkForExistingParticipation() {
-        let contestId = '{{ $contestId ?? '' }}';
-        if (!contestId) {
-            const contestIdInput = document.getElementById('contestId');
-            if (contestIdInput) {
-                contestId = contestIdInput.value;
-            }
-        }
-        if (!contestId) return;
-        const key = `contest_played_${contestId}`;
-        if (localStorage.getItem(key)) {
-            // Vérifier si on est déjà sur la page d'accueil avec already_played=true pour éviter les redirections en boucle
-            const urlParams = new URLSearchParams(window.location.search);
-            const alreadyOnAlreadyPlayedPage = urlParams.get('already_played') === 'true';
-            
-            // Ne rediriger que si on n'est pas déjà sur la page de redirection 
-            // ou si la session n'indique pas qu'on a déjà affiché la popup
-            if (!alreadyOnAlreadyPlayedPage && !sessionStorage.getItem('popup_shown')) {
-                const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 300);
-            }
-        }
-    }
-</script>
