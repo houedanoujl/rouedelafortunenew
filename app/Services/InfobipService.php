@@ -36,6 +36,9 @@ class InfobipService
             $phoneNumber = '+225' . ltrim($phoneNumber, '+0');
         }
         
+        // Ajouter le message de non-réponse au code QR
+        $qrCodeWithMessage = $qrCode . '. Prière de ne pas répondre à ce message.';
+        
         try {
             $response = $this->client->post('whatsapp/1/message/template', [
                 'json' => [
@@ -48,7 +51,7 @@ class InfobipService
                                 'templateName' => 'dinor_70ans_gagnant',
                                 'templateData' => [
                                     'body' => [
-                                        'placeholders' => [$name, $qrCode]
+                                        'placeholders' => [$name, $qrCodeWithMessage]
                                     ]
                                 ],
                                 'language' => 'fr'
@@ -59,7 +62,12 @@ class InfobipService
             ]);
             
             $responseBody = json_decode($response->getBody()->getContents(), true);
-            Log::info('WhatsApp notification sent successfully', $responseBody);
+            Log::info('WhatsApp notification sent successfully', [
+                'to' => $phoneNumber,
+                'name' => $name,
+                'qr_code' => $qrCode,
+                'response' => $responseBody
+            ]);
             return $responseBody;
             
         } catch (\Exception $e) {

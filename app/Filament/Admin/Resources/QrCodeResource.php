@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
+use Filament\Notifications\Notification;
 
 class QrCodeResource extends Resource
 {
@@ -59,6 +62,21 @@ class QrCodeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query) {
+                // Sous-requête pour obtenir les IDs des QR codes les plus récents pour chaque participation
+                $latestQrCodesSubquery = DB::table('qr_codes')
+                    ->select('entry_id', DB::raw('MAX(id) as latest_id'))
+                    ->groupBy('entry_id');
+                
+                // Utiliser la sous-requête pour ne récupérer que les derniers QR codes
+                return $query->joinSub(
+                    $latestQrCodesSubquery,
+                    'latest_qr_codes',
+                    function ($join) {
+                        $join->on('qr_codes.id', '=', 'latest_qr_codes.latest_id');
+                    }
+                );
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Code QR')
@@ -183,6 +201,37 @@ class QrCodeResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('clean_duplicates')
+                    ->label('Supprimer les doubles')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (QrCode $record) {
+                        // Supprime tous les autres QR codes associés à la même participation sauf celui-ci
+                        QrCode::where('entry_id', $record->entry_id)
+                            ->where('id', '!=', $record->id)
+                            ->delete();
+                            
+                        Notification::make()
+                            ->title('QR codes dupliqués supprimés')
+                            ->success()
+                            ->send();
+                    }),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('clean_all_duplicates')
+                    ->label('Nettoyer tous les doublons')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function () {
+                        Artisan::call('qrcodes:clean-duplicates');
+                        
+                        Notification::make()
+                            ->title('Tous les QR codes dupliqués ont été supprimés')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

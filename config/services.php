@@ -45,6 +45,8 @@ return [
         'media_url' => env('GREENAPI_MEDIA_URL'),
         'id_instance' => env('GREENAPI_ID_INSTANCE'),
         'api_token' => env('GREENAPI_API_TOKEN'),
+        'contact_number' => env('GREENAPI_CONTACT_NUMBER', '0719048728'),
+        'default_message' => env('GREENAPI_DEFAULT_MESSAGE', "Félicitations ! Vous avez gagné ce prix : *{prize}*. Voici votre QR code pour récupérer votre gain.\n\n*Prière de ne pas répondre à ce message.*\n\nPour toute information, veuillez appeler le *+225 07 19 04 87 28*."),
     ],
 
 ];

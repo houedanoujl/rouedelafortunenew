@@ -382,15 +382,55 @@ class FortuneWheel extends Component
      */
     private function handleWinning()
     {
-        // Générer un code QR plus lisible et mémorisable
-        $qrCode = 'DNR70-' . strtoupper(substr(md5($this->entry->id . time()), 0, 8));
-        
-        // Créer l'enregistrement QR code
-        $qrCodeModel = QrCode::create([
-            'entry_id' => $this->entry->id,
-            'code' => $qrCode,
+        \Log::info('[QR] FortuneWheel::handleWinning CALLED', [
+            'entry_id' => $this->entry ? $this->entry->id : null,
+            'entry' => $this->entry
         ]);
+        // Vérifier si un QR code existe déjà pour cette entrée
+        $existingQrCode = $this->entry->qrCode;
         
+        if ($existingQrCode) {
+            Log::info('QR Code existant utilisé dans handleWinning', [
+                'entry_id' => $this->entry->id,
+                'existing_qr_code' => $existingQrCode->code
+            ]);
+            // LOGGING DISTINCTIF (toujours loguer)
+            \Log::info('[QR] FortuneWheel::handleWinning', [
+                'entry_id' => $this->entry->id,
+                'qr_code' => $existingQrCode->code,
+                'source' => 'existing',
+                'frontend_displayed' => $existingQrCode->code
+            ]);
+            $qrCode = $existingQrCode->code;
+            $qrCodeModel = $existingQrCode;
+        } else {
+            // Générer un code QR plus lisible et mémorisable
+            $code = 'DNR70-' . strtoupper(substr(md5($this->entry->id . time()), 0, 8));
+            $qrCodeModel = \App\Models\QrCode::firstOrCreate(
+                ['entry_id' => $this->entry->id],
+                [
+                    'code' => $code,
+                    'scanned' => false
+                ]
+            );
+            $qrCode = $qrCodeModel->code;
+            Log::info('QR Code généré dans handleWinning', [
+                'entry_id' => $this->entry->id,
+                'qr_code' => $qrCode
+            ]);
+            // LOGGING DISTINCTIF
+            \Log::info('[QR] FortuneWheel::handleWinning', [
+                'entry_id' => $this->entry->id,
+                'qr_code' => $qrCode,
+                'source' => 'created',
+                'frontend_displayed' => $qrCode
+            ]);
+        }
+        // LOGGING FINAL - Toujours loguer ce qui est envoyé au frontend
+        \Log::info('[QR] FortuneWheel::frontend_display', [
+            'entry_id' => $this->entry->id,
+            'qr_code' => $qrCode
+        ]);
         // NOTE: La décrémentation des stocks a été déplacée vers SpinController
         // pour éviter la double décrémentation
         $contest = $this->entry->contest;

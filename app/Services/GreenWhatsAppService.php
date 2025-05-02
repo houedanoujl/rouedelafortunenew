@@ -71,7 +71,39 @@ class GreenWhatsAppService
             // 1. Envoyer un message texte avant l'image
             if ($message === null) {
                 $prize = session('prize_name') ?? 'un prix';
-                $message = "Félicitations ! Vous avez gagné ce prix : {$prize}. Voici votre QR code pour récupérer votre gain.";
+                // Récupérer le message par défaut depuis la configuration
+                $template = config('services.greenapi.default_message', "Félicitations ! Vous avez gagné ce prix : *{prize}*. Voici votre QR code pour récupérer votre gain.");
+                $message = str_replace('{prize}', $prize, $template);
+                
+                // Si le message ne contient pas déjà les informations de contact et la mention
+                if (strpos($message, "Prière de ne pas répondre") === false) {
+                    // Numéro de contact à appeler pour des informations
+                    $contactNumber = config('services.greenapi.contact_number', '0719048728');
+                    // Formater le numéro pour le rendre facilement cliquable
+                    $formattedNumber = '+225 ' . substr($contactNumber, 0, 2) . ' ' . substr($contactNumber, 2, 2) . ' ' . 
+                                       substr($contactNumber, 4, 2) . ' ' . substr($contactNumber, 6, 2);
+                    
+                    // Ajouter les informations standard
+                    $message .= "\n\n*Prière de ne pas répondre à ce message.*";
+                    $message .= "\n\nPour toute information, veuillez appeler le *{$formattedNumber}*.";
+                }
+            } else {
+                // Si un message est fourni, s'assurer que la mention est à la fin
+                if (strpos($message, "Prière de ne pas répondre à ce message") !== false) {
+                    // Enlever la mention si elle existe déjà
+                    $message = str_replace("Prière de ne pas répondre à ce message", "", $message);
+                    $message = trim($message);
+                }
+                
+                // Numéro de contact à appeler pour des informations
+                $contactNumber = config('services.greenapi.contact_number', '0719048728');
+                // Formater le numéro pour le rendre facilement cliquable
+                $formattedNumber = '+225 ' . substr($contactNumber, 0, 2) . ' ' . substr($contactNumber, 2, 2) . ' ' . 
+                                   substr($contactNumber, 4, 2) . ' ' . substr($contactNumber, 6, 2);
+                
+                // Ajouter la mention à la fin avec retour à la ligne et en gras
+                $message .= "\n\n*Prière de ne pas répondre à ce message.*";
+                $message .= "\n\nPour toute information, veuillez appeler le *{$formattedNumber}*.";
             }
             
             // Appel de l'API pour envoyer le message texte
@@ -197,10 +229,15 @@ class GreenWhatsAppService
             return "Erreur: Configuration Green API incomplète";
         }
 
+        // Ajouter la mention "Prière de ne pas répondre à ce message" s'il n'y est pas déjà
+        if (!str_contains($message, "Prière de ne pas répondre à ce message")) {
+            $message .= " Prière de ne pas répondre à ce message.";
+        }
+
         $recipientPhone = $this->formatPhoneNumber($recipientPhone);
         $chatIdNumber = ltrim($recipientPhone, '+');
         $formattedChatId = $chatIdNumber . '@c.us';
-
+        
         try {
             $sendTextUrl = "{$apiUrl}/waInstance{$idInstance}/sendMessage/{$apiTokenInstance}";
             $client = new Client();

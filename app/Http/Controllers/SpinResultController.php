@@ -104,27 +104,17 @@ class SpinResultController extends Controller
      */
     private function generateQrCodeForEntry(Entry $entry)
     {
-        // Vérifier si l'entrée existe et n'a pas déjà un code QR
-        if (!$entry || $entry->qrCode) {
-            return;
-        }
+        // Cette fonction est maintenant un stub pour éviter les duplications
+        // La génération du QR code est gérée par SpinController::result qui affiche
+        // le code au frontend
         
-        // Générer un code unique aléatoire
-        $code = 'DNR' . rand(10, 99) . '-' . substr(md5(uniqid()), 0, 8);
-        
-        // Créer un nouveau QR Code
-        $qrCode = new \App\Models\QrCode([
-            'code' => $code,
-            'status' => 'active'
-        ]);
-        
-        // Associer le QR Code à l'entrée
-        $entry->qrCode()->save($qrCode);
-        
-        Log::info('QR Code généré pour une entrée mise à jour', [
+        \Log::info('[QR] SpinResultController::generateQrCodeForEntry DISABLED', [
             'entry_id' => $entry->id,
-            'qr_code' => $code
+            'message' => 'Cette fonction ne génère plus de QR code pour éviter les duplications'
         ]);
+        
+        // NOTE: Ne plus générer de QR code ici pour éviter les duplications
+        // La génération est centralisée dans SpinController::result
     }
     
     private function saveToSpinHistory(Request $request, Entry $entry, $isWinningResult)

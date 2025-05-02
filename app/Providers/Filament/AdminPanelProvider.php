@@ -21,6 +21,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Admin\Pages\ScanQrCodes;
 use App\Filament\Pages\WinnersCalendar;
 use App\Filament\Pages\WheelSettings;
+use App\Filament\Pages\WinnersList;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -42,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
                 ScanQrCodes::class,
                 WinnersCalendar::class,
                 WheelSettings::class,
+                WinnersList::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
