@@ -75,7 +75,6 @@
         // Variables
         let isSpinning = false;
         let theWheel;
-        let spinBtn = document.getElementById('spinBtn');
 
         // Initialisation de la roue
         initWheel();
@@ -158,187 +157,292 @@
             return isWinning;
         }
 
-        // Variables globales pour la redirection
-        let shouldRedirect = false;
-        let redirectTimeout = null;
+        // Callback lorsque la roue s'arrête
+        function finishedSpinning() {
+            isSpinning = false;
 
-        // Fonction utilitaire pour obtenir les indexes des secteurs gagnants et perdants
-        function getSegmentIndexesByText(text) {
-            const indexes = [];
-            for (let i = 1; i <= theWheel.numSegments; i++) {
-                if (theWheel.segments[i].text === text) {
-                    indexes.push(i);
-                }
+            // Obtenez le segment final indiqué par le pointeur
+            const winningSegment = theWheel.getIndicatedSegment();
+
+            // Vérifier si c'est un segment gagnant (fond jaune)
+            let isWinningSegment = winningSegment.fillStyle === '#F7DB15';
+            
+            // Double vérification des données du serveur
+            const serverHasWon = {{ $entry->has_won ? 'true' : 'false' }};
+            
+            // S'assurer que le résultat visuel correspond à l'état en base de données
+            // Si le stock est à 0, personne ne devrait gagner, même si la roue indique un segment gagnant
+            if (isWinningSegment && !serverHasWon) {
+                
+                // On simule un segment perdant pour l'animation
+                isWinningSegment = false;
             }
-            return indexes;
-        }
 
-        // Fonction pour obtenir l'angle d'arrêt pour un index de segment Winwheel (1-based)
-        function getStopAngleForSegmentIndex(index) {
-            const baseAngle = 360 / theWheel.numSegments;
-            // On vise le centre du segment
-            return ((index - 1) * baseAngle) + (baseAngle / 2);
-        }
+            // Afficher les résultats
+            // Déterminer si c'est un segment gagnant basé sur le texte réel du segment
+            const isWinningSegmentFinal = winningSegment.text === 'GAGNÉ';
 
-        // Fonction principale pour démarrer le spin avec cohérence segment/résultat
-        function spinWheelWithResult(result) {
+            // Mettre en avant le segment obtenu
+            if (winningSegment) {
+                // Sauvegarder l'ancien style
+                const oldFillStyle = winningSegment.fillStyle;
+                // Appliquer un effet visuel temporaire
+                winningSegment.fillStyle = '#fffbe6'; // Couleur plus claire ou personnalisée
+                theWheel.draw();
+                setTimeout(() => {
+                    winningSegment.fillStyle = oldFillStyle;
+                    theWheel.draw();
+                }, 1600);
+            }
+
+            setTimeout(() => {
+                // Jouer le son correspondant
+                if (isWinningSegmentFinal) {
+                    
+                    if (winSound) {
+                        winSound.currentTime = 0;
+                        winSound.play();
+                    }
+                } else {
+                    
+                    if (loseSound) {
+                        loseSound.currentTime = 0;
+                        loseSound.play();
+                    }
+                }
+            }, 1000);
+
+            // Envoyer le résultat réel au serveur via une requête AJAX sécurisée
+            
+            fetch('{{ route('spin.record-result') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    entry_id: {{ $entry->id }},
+                    displayed_result: isWinningSegmentFinal ? 'win' : 'lose',
+                    segment_text: winningSegment.text
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                
+                // Redirection vers la page de résultat après un court délai
+                setTimeout(() => {
+                    
+                    window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
+                }, 2000);
+            })
+            .catch(error => {
+                
+                // En cas d'erreur, rediriger quand même
+                setTimeout(() => {
+                    window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
+                }, 2000);
+            });
+            
+            console.log(`
+█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█ 🎯 RÉSULTAT FINAL DU TIRAGE 🎯                                █
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+👤 Participant: {{ $entry->participant ? $entry->participant->first_name . " " . $entry->participant->last_name : "Inconnu" }}
+📱 Téléphone: {{ $entry->participant ? $entry->participant->phone : "Non renseigné" }}
+🎁 Résultat: ${serverHasWon ? '✅ GAGNÉ' : '❌ PERDU'}
+⏰ Date/Heure: ${new Date().toLocaleString()}
+🔢 ID Participation: {{ $entry->id }}
+`);
+        }
+        
+        // Fonction pour déterminer les angles de segments gagnants et perdants
+        function getWinningSegments() {
+            // Les segments gagnants sont les segments pairs (0, 2, 4, 6, 8)
+            const winningSegments = [];
+            for (let i = 0; i < 10; i += 2) {
+                const startAngle = i * 36;
+                const endAngle = startAngle + 36;
+                const midAngle = startAngle + 18;
+                winningSegments.push({ start: startAngle, end: endAngle, mid: midAngle });
+            }
+            return winningSegments;
+        }
+        
+        function getLosingSegments() {
+            // Les segments perdants sont les segments impairs (1, 3, 5, 7, 9)
+            const losingSegments = [];
+            for (let i = 1; i < 10; i += 2) {
+                const startAngle = i * 36;
+                const endAngle = startAngle + 36;
+                const midAngle = startAngle + 18;
+                losingSegments.push({ start: startAngle, end: endAngle, mid: midAngle });
+            }
+            return losingSegments;
+        }
+        
+        // Fonction pour choisir un angle basé sur le résultat souhaité
+        function chooseTargetAngle(shouldWin) {
+            const segments = shouldWin ? getWinningSegments() : getLosingSegments();
+            const randomIndex = Math.floor(Math.random() * segments.length);
+            // Utiliser l'angle central du segment avec une légère variation
+            const variation = Math.random() * 10 - 5; // Variation de -5 à +5 degrés
+            return segments[randomIndex].mid + variation;
+        }
+        
+        // Faire tourner la roue avec un résultat aléatoire mais respectant le résultat gagné/perdu
+        function spinWheel(data) {
             if (isSpinning) return;
+
             isSpinning = true;
 
-            // Sélectionner l'index du segment cible selon le résultat
-            let targetIndexes = [];
-            if (result === 'win') {
-                targetIndexes = getSegmentIndexesByText('GAGNÉ');
-            } else {
-                targetIndexes = getSegmentIndexesByText('PERDU');
-            }
-            const chosenIndex = targetIndexes[Math.floor(Math.random() * targetIndexes.length)];
-            const stopAngle = getStopAngleForSegmentIndex(chosenIndex);
-
-            // PATCH: Remise à zéro de la roue avant chaque spin
-            theWheel.stopAnimation(false);
-            theWheel.rotationAngle = 0;
-            theWheel.draw();
-
+            // Jouer le son de rotation
             if (spinningSound) {
                 spinningSound.currentTime = 0;
                 spinningSound.play();
             }
 
-            theWheel.animation = {
-                type: 'spinToStop',
-                duration: 10,
-                spins: 8,
-                stopAngle: stopAngle,
-                callbackFinished: finishedSpinning,
-                callbackSound: playTickSound,
-                soundTrigger: 'pin'
-            };
-            theWheel.startAnimation();
-            shouldRedirect = true;
-        }
-
-        // Callback lorsque la roue s'arrête
-        function finishedSpinning() {
-            isSpinning = false;
-
-            // Arrêter le son de la roue qui tourne
-            if (spinningSound) {
-                spinningSound.pause();
-                spinningSound.currentTime = 0;
-            }
-
-            // Récupérer le segment final indiqué par le pointeur
-            const winningSegment = theWheel.getIndicatedSegment();
-
-            // Déterminer si c'est un segment gagnant basé sur le texte
-            const isWinningSegmentFinal = winningSegment.text === 'GAGNÉ';
-            const serverHasWon = {{ $entry->has_won ? 'true' : 'false' }};
+            // Extraire les informations envoyées par le backend
             
-            // Mettre en avant le segment obtenu
-            if (winningSegment) {
-                const oldFillStyle = winningSegment.fillStyle;
-                winningSegment.fillStyle = '#fffbe6';
-                theWheel.draw();
-                setTimeout(() => {
-                    winningSegment.fillStyle = oldFillStyle;
-                    theWheel.draw();
-                }, 200); // Plus rapide pour éviter des problèmes visuels
-            }
+            const isWinning = data.isWinning === 1;
 
-            // Logs détaillés pour le tirage final
-            console.log(`
-█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-█ 🎯 RÉSULTAT FINAL DU TIRAGE 🎯                                █
-█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
-`);
-            console.log(`👤 Participant: {{ $entry->participant ? $entry->participant->first_name . " " . $entry->participant->last_name : "Inconnu" }}`);
-            console.log(`📱 Téléphone: {{ $entry->participant ? $entry->participant->phone : "Non renseigné" }}`);
-            console.log(`📧 Email: {{ $entry->participant ? $entry->participant->email : "Non renseigné" }}`);
-            console.log(`🎁 Résultat: ${isWinningSegmentFinal ? '✅ GAGNÉ' : '❌ PERDU'}`);
-            console.log(`⏰ Date/Heure: ${new Date().toLocaleString()}`);
-            console.log(`🔢 ID Participation: {{ $entry->id }}`);
-            // Informations supplémentaires sur le segment 
-            console.log(`🎯 Segment: ${winningSegment.text}`);
-            console.log(`🎯 Angle d'arrêt: ${theWheel.animation.stopAngle.toFixed(2)}°`);
-
-            // Jouer le son correspondant
-            if (isWinningSegmentFinal) {
-                if (winSound) {
-                    winSound.currentTime = 0;
-                    winSound.play();
-                }
+            // Vérification du résultat
+            if (!checkExpectedOutcome(isWinning, data)) {
+                
+                // Ne pas appeler spinWheel récursivement - uniquement s'assurer que nous allons sur un secteur perdant
+                stopAngle = chooseTargetAngle(false);
+                
             } else {
-                if (loseSound) {
-                    loseSound.currentTime = 0;
-                    loseSound.play();
-                }
+                // Choisir un angle cible basé sur le résultat du serveur
+                stopAngle = chooseTargetAngle(true);
             }
-            
-            // Si on doit rediriger, programmer la redirection
-            if (shouldRedirect) {
-                // Redirection après un délai pour que les sons soient joués
-                redirectTimeout = setTimeout(() => {
-                    window.location.href = "{{ route('spin.result', ['entry' => $entry->id]) }}";
-                }, 2000);
-            }
-        }
 
-        // Événement clic sur le bouton
-        if (spinBtn) {
-            spinBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (isSpinning) return;
+            // Réinitialiser la roue avant une nouvelle rotation
+            theWheel.rotationAngle = 0;
 
+            // Configuration de l'animation avec l'angle d'arrêt aléatoire
+            theWheel.animation = {
+                'type': 'spinToStop',
+                'duration': 12 + Math.random() * 4, // Durée plus longue entre 12 et 16 secondes (avant : 8 sec)
+                'spins': 8 + Math.random() * 6, // Nombre de tours plus important entre 8 et 14 tours (avant : 4-6)
+                'stopAngle': stopAngle,
+                'callbackFinished': finishedSpinning,
+                'callbackSound': playTickSound,
+                'soundTrigger': 'pin'
+            };
+
+            // Désactiver le bouton
+            const spinBtn = document.getElementById('spinBtn');
+            if (spinBtn) {
                 spinBtn.disabled = true;
                 spinBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> En cours...';
+            }
 
-                // Logs début tirage
-                const consoleLogs = [
-                    `🎯 DÉBUT DU TIRAGE 🎯`,
-                    `👤 Participant: {{ $entry->participant ? $entry->participant->first_name . " " . $entry->participant->last_name : "Inconnu" }}`,
-                    `📱 Téléphone: {{ $entry->participant ? $entry->participant->phone : "Non renseigné" }}`,
-                    `📧 Email: {{ $entry->participant ? $entry->participant->email : "Non renseigné" }}`,
-                    `⏰ Date/Heure: ${new Date().toLocaleString()}`,
-                    `🔢 ID Participation: {{ $entry->id }}`,
-                    `💾 Version QR: {{ config('app.qr_version', '1.0') }}`
-                ];
-                console.log(`\n█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█\n█ 🎯 DÉBUT DU TIRAGE 🎯                                        █\n█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█\n`);
-                consoleLogs.forEach(log => console.log(log));
-
-                // Appel AJAX pour obtenir le résultat
-                fetch('{{ route('spin.record-result') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        entry_id: {{ $entry->id }},
-                        displayed_result: {!! json_encode($entry->has_won ? 'win' : 'lose') !!},
-                        segment_text: {!! json_encode($entry->has_won ? 'GAGNÉ' : 'PERDU') !!},
-                        console_logs: consoleLogs,
-                        wheel_type: 'main'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data && typeof data.is_winning !== 'undefined') {
-                        spinWheelWithResult(data.is_winning ? 'win' : 'lose');
-                    } else {
-                        alert('Erreur technique. Veuillez réessayer.');
-                        spinBtn.disabled = false;
-                        spinBtn.innerHTML = 'Tourner la roue';
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert('Erreur technique. Veuillez réessayer.');
-                    spinBtn.disabled = false;
-                    spinBtn.innerHTML = 'Tourner la roue';
-                });
-            });
+            // Démarrer l'animation
+            theWheel.startAnimation();
         }
+
+        // Fonction pour démarrer le tour de roue
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            // Obtenir le statut de victoire du serveur
+            
+            const serverShouldWin = {{ $entry->has_won ? 'true' : 'false' }};
+            
+            // Choisir un angle cible basé sur le résultat du serveur
+            const targetAngle = chooseTargetAngle(serverShouldWin);
+            
+            // Calculer les tours complets + l'angle cible
+            const stopAt = 360 * 5 + targetAngle;
+            
+            // Démarrer la roue avec les paramètres calculés
+            theWheel.animation.stopAngle = stopAt;
+            theWheel.startAnimation();
+            
+            // Audio feedback
+            if (finalSound) {
+                finalSound.play();
+            }
+        }
+
+        // Écouter les événements Livewire
+        document.addEventListener('livewire:initialized', () => {
+            @this.on('startSpinWithSound', (data) => {
+                
+                // Vérifier que les données sont valides
+                if (data) {
+                    console.log(`
+█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█ 🔒 INFORMATIONS DE SÉCURITÉ - NE PAS PARTAGER 🔒              █
+█                                                              █
+█ Ces informations sont enregistrées à des fins de sécurité    █
+█ et pour prévenir la triche. Toute tentative de manipulation  █
+█ du système entraînera la disqualification immédiate.         █
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+`);
+                    
+                    console.log(`🎁 RÉSULTAT: ${data.isWinning ? '✅ GAGNANT' : '❌ PERDANT'}`);
+                    console.log(`👤 PARTICIPANT: ${JSON.stringify({
+                        nom: '{{ $entry->participant ? $entry->participant->first_name . " " . $entry->participant->last_name : "Inconnu" }}',
+                        telephone: '{{ $entry->participant ? $entry->participant->phone : "Non renseigné" }}',
+                        email: '{{ $entry->participant ? $entry->participant->email : "Non renseigné" }}'
+                    })}`);
+                    
+                    spinWheel(data);
+                } else {
+                    console.log('❌ Erreur: Données manquantes pour le tour de roue');
+                }
+            });
+
+            @this.on('victory', () => {
+                setTimeout(launchConfetti, 1000);
+            });
+
+            // Afficher les informations de stock à l'initialisation
+            @this.on('stock-status-init', (data) => {
+                console.log(`
+█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█ 📦 INVENTAIRE DES LOTS DISPONIBLES - ${new Date().toLocaleDateString()} 📦        █
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+`);
+            });
+            
+            // Écouter l'événement de vérification de stock (Livewire v3)
+            @this.on('stock-check', (data) => {
+                // Correction : si data est un tableau, on prend le premier élément
+                const payload = Array.isArray(data) ? data[0] : data;
+                // Vérifier que les distributions existent avant d'accéder à leurs propriétés
+                const distributions = payload.distributions || [];
+                const validCount = payload.valid_count || 0;
+                
+                console.log('📊 ÉTAT DES STOCKS:', {
+                    validCount: validCount,
+                    hasPrizesInStock: validCount > 0 ? 'OUI' : 'NON',
+                    distributions: distributions
+                });
+
+                console.log(`
+█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█ 🎁 LOTS DISPONIBLES AUJOURD'HUI 🎁                            █
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█`);
+                
+                if (distributions.length === 0) {
+                    console.log('❌ Aucun lot disponible');
+                } else {
+                    distributions.forEach((dist, index) => {
+                        if (dist.prize) {
+                            console.log(`${index + 1}. ${dist.prize.name} - Quantité: ${dist.remaining}/${dist.quantity} - Validité: ${dist.start_date ? new Date(dist.start_date).toLocaleDateString() : 'Non définie'} au ${dist.end_date ? new Date(dist.end_date).toLocaleDateString() : 'Non définie'}`);
+                        }
+                    });
+                }
+            });
+            
+            // Écouter l'événement de vérification de stock (Livewire v3)
+            @this.on('stock-check', (data) => {
+                
+            });
+        });
 
         // Ajout d'un listener JS pour voir ce que le backend envoie au frontend
         window.addEventListener('DOMContentLoaded', function() {
@@ -378,107 +482,23 @@
             }, 250);
         }
 
-        // Écouter les événements Livewire
-        document.addEventListener('livewire:initialized', () => {
-            @this.on('startSpinWithSound', (data) => {
-                
-                // Vérifier que les données sont valides
-                if (data) {
-                    console.log(`
-█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-█ 🔒 INFORMATIONS DE SÉCURITÉ - NE PAS PARTAGER 🔒              █
-█                                                              █
-█ Ces informations sont enregistrées à des fins de sécurité    █
-█ et pour prévenir la triche. Toute tentative de manipulation  █
-█ du système entraînera la disqualification immédiate.         █
-█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
-`);
+        // Clic sur le bouton
+        const spinBtn = document.getElementById('spinBtn');
+        if (spinBtn) {
+            spinBtn.addEventListener('click', function() {
+                if (isSpinning) return;
+
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> En cours...';
+
+                try {
+                    @this.spin();
+                } catch (e) {
                     
-                    console.log(`🎁 RÉSULTAT: ${data.isWinning ? '✅ GAGNANT' : '❌ PERDANT'}`);
-                    console.log(`👤 PARTICIPANT: ${JSON.stringify({
-                        nom: '{{ $entry->participant ? $entry->participant->first_name . " " . $entry->participant->last_name : "Inconnu" }}',
-                        telephone: '{{ $entry->participant ? $entry->participant->phone : "Non renseigné" }}',
-                        email: '{{ $entry->participant ? $entry->participant->email : "Non renseigné" }}'
-                    })}`);
-                    
-                    // spinWheel(data);
-                } else {
-                    console.log('❌ Erreur: Données manquantes pour le tour de roue');
+                    this.disabled = false;
+                    this.innerText = "Tourner la roue";
                 }
             });
-
-            @this.on('victory', () => {
-                setTimeout(launchConfetti, 1000);
-            });
-
-            // Afficher les informations de stock à l'initialisation
-            @this.on('stock-status-init', (data) => {
-                console.log(`
-█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-█ 📦 INVENTAIRE DES LOTS DISPONIBLES - ${new Date().toLocaleDateString()} 📦        █
-█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
-`);
-            });
-            
-            // Écouter l'événement de vérification de stock (Livewire v3)
-            @this.on('stock-check', (data) => {
-                // Correction : si data est un tableau, on prend le premier élément
-                const payload = Array.isArray(data) ? data[0] : data;
-                // Vérifier que les distributions existent avant d'accéder à leurs propriétés
-                const distributions = payload.distributions || [];
-                const validCount = payload.valid_count || 0;
-                
-                console.log('📊 ÉTAT DES STOCKS:', {
-                    validCount: validCount,
-                    hasPrizesInStock: validCount > 0 ? 'OUI' : 'NON',
-                    distributions: distributions
-                });
-
-                console.log(`
-█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-█ 🎁 LOTS DISPONIBLES AUJOURD'HUI 🎁                            █
-█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█`);
-                
-                if (distributions.length === 0) {
-                    console.log('❌ Aucun lot disponible');
-                } else {
-                    distributions.forEach((dist, index) => {
-                        if (dist.prize) {
-                            console.log(`${index + 1}. ${dist.prize.name} - Quantité: ${dist.remaining}/${dist.quantity} - Validité: ${dist.start_date ? new Date(dist.start_date).toLocaleDateString() : 'Non définie'} au ${dist.end_date ? new Date(dist.end_date).toLocaleDateString() : 'Non définie'}`);
-                        }
-                    });
-                }
-            });
-            
-            // Écouter l'événement de vérification de stock (Livewire v3)
-            @this.on('stock-check', (data) => {
-                
-            });
-        });
-
-        // Fonction pour déterminer les angles de segments gagnants et perdants
-        function getWinningSegments() {
-            // Les segments gagnants sont les segments pairs (0, 2, 4, 6, 8)
-            const winningSegments = [];
-            for (let i = 0; i < 10; i += 2) {
-                const startAngle = i * 36;
-                const endAngle = startAngle + 36;
-                const midAngle = startAngle + 18;
-                winningSegments.push({ start: startAngle, end: endAngle, mid: midAngle });
-            }
-            return winningSegments;
-        }
-        
-        function getLosingSegments() {
-            // Les segments perdants sont les segments impairs (1, 3, 5, 7, 9)
-            const losingSegments = [];
-            for (let i = 1; i < 10; i += 2) {
-                const startAngle = i * 36;
-                const endAngle = startAngle + 36;
-                const midAngle = startAngle + 18;
-                losingSegments.push({ start: startAngle, end: endAngle, mid: midAngle });
-            }
-            return losingSegments;
         }
     </script>
 

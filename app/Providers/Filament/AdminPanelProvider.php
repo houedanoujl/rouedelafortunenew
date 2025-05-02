@@ -20,6 +20,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Admin\Pages\ScanQrCodes;
 use App\Filament\Pages\WinnersCalendar;
+use App\Filament\Pages\WheelSettings;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -40,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
                 ScanQrCodes::class,
                 WinnersCalendar::class,
+                WheelSettings::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
@@ -53,6 +55,11 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Monitoring')
                     ->sort(3)
                     ->openUrlInNewTab(),
+                NavigationItem::make('Logs tours de roue')
+                    ->url(fn (): string => '/admin/spin-history-logs')
+                    ->icon('heroicon-o-clock')
+                    ->group('Rapports')
+                    ->sort(3),
             ])
             ->middleware([
                 EncryptCookies::class,

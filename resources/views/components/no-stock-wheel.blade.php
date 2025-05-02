@@ -186,131 +186,77 @@
                 spinBtn.style.opacity = '0.5';
                 spinBtn.style.pointerEvents = 'none';
             }
+
+            // Envoi d'un log (optionnel, ici on n'envoie PAS de log d'historique, mais on montre l'exemple)
+            /*
+            fetch('/api/spin/log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    wheel_type: 'no-stock',
+                    // ... autres infos si besoin
+                })
+            });
+            */
         }
 
-        // Clic sur le bouton
-        document.addEventListener('DOMContentLoaded', function() {
-            // Vérifier si l'utilisateur a déjà joué (cookie)
-            const hasPlayed = getNostockCookie('nostock_wheel_played');
-            
-            if (hasPlayed) {
-                console.log('Utilisateur a déjà joué à la roue no-stock');
-                // Afficher directement le message de résultat sans faire tourner la roue
-                const resultMessage = document.getElementById('nostockResultMessage');
-                const resultTitle = document.getElementById('nostockResultTitle');
-                const resultText = document.getElementById('nostockResultText');
-                
-                if (resultMessage && resultTitle && resultText) {
-                    resultMessage.className = 'alert alert-danger my-3';
-                    resultTitle.innerHTML = '<i class="fas fa-times-circle"></i> Dommage !';
-                    resultText.innerHTML = 'Perdu.<br>Merci de revenir la semaine prochaine pour tenter à nouveau votre chance.';
-                    resultMessage.style.display = 'block';
-                }
-                
-                // Désactiver la roue
-                const wheelContainer = document.querySelector('.wheel-container');
-                if (wheelContainer) {
-                    wheelContainer.style.opacity = '0.5';
-                    wheelContainer.style.pointerEvents = 'none';
-                }
-                
-                return; // Ne pas déclencher la rotation
-            }
-            
-            // Si l'utilisateur n'a pas encore joué, déclencher la rotation automatiquement
-            setTimeout(function() {
-                spinNoStockWheel();
-            }, 1000); // Attendre 1 seconde avant de lancer la roue automatiquement
-            
-            // Fonction pour faire tourner la roue
-            function spinNoStockWheel() {
-                if (nostockIsSpinning) return;
-                nostockIsSpinning = true;
-                
-                // Masquer le message de résultat précédent
-                const resultMessage = document.getElementById('nostockResultMessage');
-                if (resultMessage) {
-                    resultMessage.style.display = 'none';
-                }
-                
-                // Désactiver le bouton pendant le spin
-                const spinBtn = document.getElementById('spinNoStockBtn');
-                if (spinBtn) {
-                    spinBtn.disabled = true;
-                    spinBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> En cours...';
-                }
-                
-                // Jouer le son de la roue qui tourne
-                if (nostockSpinningSound) {
-                    nostockSpinningSound.currentTime = 0;
-                    nostockSpinningSound.play();
-                }
-                
-                // TECHNIQUE CORRECTE SELON LA DOCUMENTATION: Contrôler exactement où la roue s'arrête
-                
-                // Les segments "PERDU" sont aux positions 1, 3, 5, 7, 9 (index 0, 2, 4, 6, 8)
-                const losingSectors = [0, 2, 4, 6, 8];
-                
-                // Choisir aléatoirement l'un des secteurs perdants
-                const randomIndex = Math.floor(Math.random() * losingSectors.length);
-                const targetSegment = losingSectors[randomIndex] + 1; // +1 car getRandomForSegment attend un numéro de segment (1-based)
-                
-                console.log('Segment cible choisi:', targetSegment);
-                
-                // Utiliser la méthode recommandée dans la documentation:
-                // getRandomForSegment retourne un angle aléatoire à l'intérieur du segment spécifié
-                // et évite les angles proches des bords du segment (problème de segments partageant des angles)
-                const stopAt = nostockWheel.getRandomForSegment(targetSegment);
-                
-                console.log('Angle d\'arrêt choisi dans le segment:', stopAt);
-                
-                // Configurer l'animation avec l'angle d'arrêt calculé
-                nostockWheel.animation = {
-                    'type': 'spinToStop',
-                    'duration': 10,
-                    'spins': 8,
-                    'stopAngle': stopAt,
-                    'callbackFinished': finishedNoStockSpinning,
-                    'callbackSound': playNoStockTickSound,
-                    'soundTrigger': 'pin'
-                };
-                
-                // Démarrer l'animation
-                nostockWheel.startAnimation();
-                
-                // Définir le cookie pour indiquer que l'utilisateur a joué
-                setNostockCookie('nostock_wheel_played', 'true', 7); // Cookie valide 7 jours (1 semaine)
-                
-                // Définir également une variable de session côté client
-                if (typeof(Storage) !== "undefined") {
-                    sessionStorage.setItem('nostock_wheel_played', 'true');
-                }
-                
-                // Vérification supplémentaire: confirmer le segment qui sera indiqué à l'arrêt
-                setTimeout(function() {
-                    // Calculer quel segment sera indiqué avec cet angle d'arrêt
-                    nostockWheel.computeAnimation();
-                    
-                    // Vérifier que nous nous arrêtons bien sur un secteur PERDU
-                    const indicatedSegmentNumber = nostockWheel.getIndicatedSegmentNumber();
-                    const indicatedSegment = nostockWheel.getIndicatedSegment();
-                    
-                    console.log('Segment qui sera indiqué (numéro):', indicatedSegmentNumber);
-                    console.log('Segment qui sera indiqué (objet):', indicatedSegment);
-                    console.log('Texte du segment:', indicatedSegment.text);
-                    
-                    // S'assurer que c'est bien un segment PERDU
-                    if (indicatedSegment.text !== 'PERDU') {
-                        console.error('ERREUR: L\'angle d\'arrêt ne correspond pas à un segment PERDU!');
-                    }
-                }, 100);
-            }
-
-            // Le bouton n'est plus nécessaire car la roue tourne automatiquement au chargement
+        // Fonction pour faire tourner la roue avec un angle précis reçu du backend
+        function spinNoStockWheelWithAngle(targetAngle) {
+            if (nostockIsSpinning) return;
+            nostockIsSpinning = true;
+            const resultMessage = document.getElementById('nostockResultMessage');
+            if (resultMessage) resultMessage.style.display = 'none';
             const spinBtn = document.getElementById('spinNoStockBtn');
             if (spinBtn) {
-                spinBtn.style.display = 'none';
+                spinBtn.disabled = true;
+                spinBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> En cours...';
             }
+            if (nostockSpinningSound) {
+                nostockSpinningSound.currentTime = 0;
+                nostockSpinningSound.play();
+            }
+            // PATCH: Remise à zéro de la roue avant chaque spin
+            nostockWheel.stopAnimation(false);
+            nostockWheel.rotationAngle = 0;
+            nostockWheel.draw();
+            // PATCH: Nombre de tours fixe et angle exact
+            nostockWheel.animation = {
+                'type': 'spinToStop',
+                'duration': 10,
+                'spins': 8,
+                'stopAngle': targetAngle,
+                'callbackFinished': finishedNoStockSpinning,
+                'callbackSound': playNoStockTickSound,
+                'soundTrigger': 'pin'
+            };
+            nostockWheel.startAnimation();
+            setNostockCookie('nostock_wheel_played', 'true', 7);
+            if (typeof(Storage) !== "undefined") {
+                sessionStorage.setItem('nostock_wheel_played', 'true');
+            }
+        }
+
+        // Lors du chargement, demander l'angle exact au backend
+        document.addEventListener('DOMContentLoaded', function() {
+            // SUPPRESSION de tout spin automatique résiduel ici
+            fetch('/wheel/api/no-stock-wheel-angle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ wheel_type: 'no-stock' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && typeof data.target_angle === 'number') {
+                    // Ne lance le spin qu'ICI, jamais ailleurs
+                    spinNoStockWheelWithAngle(data.target_angle);
+                }
+            });
         });
     </script>
     <style>

@@ -402,8 +402,16 @@ class ParticipantController extends Controller
             // Récupérer les distributions du concours actif
             $distributions = PrizeDistribution::where('contest_id', $contest->id)
                 ->where('remaining', '>', 0)  // Ne sélectionner que les distributions avec stock restant
-                ->whereDate('start_date', '<=', now())
-                ->whereDate('end_date', '>=', now())
+                ->where(function($query) {
+                    $now = now();
+                    $query->whereNull('start_date')
+                          ->orWhere('start_date', '<=', $now);
+                })
+                ->where(function($query) {
+                    $now = now();
+                    $query->whereNull('end_date')
+                          ->orWhere('end_date', '>=', $now);
+                })
                 ->with(['prize' => function($query) {
                     $query->where('stock', '>', 0);  // Ne sélectionner que les prix avec stock positif
                 }])

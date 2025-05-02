@@ -27,3 +27,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/prizes/{id}', [PrizeApiController::class, 'show']);
     Route::post('/prizes/{id}/upload-image', [PrizeApiController::class, 'uploadImage']);
 });
+
+Route::post('/no-stock-wheel-angle', function(Request $request) {
+    // Même logique que dans SpinResultController pour la roue no-stock
+    $segments = [
+        ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'],
+        ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ']
+    ];
+    $targetIndexes = [0,2,4,6,8]; // Toujours un secteur perdant
+    $chosenIndex = $targetIndexes[0]; // Ou random côté backend si souhaité
+    $target_angle = ($chosenIndex * 36) + 18;
+    return response()->json(['target_angle' => $target_angle]);
+});

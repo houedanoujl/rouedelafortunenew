@@ -16,7 +16,6 @@ use Filament\Tables\Grouping\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
 class PrizeDistributionResource extends Resource
 {
@@ -30,102 +29,118 @@ class PrizeDistributionResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // Suppression du test fatal, ce fichier n'est pas utilisé.
-        Log::info('[PRIZE FORM] Chargement du formulaire de distribution de prix');
-        $contests = Contest::orderBy('created_at', 'desc')->get();
-        $prizes = Prize::all();
-        Log::info('[PRIZE FORM] Concours disponibles :', $contests->pluck('id', 'name')->toArray());
-        Log::info('[PRIZE FORM] Prix disponibles :', $prizes->pluck('id', 'name')->toArray());
+        // Trouver le concours le plus récent (active ou pas)
+        $latestContest = Contest::orderBy('created_at', 'desc')->first();
+        $latestContestId = $latestContest ? $latestContest->id : null;
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Informations de la distribution')
                     ->schema([
-                        Forms\Components\Radio::make('contest_id')
+                        Forms\Components\Select::make('contest_id')
                             ->label('Concours')
-                            ->options($contests->mapWithKeys(function ($contest) {
-                                $label = $contest->name;
-                                if ($contest->status === 'active') {
-                                    $label .= ' [ACTIF]';
-                                }
-                                return [$contest->id => $label];
-                            }))
-                            ->default(function() use ($contests) {
-                                $latest = $contests->first();
-                                return $latest ? $latest->id : null;
-                            })
-                            ->required()
-                            ->inline()
-                            ->live()
-                            ->afterStateUpdated(function (Forms\Set $set, $state) {
-                                Log::info('[PRIZE FORM] Sélection concours radio changé : ' . $state);
-                                if ($state) {
-                                    $contest = Contest::find($state);
-                                    if ($contest) {
-                                        $set('start_date', $contest->start_date);
-                                        $set('end_date', $contest->end_date);
+                            ->options(function () {
+                                // Récupérer tous les concours avec un marqueur pour les actifs
+                                return Contest::all()->mapWithKeys(function ($contest) {
+                                    $label = $contest->name;
+                                    if ($contest->status === 'active') {
+                                        $label .= ' [ACTIF]';
                                     }
-                                }
-                            }),
-                        Forms\Components\Placeholder::make('contest_dates')
-                            ->label('Dates du concours sélectionné')
-                            ->content(function (Forms\Get $get) {
-                                $contestId = $get('contest_id');
-                                Log::info('[PRIZE FORM] Placeholder dates, concours sélectionné : ' . print_r($contestId, true));
-                                if (!$contestId) {
-                                    return 'Sélectionnez un concours pour voir ses dates';
-                                }
-                                $contest = Contest::find($contestId);
-                                if (!$contest) {
-                                    return 'Concours non trouvé';
-                                }
-                                return 'Du ' . ($contest->start_date ? $contest->start_date->format('d/m/Y H:i') : '?') . 
-                                       ' au ' . ($contest->end_date ? $contest->end_date->format('d/m/Y H:i') : '?');
+                                    return [$contest->id => $label];
+                                });
                             })
-                            ->hidden(fn (Forms\Get $get) => ! $get('contest_id')),
-                        Forms\Components\Radio::make('prize_id')
-                            ->label('Prix')
-                            ->options($prizes->mapWithKeys(function ($prize) {
-                                $label = $prize->name;
-                                $label .= ' (Stock: ' . $prize->stock . ')';
-                                return [$prize->id => $label];
-                            }))
-                            ->descriptions(function () use ($prizes) {
-                                $descriptions = [];
-                                foreach ($prizes as $prize) {
-                                    $descriptions[$prize->id] = $prize->description ?? 'Aucune description';
-                                }
-                                return $descriptions;
-                            })
+                            ->searchable()
                             ->required()
-                            ->inline(),
-                        Forms\Components\Grid::make()
-                            ->schema([
-                                Forms\Components\TextInput::make('quantity')
-                                    ->label('Quantité totale')
-                                    ->numeric()
-                                    ->required()
-                                    ->default(1),
-                                    
-                                Forms\Components\TextInput::make('remaining')
-                                    ->label('Quantité restante')
-                                    ->numeric()
-                                    ->helperText('Si laissé vide, sera défini automatiquement à la quantité totale'),
-                            ])
-                            ->columns(2),
-                            
-                        Forms\Components\Grid::make()
-                            ->schema([
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nom du concours')
+                                    ->required(),
+                                Forms\Components\Select::make('status')
+                                    ->label('Statut')
+                                    ->options([
+                                        'active' => 'Actif',
+                                        'scheduled' => 'Planifié',
+                                        'completed' => 'Terminé',
+                                        'cancelled' => 'Annulé',
+                                    ])
+                                    ->default('active')
+                                    ->required(),
                                 Forms\Components\DateTimePicker::make('start_date')
                                     ->label('Date de début')
                                     ->required(),
-                                    
                                 Forms\Components\DateTimePicker::make('end_date')
                                     ->label('Date de fin')
                                     ->required()
                                     ->afterOrEqual('start_date'),
                             ])
-                            ->columns(2),
-                    ]),
+                            ->createOptionAction(function ($action) {
+                                return $action->label('Créer un nouveau concours');
+                            }),
+                            
+                        Forms\Components\Select::make('prize_id')
+                            ->label('Prix')
+                            ->options(Prize::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nom du prix')
+                                    ->required(),
+                                Forms\Components\TextInput::make('value')
+                                    ->label('Valeur')
+                                    ->numeric()
+                                    ->required(),
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Description')
+                                    ->rows(3),
+                                Forms\Components\TextInput::make('stock')
+                                    ->label('Stock initial')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(1),
+                            ])
+                            ->createOptionAction(function ($action) {
+                                return $action->label('Créer un nouveau prix');
+                            }),
+                            
+                        Forms\Components::make([
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('Quantité totale')
+                                        ->numeric()
+                                        ->required()
+                                        ->default(1),
+                                        
+                                    Forms\Components\TextInput::make('remaining')
+                                        ->label('Quantité restante')
+                                        ->numeric()
+                                        ->helperText('Si laissé vide, sera défini automatiquement à la quantité totale'),
+                                ]),
+                                
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\DateTimePicker::make('start_date')
+                                        ->label('Date de début')
+                                        ->required(),
+                                        
+                                    Forms\Components::make(function (?PrizeDistribution $record) {
+                                        // Retrouver la date de fin du concours si un enregistrement existe
+                                        $contestEndDate = null;
+                                        if ($record && $record->contest) {
+                                            $contestEndDate = $record->contest->end_date;
+                                        }
+                                        
+                                        return Forms\Components\DateTimePicker::make('end_date')
+                                            ->label('Date de fin')
+                                            ->required()
+                                            ->afterOrEqual('start_date')
+                                            ->default($contestEndDate);
+                                    }),
+                                ]),
+                        ]),
+                    ])
+                    ->columns(1),
             ]);
     }
 

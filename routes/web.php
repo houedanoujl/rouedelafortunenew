@@ -11,6 +11,7 @@ use App\Http\Controllers\WhatsappTestController;
 use App\Http\Controllers\MetaWhatsappTestController;
 use App\Http\Controllers\GreenApiWhatsappController;
 use App\Http\Controllers\PrizeUploadController;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,19 @@ Route::post('/register', [ParticipantController::class, 'register'])->name('regi
 // Routes pour la roue
 Route::get('/wheel/{entry}', [SpinController::class, 'show'])->name('wheel.show');
 Route::get('/spin/result/{entry}', [SpinController::class, 'result'])->name('spin.result');
+
+// Route pour la roue no-stock (nécessaire pour le frontend)
+Route::post('/wheel/api/no-stock-wheel-angle', function(Request $request) {
+    // Même logique que dans SpinResultController pour la roue no-stock
+    $segments = [
+        ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'],
+        ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ']
+    ];
+    $targetIndexes = [0,2,4,6,8]; // Toujours un secteur perdant
+    $chosenIndex = $targetIndexes[0]; // Ou random côté backend si souhaité
+    $target_angle = ($chosenIndex * 36) + 18;
+    return response()->json(['target_angle' => $target_angle]);
+});
 
 // Route pour le QR code
 Route::get('/qrcode/check', [QrCodeController::class, 'check'])->name('qrcode.check');
@@ -95,4 +109,5 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/whatsapp-logs/download', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'download'])->name('admin.whatsapp.logs.download');
     Route::get('/whatsapp-logs/clear', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'clear'])->name('admin.whatsapp.logs.clear');
     Route::get('/whatsapp/send-documents/{entry}', [\App\Http\Controllers\Admin\WhatsAppDocumentController::class, 'sendDocuments'])->name('admin.whatsapp.send-documents');
+    Route::get('/spin-history-logs', [\App\Http\Controllers\SpinHistoryLogsController::class, 'index'])->name('admin.spin-history-logs');
 });

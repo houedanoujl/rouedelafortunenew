@@ -22,6 +22,33 @@ class SpinController extends Controller
             abort(404);
         }
 
+        // Vérification pour les emails interdits (employés SIFCA et Big Five)
+        if ($entry->participant && $entry->participant->email) {
+            $restrictedDomains = [
+                '@bigfivesolutions.com',
+                '@bigfiveabidjan.com',
+                '@sifca.ci'
+            ];
+            
+            $email = strtolower($entry->participant->email);
+            foreach ($restrictedDomains as $domain) {
+                if (str_ends_with($email, $domain)) {
+                    // Journaliser la tentative
+                    Log::warning('Tentative de participation par un employé', [
+                        'email' => $email,
+                        'entry_id' => $entry->id,
+                        'ip' => $request->ip()
+                    ]);
+                    
+                    // Rediriger vers une vue spéciale avec message d'avertissement
+                    return view('restricted-access', [
+                        'entry' => $entry,
+                        'reason' => 'Le jeu est interdit aux employés de SIFCA et Big Five.'
+                    ]);
+                }
+            }
+        }
+
         // Vérifier si l'entrée a déjà été jouée
         if ($entry->has_played) {
             // Vérifier si nous avons un jeton d'authentification pour cette entrée
@@ -57,6 +84,16 @@ class SpinController extends Controller
             // Chercher les distributions avec stock disponible
             $distributions = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
                 ->where('remaining', '>', 0)
+                ->where(function($query) {
+                    $now = now();
+                    $query->whereNull('start_date')
+                          ->orWhere('start_date', '<=', $now);
+                })
+                ->where(function($query) {
+                    $now = now();
+                    $query->whereNull('end_date')
+                          ->orWhere('end_date', '>=', $now);
+                })
                 ->with('prize')
                 ->get();
                 
@@ -313,6 +350,16 @@ class SpinController extends Controller
                     // Chercher toutes les distributions disponibles avec un prix
                     $distributions = \App\Models\PrizeDistribution::where('contest_id', $entry->contest_id)
                         ->where('remaining', '>', 0)
+                        ->where(function($query) {
+                            $now = now();
+                            $query->whereNull('start_date')
+                                  ->orWhere('start_date', '<=', $now);
+                        })
+                        ->where(function($query) {
+                            $now = now();
+                            $query->whereNull('end_date')
+                                  ->orWhere('end_date', '>=', $now);
+                        })
                         ->with('prize')
                         ->get();
                         

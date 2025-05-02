@@ -451,7 +451,7 @@ class FortuneWheel extends Component
             $ip = request()->ip();
             
             // Chemin du fichier d'historique à la racine du projet
-            $historyFile = base_path('spin_history.json');
+            $historyFile = storage_path('app/spin_history.json');
             $csvFile = storage_path('app/public/participations.csv');
             
             // Données à enregistrer

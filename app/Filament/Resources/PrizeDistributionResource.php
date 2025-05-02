@@ -28,44 +28,65 @@ class PrizeDistributionResource extends Resource
 
     public static function form(Form $form): Form
     {
+        \Log::info('[PRIZE FORM] Chargement du formulaire de distribution de prix');
+        $contests = \App\Models\Contest::orderBy('created_at', 'desc')->get();
+        $prizes = \App\Models\Prize::all();
+        \Log::info('[PRIZE FORM] Concours disponibles', ['contests' => $contests->pluck('name', 'id')]);
+        \Log::info('[PRIZE FORM] Prix disponibles', ['prizes' => $prizes->pluck('name', 'id')]);
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Informations concours')
                     ->description('Les dates de distribution doivent être dans les limites du concours')
                     ->schema([
+                        Forms\Components\Radio::make('contest_id')
+                            ->label('Concours')
+                            ->options($contests->mapWithKeys(function ($contest) {
+                                $label = $contest->name;
+                                if ($contest->status === 'active') {
+                                    $label .= ' [ACTIF]';
+                                }
+                                return [$contest->id => $label];
+                            }))
+                            ->inline()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) use ($contests) {
+                                $contest = $contests->find($state);
+                                \Log::info('[PRIZE FORM] Concours sélectionné', ['contest_id' => $state, 'dates' => $contest ? [$contest->start_date, $contest->end_date] : null]);
+                                if ($contest) {
+                                    $set('contest_dates', $contest->start_date . ' → ' . $contest->end_date);
+                                } else {
+                                    $set('contest_dates', 'Sélectionnez un concours pour voir ses dates');
+                                }
+                            }),
                         Forms\Components\Placeholder::make('contest_dates')
                             ->label('Dates du concours sélectionné')
-                            ->content(function (callable $get) {
+                            ->content(function (callable $get) use ($contests) {
                                 $contestId = $get('contest_id');
                                 if (!$contestId) {
                                     return 'Sélectionnez un concours pour voir ses dates';
                                 }
-                                
-                                $contest = \App\Models\Contest::find($contestId);
+                                $contest = $contests->find($contestId);
                                 if (!$contest) {
-                                    return 'Aucune information disponible';
+                                    return 'Concours introuvable';
                                 }
-                                
-                                return sprintf(
-                                    'Du %s au %s', 
-                                    $contest->start_date->format('d/m/Y H:i'), 
-                                    $contest->end_date->format('d/m/Y H:i')
-                                );
-                            })
-                            ->columnSpanFull(),
+                                return $contest->start_date . ' → ' . $contest->end_date;
+                            }),
                     ])
                     ->collapsible()
                     ->persistCollapsed(false),
-                Forms\Components\Select::make('contest_id')
-                    ->relationship('contest', 'name')
-                    ->label('Concours')
-                    ->required()
-                    ->reactive()
-                    ->afterStateUpdated(fn () => $form->fill()),
-                Forms\Components\Select::make('prize_id')
-                    ->relationship('prize', 'name')
-                    ->label('Prix')
-                    ->required(),
+                Forms\Components\Section::make('Prix à attribuer')
+                    ->schema([
+                        Forms\Components\Radio::make('prize_id')
+                            ->label('Prix')
+                            ->options($prizes->mapWithKeys(fn ($prize) => [$prize->id => $prize->name]))
+                            ->inline()
+                            ->live()
+                            ->afterStateUpdated(function ($state) use ($prizes) {
+                                $prize = $prizes->find($state);
+                                \Log::info('[PRIZE FORM] Prix sélectionné', ['prize_id' => $state, 'prize' => $prize ? $prize->name : null]);
+                            }),
+                    ]),
                 Forms\Components\TextInput::make('quantity')
                     ->label('Quantité')
                     ->required()
