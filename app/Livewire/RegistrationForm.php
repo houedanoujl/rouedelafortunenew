@@ -133,6 +133,8 @@ class RegistrationForm extends Component
         // Vérifier si l'utilisateur a déjà participé lorsqu'il entre son téléphone ou son email
         // Ignorer cette vérification pour les comptes test
         if (($propertyName === 'phone' || $propertyName === 'email') && !session('is_test_account')) {
+            // Transmettre un indicateur pour que le JS sache ne pas réafficher le popup d'âge
+            $this->dispatch('updating-participation-check');
             $this->checkExistingParticipation();
         }
     }

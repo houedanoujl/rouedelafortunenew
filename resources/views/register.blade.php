@@ -6,12 +6,12 @@
         <div class="col-md-12">
             <div class="card" style="border: 1px solid #e0e0e0; min-height:100vh; border-radius: 4px; box-shadow: none;">
                 <div class="card-header text-white" style="background-color: var(--honolulu-blue);">
-                    <h2 class="mb-0">📝 Inscription au concours 🎁</h2>
+                    <h2 class="mb-0"> Inscription au concours </h2>
                 </div>
                 <div class="card-body">
                     <p id="isidor" class="lead mb-4">
-                        🔥 Tentez votre chance et remportez des cadeaux incroyables ! 🎉<br>
-                        Remplissez le formulaire ci-dessous pour participer  au <span style="font-weight: normal; color: var(--primary-red);">Grand Jeu DINOR 70 ans</span>. 🎰<br>
+                        Tentez votre chance et remportez des cadeaux incroyables !<br>
+                        Remplissez le formulaire ci-dessous pour participer  au <span style="font-weight: normal; color: var(--primary-red);">Grand Jeu DINOR 70 ans</span>.<br>
                                             </p>
                     
                     <!-- <h3>Test Component:</h3>
@@ -45,5 +45,5 @@
 </style>
 
 <!-- Inclure la vérification d'âge uniquement sur la page d'inscription -->
-@include('partials.age-verification')
+<!-- @include('partials.age-verification') -->
 @endsection

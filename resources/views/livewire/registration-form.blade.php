@@ -48,6 +48,89 @@
         font-size: 1.2rem;
         padding: 0.8rem 1.5rem;
     }
+
+    /* Styles pour le popup de vérification d'âge */
+    .age-verification-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: 'EB Garamond', serif;
+    }
+    
+    .age-verification-overlay.hidden {
+        display: none !important;
+    }
+    
+    .age-verification-popup {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 90%;
+        width: 400px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .age-verification-popup h2 {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: var(--honolulu-blue);
+        font-family: 'EB Garamond', serif;
+        font-weight: 600;
+    }
+    
+    .age-verification-popup p {
+        font-size: 1.4rem;
+        margin-bottom: 2rem;
+        color: #333;
+        font-family: 'EB Garamond', serif;
+    }
+    
+    .age-verification-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+    
+    .age-verification-buttons button {
+        padding: 0.8rem 2.5rem;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        font-family: 'EB Garamond', serif;
+        font-weight: 600;
+        transition: transform 0.1s, background-color 0.2s;
+    }
+    
+    .age-verification-buttons button:hover {
+        transform: translateY(-2px);
+    }
+    
+    .btn-age-yes {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn-age-yes:hover {
+        background-color: #218838;
+    }
+    
+    .btn-age-no {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-age-no:hover {
+        background-color: #c82333;
+    }
 </style>
 
     <div class="card" style="border: 1px solid #e0e0e0; min-height:100vh; border-radius: 4px; box-shadow: none;">
@@ -209,63 +292,102 @@
     </div>
     @endif
 
-    <!-- Popup de vérification d'âge -->
-    <div id="ageVerificationOverlay" class="age-verification-overlay">
-        <div class="age-verification-popup">
-            <h2>Vérification de l'âge</h2>
-            <p>Êtes vous agé(e) d'au moins 18 ans ?</p>
-            <div class="age-verification-buttons">
-                <button class="btn-age-yes" onclick="verifyAge(true)">Oui</button>
-                <button class="btn-age-no" onclick="verifyAge(false)">Non</button>
+    <!-- UNIQUE ID pour éviter les conflits -->
+    <div id="uniqueAgePopup_2023152755" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; overflow:auto; justify-content:center; align-items:center;">
+        <div style="background:white; width:90%; max-width:400px; padding:30px; border-radius:10px; text-align:center; position:relative;">
+            <h2 style="color:#0079B2; font-size:24px; margin-bottom:15px;">Vérification de l'âge</h2>
+            <p style="font-size:18px; margin-bottom:20px;">Êtes vous agé(e) d'au moins 18 ans ?</p>
+            <div style="display:flex; gap:15px; justify-content:center;">
+                <button onclick="ageVerifier2023152755.yes()" style="background:#0079B2; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:16px;">Oui</button>
+                <button onclick="ageVerifier2023152755.no()" style="background:#D03A2C; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:16px;">Non</button>
             </div>
         </div>
     </div>
 
+    <!-- Script minimaliste sans conflits potentiels -->
     <script>
-        // Fonction pour vérifier l'âge
-        function verifyAge(isAdult) {
-            if (isAdult) {
-                document.getElementById('ageVerificationOverlay').classList.add('hidden');
-            } else {
-                window.location.href = 'https://www.google.com';
-            }
-        }
-
-        // Vérification de participation (sans bloquer en navigation privée)
-        document.addEventListener('DOMContentLoaded', function() {
-            try {
-                checkForExistingParticipation();
-            } catch (e) {
-                console.error('Erreur lors de la vérification de participation:', e);
-            }
-        });
-
-        // Fonction pour vérifier la participation existante
-        function checkForExistingParticipation() {
-            let contestId = '{{ $contestId ?? '' }}';
-            if (!contestId) {
-                const contestIdInput = document.getElementById('contestId');
-                if (contestIdInput) {
-                    contestId = contestIdInput.value;
+    // Objet namespace unique pour éviter les conflits
+    var ageVerifier2023152755 = {
+        // Référence au popup
+        popupId: 'uniqueAgePopup_2023152755',
+        
+        // Montrer le popup
+        show: function() {
+            var popup = document.getElementById(this.popupId);
+            if (popup) popup.style.display = 'flex';
+        },
+        
+        // Cacher le popup
+        hide: function() {
+            var popup = document.getElementById(this.popupId);
+            if (popup) popup.style.display = 'none';
+            
+            // Libérer les ressources et supprimer le popup du DOM complètement
+            setTimeout(function() {
+                var popupElement = document.getElementById('uniqueAgePopup_2023152755');
+                if (popupElement && popupElement.parentNode) {
+                    popupElement.parentNode.removeChild(popupElement);
                 }
-            }
-            if (!contestId) return;
-            const key = `contest_played_${contestId}`;
-            if (localStorage.getItem(key)) {
-                // Vérifier si on est déjà sur la page d'accueil avec already_played=true pour éviter les redirections en boucle
-                const urlParams = new URLSearchParams(window.location.search);
-                const alreadyOnAlreadyPlayedPage = urlParams.get('already_played') === 'true';
+            }, 100);
+        },
+        
+        // Action "Oui"
+        yes: function() {
+            this.hide();
+            window.sessionStorage.setItem('age_verified_2023152755', true);
+        },
+        
+        // Action "Non"
+        no: function() {
+            window.location.href = 'https://www.google.com';
+        },
+        
+        // Initialiser le popup (une seule fois par page)
+        init: function() {
+            // Vérifier si nous avons déjà affiché le popup dans cette session
+            if (window.sessionStorage && !window.sessionStorage.getItem('age_verified_2023152755')) {
+                this.show();
                 
-                // Ne rediriger que si on n'est pas déjà sur la page de redirection 
-                // ou si la session n'indique pas qu'on a déjà affiché la popup
-                if (!alreadyOnAlreadyPlayedPage && !sessionStorage.getItem('popup_shown')) {
-                    const redirectUrl = `/home?already_played=true&contest_id=${contestId}`;
-                    setTimeout(() => {
-                        window.location.href = redirectUrl;
-                    }, 300);
+                // S'assurer que tous les liens et boutons fonctionnent correctement
+                var allButtons = document.querySelectorAll('button');
+                for (var i = 0; i < allButtons.length; i++) {
+                    if (allButtons[i].id !== 'uniqueAgePopup_2023152755') {
+                        allButtons[i].addEventListener('click', function(e) {
+                            // Si le popup est visible, masquer le popup et permettre l'événement
+                            var popup = document.getElementById('uniqueAgePopup_2023152755');
+                            if (popup && popup.style.display === 'flex') {
+                                ageVerifier2023152755.hide();
+                            }
+                        });
+                    }
                 }
             }
         }
+    };
+    
+    // Exécuté une seule fois au chargement de la page
+    document.addEventListener('DOMContentLoaded', function() {
+        ageVerifier2023152755.init();
+    });
     </script>
 
+    <!-- Script pour afficher les lots disponibles dans la console -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Récupérer les lots disponibles via une requête AJAX
+        fetch('/api/prizes/available?contest_id={{ $contestId }}')
+            .then(response => response.json())
+            .then(data => {
+                console.log('=== LOTS DISPONIBLES ===');
+                console.log(data);
+                console.table(data.prizes);
+                console.log('=== RÉCAPITULATIF ===');
+                console.log(`Total: ${data.total} lots disponibles`);
+                console.log(`Concours actif: ${data.contest_name}`);
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération des lots:', error);
+            });
+    });
+    </script>
 </div>

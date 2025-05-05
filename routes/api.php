@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PrizeApiController;
+use App\Http\Controllers\Api\AvailablePrizesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/prizes/{id}', [PrizeApiController::class, 'show']);
     Route::post('/prizes/{id}/upload-image', [PrizeApiController::class, 'uploadImage']);
 });
+
+// Route publique pour récupérer les lots disponibles pour le formulaire d'inscription
+Route::get('/prizes/available', [AvailablePrizesController::class, 'available']);
 
 Route::post('/no-stock-wheel-angle', function(Request $request) {
     // Même logique que dans SpinResultController pour la roue no-stock

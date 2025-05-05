@@ -1,3 +1,5 @@
+<!-- Ce fichier a été désactivé pour éviter les conflits avec le popup principal -->
+<!--
 <!-- Popup de vérification d'âge - toujours affiché -->
 <style>
     /* Overlay qui couvre tout l'écran */
@@ -225,3 +227,4 @@
         verifyAge(true);
     }
 </script>
+-->

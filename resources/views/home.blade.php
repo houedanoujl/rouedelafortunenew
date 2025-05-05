@@ -201,4 +201,5 @@
         background-color: var(--light-gray) !important;
     }
 </style>
+
 @endsection

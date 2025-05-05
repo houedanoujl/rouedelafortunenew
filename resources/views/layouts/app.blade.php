@@ -31,6 +31,72 @@
     @livewireStyles
     
     <style>
+        /* Styles pour le popup de vérification d'âge */
+        .age-verification-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .age-verification-popup {
+            background-color: white;
+            max-width: 400px;
+            width: 90%;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .age-verification-popup h2 {
+            color: var(--honolulu-blue);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .age-verification-popup p {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        .age-verification-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .age-verification-buttons button {
+            padding: 0.7rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        
+        .age-verification-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-age-yes {
+            background-color: #0079B2;
+            color: white;
+        }
+        
+        .btn-age-no {
+            background-color: #D03A2C;
+            color: white;
+        }
+        
         :root {
             /* Nouvelle palette de couleurs flat */
             --honolulu-blue: #0079B2ff;

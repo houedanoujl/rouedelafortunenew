@@ -13,7 +13,7 @@
             </div>
             
             <!-- Bouton pour tourner -->
-            <button id="spinNoStockBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20; display: none;">
+            <button id="spinNoStockBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20;">
                 Tourner la roue
             </button>
         </div>
@@ -241,22 +241,43 @@
 
         // Lors du chargement, demander l'angle exact au backend
         document.addEventListener('DOMContentLoaded', function() {
-            // SUPPRESSION de tout spin automatique résiduel ici
-            fetch('/wheel/api/no-stock-wheel-angle', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ wheel_type: 'no-stock' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data && typeof data.target_angle === 'number') {
-                    // Ne lance le spin qu'ICI, jamais ailleurs
-                    spinNoStockWheelWithAngle(data.target_angle);
-                }
-            });
+            // Afficher le bouton pour tourner la roue manuellement
+            const spinBtn = document.getElementById('spinNoStockBtn');
+            if (spinBtn) {
+                spinBtn.style.display = 'block';
+                spinBtn.addEventListener('click', function() {
+                    // Désactiver le bouton pendant le chargement
+                    spinBtn.disabled = true;
+                    spinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
+                    
+                    // Demander l'angle exact au backend
+                    fetch('/wheel/api/no-stock-wheel-angle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ wheel_type: 'no-stock' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && typeof data.target_angle === 'number') {
+                            // Lancer la rotation de la roue avec l'angle reçu
+                            spinNoStockWheelWithAngle(data.target_angle);
+                        } else {
+                            // En cas d'erreur, réactiver le bouton
+                            spinBtn.disabled = false;
+                            spinBtn.innerHTML = 'Tourner la roue';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la récupération de l\'angle:', error);
+                        // En cas d'erreur, réactiver le bouton
+                        spinBtn.disabled = false;
+                        spinBtn.innerHTML = 'Tourner la roue';
+                    });
+                });
+            }
         });
     </script>
     <style>
