@@ -44,6 +44,7 @@
     }
 </style>
 
-<!-- Inclure la vérification d'âge uniquement sur la page d'inscription -->
-<!-- @include('partials.age-verification') -->
+<!-- Inclure le popup de vérification d'âge sur la page d'inscription -->
+@include('partials.age-verification')
+
 @endsection

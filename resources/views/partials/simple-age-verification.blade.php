@@ -1,4 +1,6 @@
-<!-- Popup simple de vérification d'âge - plein écran -->
+<!-- Ce fichier est DÉSACTIVÉ pour éviter les doublons de popups de vérification d'âge -->
+<!-- Tout le contenu est commenté pour éviter qu'il ne soit inclus -->
+<!--
 <style>
     /* Style pour le popup de vérification d'âge */
     .age-verify-overlay {
@@ -130,3 +132,4 @@ var ageCheck = {
 // Initialiser le popup
 ageCheck.init();
 </script>
+-->
