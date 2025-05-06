@@ -31,13 +31,26 @@ class InfobipService
     
     public function sendWhatsAppNotification($phoneNumber, $name, $qrCode)
     {
-        // Assurez-vous que le numéro commence par +225 sans supprimer les chiffres existants
+        // Nettoyage initial du numéro (supprimer espaces, tirets, etc.)
+        $phoneNumber = preg_replace('/[^0-9+]/', '', $phoneNumber);
+        
+        // Formatage correct du numéro avec préfixe +225 pour la Côte d'Ivoire
         if (!str_starts_with($phoneNumber, '+225')) {
-            // Vérifier si le numéro commence déjà par 225
+            // Si le numéro commence déjà par 225, ajouter juste le +
             if (str_starts_with($phoneNumber, '225')) {
                 $phoneNumber = '+' . $phoneNumber;
-            } else {
-                $phoneNumber = '+225' . ltrim($phoneNumber, '+');
+            } 
+            // Si c'est un numéro local à 10 chiffres sans indicatif
+            else if (strlen($phoneNumber) == 10 && !str_starts_with($phoneNumber, '+')) {
+                $phoneNumber = '+225' . $phoneNumber;
+            }
+            // Si c'est un numéro local à 8 chiffres (format court)
+            else if (strlen($phoneNumber) == 8 && !str_starts_with($phoneNumber, '+')) {
+                $phoneNumber = '+225' . $phoneNumber;
+            }
+            // Pour tout autre cas, préserver le numéro et ajouter +225 seulement s'il n'a pas déjà un autre indicatif
+            else if (!str_starts_with($phoneNumber, '+')) {
+                $phoneNumber = '+225' . $phoneNumber;
             }
         }
         
