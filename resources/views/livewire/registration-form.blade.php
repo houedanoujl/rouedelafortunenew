@@ -292,7 +292,7 @@
     </div>
     @endif
 
-    <!-- UNIQUE ID pour éviter les conflits -->
+    <!-- UNIQUE ID pour éviter les conflits - Popup simple de vérification d'âge au lieu des conditions de participation -->
     <div id="uniqueAgePopup_2023152755" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; overflow:auto; justify-content:center; align-items:center;">
         <div style="background:white; width:90%; max-width:400px; padding:30px; border-radius:10px; text-align:center; position:relative;">
             <h2 style="color:#0079B2; font-size:24px; margin-bottom:15px;">Vérification de l'âge</h2>
@@ -335,6 +335,20 @@
         yes: function() {
             this.hide();
             window.sessionStorage.setItem('age_verified_2023152755', true);
+            
+            // Soumettre automatiquement le formulaire après validation de l'âge s'il était en cours de soumission
+            setTimeout(function() {
+                // Vérifier si le formulaire était en cours de soumission
+                if (window.formWasSubmitting) {
+                    // Récupérer le formulaire d'inscription
+                    var form = document.querySelector('form[wire\\:submit\\.prevent="register"]');
+                    if (form) {
+                        // Déclencher l'événement Livewire de soumission du formulaire
+                        Livewire.find(form.getAttribute('wire:id')).call('register');
+                    }
+                    window.formWasSubmitting = false;
+                }
+            }, 200);
         },
         
         // Action "Non"
@@ -347,47 +361,64 @@
             // Vérifier si nous avons déjà affiché le popup dans cette session
             if (window.sessionStorage && !window.sessionStorage.getItem('age_verified_2023152755')) {
                 this.show();
-                
-                // S'assurer que tous les liens et boutons fonctionnent correctement
-                var allButtons = document.querySelectorAll('button');
-                for (var i = 0; i < allButtons.length; i++) {
-                    if (allButtons[i].id !== 'uniqueAgePopup_2023152755') {
-                        allButtons[i].addEventListener('click', function(e) {
-                            // Si le popup est visible, masquer le popup et permettre l'événement
-                            var popup = document.getElementById('uniqueAgePopup_2023152755');
-                            if (popup && popup.style.display === 'flex') {
-                                ageVerifier2023152755.hide();
-                            }
-                        });
-                    }
-                }
             }
         }
     };
     
     // Exécuté une seule fois au chargement de la page
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser le popup de vérification d'âge
         ageVerifier2023152755.init();
+        
+        // Ajouter un gestionnaire d'événement sur le formulaire pour la soumission
+        var form = document.querySelector('form[wire\\:submit\\.prevent="register"]');
+        if (form) {
+            // Variable globale pour suivre si le formulaire est en cours de soumission
+            window.formWasSubmitting = false;
+            
+            // Intercepter la soumission du formulaire
+            form.addEventListener('submit', function(e) {
+                // Si l'âge n'a pas été vérifié, montrer le popup et empêcher la soumission
+                if (!window.sessionStorage.getItem('age_verified_2023152755')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.formWasSubmitting = true;
+                    ageVerifier2023152755.show();
+                    return false;
+                }
+            });
+        }
     });
     </script>
 
     <!-- Script pour afficher les lots disponibles dans la console -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Récupérer les lots disponibles via une requête AJAX
-        fetch('/api/prizes/available?contest_id={{ $contestId }}')
-            .then(response => response.json())
-            .then(data => {
-                console.log('=== LOTS DISPONIBLES ===');
-                console.log(data);
-                console.table(data.prizes);
-                console.log('=== RÉCAPITULATIF ===');
-                console.log(`Total: ${data.total} lots disponibles`);
-                console.log(`Concours actif: ${data.contest_name}`);
-            })
-            .catch(error => {
-                console.error('Erreur lors de la récupération des lots:', error);
-            });
+        try {
+            // Récupérer les lots disponibles via une requête AJAX
+            fetch('/api/prizes/available?contest_id={{ $contestId }}')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Réponse réseau non OK');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('=== LOTS DISPONIBLES ===');
+                    console.log(data);
+                    if (data.prizes) {
+                        console.table(data.prizes);
+                        console.log('=== RÉCAPITULATIF ===');
+                        console.log(`Total: ${data.total} lots disponibles`);
+                        console.log(`Concours actif: ${data.contest_name}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des lots:', error);
+                });
+        } catch (error) {
+            console.error('Erreur dans le bloc try/catch global:', error);
+        }
     });
     </script>
 </div>

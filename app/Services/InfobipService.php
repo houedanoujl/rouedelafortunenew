@@ -31,9 +31,14 @@ class InfobipService
     
     public function sendWhatsAppNotification($phoneNumber, $name, $qrCode)
     {
-        // Assurez-vous que le numéro commence par +225
+        // Assurez-vous que le numéro commence par +225 sans supprimer les chiffres existants
         if (!str_starts_with($phoneNumber, '+225')) {
-            $phoneNumber = '+225' . ltrim($phoneNumber, '+0');
+            // Vérifier si le numéro commence déjà par 225
+            if (str_starts_with($phoneNumber, '225')) {
+                $phoneNumber = '+' . $phoneNumber;
+            } else {
+                $phoneNumber = '+225' . ltrim($phoneNumber, '+');
+            }
         }
         
         // Ajouter le message de non-réponse au code QR

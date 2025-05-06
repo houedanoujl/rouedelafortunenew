@@ -387,6 +387,9 @@
     <!-- Modal pour les règles du jeu -->
     @include('partials.rules-modal')
 
+    <!-- Popup simple de vérification d'âge - Commenté pour éviter qu'il apparaisse sur toutes les pages -->
+    <!-- @include('partials.simple-age-verification') -->
+
     <!-- jQuery + Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
