@@ -86,7 +86,7 @@
     <div class="age-verification-popup">
         <h2>Vérification de l'âge</h2>
         <p>Êtes-vous âgé(e) de 18 ans ou plus ?</p>
-        
+
         <div class="age-verification-buttons">
             <button onclick="verifyAge(true)" class="btn-age-yes">Oui</button>
             <button onclick="verifyAge(false)" class="btn-age-no">Non</button>
@@ -97,22 +97,8 @@
 <script>
     // Exécuter après le chargement du DOM
     document.addEventListener('DOMContentLoaded', function() {
-        // Vérifier si l'utilisateur a déjà participé (via cookies ou session)
-        function checkParticipation() {
-            // Vérifier si l'âge a déjà été vérifié
-            const ageVerified = localStorage.getItem('age_verified') === 'true';
-            if (ageVerified) {
-                return true;
-            }
-            
-            // Si aucune vérification, afficher le popup
-            return false;
-        }
-        
-        // N'afficher le popup que si pas encore vérifié
-        if (!checkParticipation()) {
-            document.getElementById('ageVerificationOverlay').classList.remove('hidden');
-        }
+        // Afficher le popup à chaque visite, sans vérifier localStorage
+        document.getElementById('ageVerificationOverlay').classList.remove('hidden');
     });
 
     // Fonction pour vérifier l'âge
@@ -120,8 +106,7 @@
         if (isAdult) {
             // Si l'utilisateur a plus de 18 ans, cacher le popup
             document.getElementById('ageVerificationOverlay').classList.add('hidden');
-            // Sauvegarder dans localStorage pour ne pas redemander
-            localStorage.setItem('age_verified', 'true');
+            // Pas de sauvegarde dans localStorage pour afficher à chaque visite
         } else {
             // Simplement fermer le popup sans redirection
             document.getElementById('ageVerificationOverlay').classList.add('hidden');

@@ -78,7 +78,7 @@ class ParticipantController extends Controller
                     false,               // raw
                     'lax'                // sameSite
                 ));
-                
+
                 // Journaliser la création du cookie (pour débogage)
                 \Log::info("Cookie {$cookieName} créé pour un utilisateur normal", [
                     'cookie_name' => $cookieName,
@@ -265,7 +265,7 @@ class ParticipantController extends Controller
             session()->flash('info', 'Vous avez déjà participé à ce concours. Une seule participation par semaine au concours est autorisée.');
             return redirect()->route('wheel.show', ['entry' => $existingEntry->id]);
         }
-        
+
         // Créer une nouvelle participation
         $entry = Entry::create([
             'participant_id' => $participant->id,
@@ -432,14 +432,14 @@ class ParticipantController extends Controller
             // Obtenir l'heure actuelle en format GMT/UTC
             $now = now()->timezone('UTC');
             $currentHour = (int) $now->format('H');
-            
+
             // Vérifier si l'heure actuelle est dans les plages spécifiées (12h-14h ou 18h-20h GMT)
-            $isPromotionalTime = ($currentHour >= 12 && $currentHour < 14) || 
+            $isPromotionalTime = ($currentHour >= 12 && $currentHour < 14) ||
                                  ($currentHour >= 18 && $currentHour < 20);
-            
+
             // Définir des probabilités de gagner selon l'heure
             $chanceToWin = 0.01; // 1% par défaut
-            
+
             // Vérifier si l'utilisateur est en mode test (d'après la mémoire existante)
             if (session('is_test_account')) {
                 $chanceToWin = 1.0; // 100% pour les comptes de test
@@ -451,14 +451,14 @@ class ParticipantController extends Controller
                 $chanceToWin = 0.5; // 50% de chances durant les heures promotionnelles
                 \Log::info('Période promotionnelle détectée: ' . $now->format('Y-m-d H:i:s') . ' - Chances de gain augmentées à 50%');
             }
-            
+
             \Log::info('Paramètres de spin', [
                 'heure_actuelle' => $now->format('Y-m-d H:i:s'),
                 'période_promotionnelle' => $isPromotionalTime,
                 'chance_de_gain' => $chanceToWin * 100 . '%',
                 'prix_en_stock' => $hasPrizesInStock
             ]);
-                
+
             // Créer 100 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance
             $sectors = [];
 
@@ -534,6 +534,25 @@ class ParticipantController extends Controller
                 // Déterminer le résultat (gagné ou perdu)
                 $hasWon = $selectedSector && $selectedSector['is_winning'] && $hasPrizesInStock;
 
+                // Vérifier si le participant a déjà gagné un prix dans un autre concours
+                if ($hasWon && $entry->participant) {
+                    $alreadyWon = $this->hasParticipantPreviouslyWon(
+                        $entry->participant->phone,
+                        $entry->participant->email
+                    );
+
+                    if ($alreadyWon) {
+                        \Log::warning('Participant déjà gagnant à un précédent concours - Résultat forcé à perdant', [
+                            'entry_id' => $entry->id,
+                            'participant_id' => $entry->participant->id,
+                            'phone' => $entry->participant->phone,
+                            'email' => $entry->participant->email
+                        ]);
+                        // Forcer le résultat à perdant
+                        $hasWon = false;
+                    }
+                }
+
                 // Si le joueur a gagné, choisir un prix aléatoirement parmi les disponibles
                 $prizeId = null;
                 $distributionId = null;
@@ -544,8 +563,8 @@ class ParticipantController extends Controller
                     $availablePrizes = [];
 
                     foreach ($distributions as $distribution) {
-                        if ($distribution->prize && 
-                            $distribution->prize->stock > 0 && 
+                        if ($distribution->prize &&
+                            $distribution->prize->stock > 0 &&
                             $distribution->contest_id == $contest->id) {
                             $availablePrizes[] = [
                                 'prize_id' => $distribution->prize->id,
@@ -567,7 +586,7 @@ class ParticipantController extends Controller
                         $selectedPrize = $availablePrizes[$randomIndex];
                         $prizeId = $selectedPrize['prize_id'];
                         $distributionId = $selectedPrize['distribution_id'];
-                        
+
                         \Log::info('Prix sélectionné aléatoirement', [
                             'selected_index' => $randomIndex,
                             'prize_id' => $prizeId,
@@ -590,7 +609,7 @@ class ParticipantController extends Controller
                 // Force le débogage pour voir ce qui se passe exactement ici
                 \Log::debug('État avant décrémentation des stocks', [
                     'hasWon' => $hasWon,
-                    'entry_id' => $entry->id, 
+                    'entry_id' => $entry->id,
                     'prize_id' => $prizeId,
                     'distribution_id' => $distributionId
                 ]);
@@ -602,7 +621,7 @@ class ParticipantController extends Controller
                         'prize_id' => $prizeId,
                         'distribution_id' => $distributionId
                     ]);
-                    
+
                     // DÉCRÉMENTATION DU STOCK DU PRIX DIRECTEMENT - Stratégie 1
                     $prize = Prize::find($prizeId);
                     if ($prize) {
@@ -611,11 +630,11 @@ class ParticipantController extends Controller
                             'prize_name' => $prize->name,
                             'current_stock' => $prize->stock
                         ]);
-                        
+
                         if ($prize->stock > 0) {
                             $prize->stock -= 1;
                             $prize->save();
-                            
+
                             \Log::info('Stock du prix décrémenté directement', [
                                 'prize_id' => $prizeId,
                                 'prize_name' => $prize->name,
@@ -623,7 +642,7 @@ class ParticipantController extends Controller
                             ]);
                         }
                     }
-                    
+
                     // DÉCRÉMENTATION DU STOCK DE LA DISTRIBUTION - Stratégie 2
                     // Si on a un distribution_id, essayer de l'utiliser directement
                     if ($distributionId) {
@@ -632,42 +651,42 @@ class ParticipantController extends Controller
                             \Log::debug('Distribution trouvée avec ID fourni', [
                                 'distribution_id' => $distributionId,
                                 'prize_id' => $distribution->prize_id,
-                                'current_remaining' => $distribution->remaining 
+                                'current_remaining' => $distribution->remaining
                             ]);
-                            
+
                             if ($distribution->remaining > 0) {
                                 $distribution->remaining -= 1;
                                 $distribution->save();
-                                
+
                                 \Log::info('Stock de distribution décrémenté avec ID fourni', [
                                     'distribution_id' => $distributionId,
                                     'new_remaining' => $distribution->remaining
                                 ]);
                             }
                         }
-                    } 
+                    }
                     // Sinon, chercher des distributions liées au prix
                     else {
                         \Log::debug('Aucun distribution_id fourni, recherche de distributions pour le prix', [
                             'prize_id' => $prizeId
                         ]);
-                        
+
                         // Chercher une distribution pour ce prix dans le concours actuel
                         $matchingDistribution = PrizeDistribution::where('prize_id', $prizeId)
                             ->where('contest_id', $contest->id)
                             ->where('remaining', '>', 0)
                             ->first();
-                            
+
                         if ($matchingDistribution) {
                             \Log::info('Distribution trouvée par recherche', [
                                 'distribution_id' => $matchingDistribution->id,
                                 'prize_id' => $prizeId,
                                 'current_remaining' => $matchingDistribution->remaining
                             ]);
-                            
+
                             $matchingDistribution->remaining -= 1;
                             $matchingDistribution->save();
-                            
+
                             \Log::info('Stock de distribution décrémenté après recherche', [
                                 'distribution_id' => $matchingDistribution->id,
                                 'new_remaining' => $matchingDistribution->remaining
@@ -701,23 +720,23 @@ class ParticipantController extends Controller
                         ->margin(10)
                         ->build()
                         ->saveToFile($qrPath);
-                    
+
                     // Stocker le nom du prix dans la session pour le message WhatsApp
                     if ($prize) {
                         session(['prize_name' => $prize->name]);
                     }
-                    
+
                     // Utiliser Green API pour l'envoi WhatsApp (nouvelle méthode)
                     $greenWhatsapp = new GreenWhatsAppService();
                     try {
-                        $message = "Félicitations ! Vous avez gagné " . ($prize ? $prize->name : "un prix") . 
-                                  ". Voici votre QR code pour récupérer votre gain. Conservez-le précieusement !";
-                        
+                        $message = "Félicitations ! Vous avez gagné " . ($prize ? $prize->name : "un prix") .
+                                  ". Voici votre QR code pour récupérer votre gain. Conservez-le précieusement ! Prière de contacter le 07 19 04 87 28 afin de récupérer votre prix.";
+
                         $greenWhatsapp->sendQrCodeToWinner($recipientPhone, $qrPath, $message);
                         \Log::info('Message WhatsApp envoyé au gagnant via Green API', ['phone' => $recipientPhone, 'entry_id' => $entry->id]);
                     } catch (\Exception $ex) {
                         \Log::error('Erreur lors de l\'envoi WhatsApp via Green API', ['error' => $ex->getMessage()]);
-                        
+
                         // Fallback sur l'ancien service en cas d'échec
                         try {
                             $whatsapp = new WhatsAppService();
@@ -834,5 +853,32 @@ class ParticipantController extends Controller
     public function qrCodeResultPage($code)
     {
         return view('qr-result', ['code' => $code]);
+    }
+
+    /**
+     * Vérifie si un participant a déjà gagné un prix à n'importe quel concours
+     *
+     * @param string $phone Numéro de téléphone
+     * @param string|null $email Email (optionnel)
+     * @return bool True si le participant a déjà gagné, false sinon
+     */
+    private function hasParticipantPreviouslyWon($phone, $email = null)
+    {
+        $query = Entry::where('has_won', true)
+            ->whereHas('participant', function($query) use ($phone, $email) {
+                $query->where('phone', $phone);
+
+                if ($email) {
+                    $query->orWhere('email', $email);
+                }
+            });
+
+        \Log::info('Vérification si le participant a déjà gagné', [
+            'phone' => $phone,
+            'email' => $email,
+            'a_déjà_gagné' => $query->exists()
+        ]);
+
+        return $query->exists();
     }
 }

@@ -20,10 +20,10 @@ class FortuneWheel extends Component
     public bool $hasStock = false; // Nouvelle propriété pour stocker l'état des stocks
     public array $stockInfo = []; // Information sur les stocks disponibles
 
-    // Constantes pour la roue 
+    // Constantes pour la roue
     const SECTORS_COUNT = 10; // Nombre total de secteurs
     const SECTOR_ANGLE = 36;  // Angle de chaque secteur (360 / SECTORS_COUNT)
-    
+
     /**
      * Initialisation du composant avec l'entrée
      */
@@ -31,17 +31,17 @@ class FortuneWheel extends Component
     {
         $this->entry = $entry;
         $this->showWheel = !$entry->has_played;
-        
+
         // Vérifier les stocks AVANT l'affichage de la roue
         $this->checkStocksBeforeRender();
-        
+
         // Journaliser l'état des stocks au chargement de la page
         $this->logStockStatus();
-        
+
         // Vérifier l'état des stocks et passer l'information au frontend
         $this->checkStockAvailability();
     }
-    
+
     /**
      * Vérifie l'état des stocks avant le rendu de la page
      */
@@ -53,20 +53,20 @@ class FortuneWheel extends Component
             $this->hasStock = false;
             return;
         }
-        
+
         // Chercher les distributions de prix pour ce concours avec des prix disponibles
         $distributions = PrizeDistribution::where('contest_id', $contest->id)
             ->where('remaining', '>', 0)
             ->with('prize')
             ->get();
-        
+
         $validDistributions = $distributions->filter(function($dist) {
             return $dist->prize !== null;
         });
-        
+
         // Stocker l'état des stocks
         $this->hasStock = $validDistributions->count() > 0;
-        
+
         // Stocker des informations sur les stocks pour le frontend
         $this->stockInfo = [
             'has_stock' => $this->hasStock,
@@ -81,7 +81,7 @@ class FortuneWheel extends Component
             })->toArray()
         ];
     }
-    
+
     /**
      * Vérifie l'état des stocks et passer l'information au frontend
      */
@@ -97,17 +97,17 @@ class FortuneWheel extends Component
             ]);
             return;
         }
-        
+
         // Chercher les distributions de prix pour ce concours avec des prix disponibles
         $distributions = PrizeDistribution::where('contest_id', $contest->id)
             ->where('remaining', '>', 0)
             ->with('prize')
             ->get();
-        
+
         $validDistributions = $distributions->filter(function($dist) {
             return $dist->prize !== null;
         });
-        
+
         // Envoyer l'état au frontend
         $this->dispatch('stock-status', [
             'has_stock' => $validDistributions->count() > 0,
@@ -123,7 +123,7 @@ class FortuneWheel extends Component
             })
         ]);
     }
-    
+
     /**
      * Vérifie et journaliser l'état de tous les stocks disponibles
      */
@@ -132,31 +132,31 @@ class FortuneWheel extends Component
         try {
             // Récupérer tous les concours actifs
             $activeContests = \App\Models\Contest::where('status', 'active')->get();
-            
+
             Log::info('====== VÉRIFICATION DES STOCKS AU DÉMARRAGE ======');
             Log::info('Nombre de concours actifs: ' . count($activeContests));
-            
+
             $allStockData = [];
-            
+
             foreach ($activeContests as $contest) {
                 Log::info("Vérification des stocks pour le concours: {$contest->name} (ID: {$contest->id})");
-                
+
                 // Récupérer toutes les distributions de prix pour ce concours
                 $distributions = \App\Models\PrizeDistribution::where('contest_id', $contest->id)
                     ->with('prize')
                     ->get();
-                
+
                 if ($distributions->isEmpty()) {
                     Log::warning("Aucune distribution de prix trouvée pour le concours {$contest->name}");
                     continue;
                 }
-                
+
                 $contestStockData = [
                     'contest_name' => $contest->name,
                     'contest_id' => $contest->id,
                     'distributions' => []
                 ];
-                
+
                 // Journaliser chaque distribution
                 foreach ($distributions as $dist) {
                     $distData = [
@@ -168,38 +168,38 @@ class FortuneWheel extends Component
                         'prix_stock' => $dist->prize ? $dist->prize->stock : 'N/A',
                         'statut' => $dist->remaining > 0 ? 'DISPONIBLE' : 'ÉPUISÉ'
                     ];
-                    
+
                     $contestStockData['distributions'][] = $distData;
-                    
+
                     Log::info("Distribution #{$dist->id}: " . ($dist->prize ? $dist->prize->name : 'Prix NULL'), $distData);
                 }
-                
+
                 // Compter les distributions disponibles
                 $availableDistributions = $distributions->filter(function($dist) {
                     return $dist->prize !== null && $dist->remaining > 0;
                 });
-                
+
                 $contestStockData['available_count'] = count($availableDistributions);
                 $contestStockData['total_count'] = count($distributions);
-                
+
                 $allStockData[] = $contestStockData;
-                
+
                 Log::info("Résumé pour le concours {$contest->name}: " . count($availableDistributions) . " prix disponibles sur " . count($distributions) . " distributions");
             }
-            
+
             // Envoyer les données à la console du navigateur
             $this->dispatch('stock-status-init', [
                 'contests' => $allStockData,
                 'timestamp' => now()->format('Y-m-d H:i:s')
             ]);
-            
+
             Log::info('====== FIN DE LA VÉRIFICATION DES STOCKS ======');
         } catch (\Exception $e) {
             Log::error('Erreur lors de la vérification des stocks', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Envoyer l'erreur à la console également
             $this->dispatch('stock-status-error', [
                 'message' => $e->getMessage(),
@@ -207,7 +207,7 @@ class FortuneWheel extends Component
             ]);
         }
     }
-    
+
     /**
      * Fait tourner la roue et traite le résultat
      */
@@ -216,7 +216,7 @@ class FortuneWheel extends Component
         try {
             // Définir l'état de tournage à vrai
             $this->spinning = true;
-            
+
             // Si la roue a déjà été tournée, on ne permet pas de tourner à nouveau
             if ($this->entry->has_played) {
                 return redirect()->route('spin.result', ['entry' => $this->entry->id]);
@@ -224,22 +224,22 @@ class FortuneWheel extends Component
 
             // Vérifier les stocks encore une fois (double vérification) pour éviter les manipulations
             $this->checkStocksBeforeRender();
-            
+
             if (!$this->hasStock) {
                 // Rediriger vers une page indiquant qu'il n'y a plus de stock
                 $this->dispatch('no-stock');
                 return;
             }
-            
+
             // Générer un résultat (gagné/perdu) basé sur la probabilité
             $isWinning = $this->calculateWinChance();
-            
+
             // Déterminer le secteur et l'angle final
             $result = $this->determineSector($isWinning);
             $finalAngle = $result['angle'];
             $sectorIndex = $result['index'];
             $sectorId = $result['id'];
-            
+
             // Journaliser la décision
             Log::info('Décision de spin générée', [
                 'entry_id' => $this->entry->id,
@@ -247,28 +247,28 @@ class FortuneWheel extends Component
                 'final_angle' => $finalAngle,
                 'sector_id' => $sectorId
             ]);
-            
+
             // Est-ce un secteur gagnant ? (Les secteurs pairs sont gagnants)
             $isResultWinning = $sectorIndex % 2 === 0;
-            
+
             // Utiliser le résultat déterminé par le secteur, pas par le tirage au sort
             $this->entry->has_played = true;
             $this->entry->has_won = $isResultWinning;
             $this->entry->save();
-            
+
             // Si c'est un gain, incrémenter le compteur quotidien
             if ($isResultWinning) {
                 app(WinLimitService::class)->incrementTodayWinnersCount();
-                
+
                 Log::info('Compteur de gagnants incrémenté pour aujourd\'hui', [
                     'entry_id' => $this->entry->id,
                     'date' => Carbon::now()->toDateString()
                 ]);
             }
-            
+
             // Enregistrer le résultat dans l'historique JSON
             $this->saveSpinHistory($finalAngle, $isResultWinning, $sectorId, $this->entry);
-            
+
             // Déclencher l'animation de la roue
             $this->dispatch('startSpinWithSound', [
                 'angle' => $finalAngle,
@@ -276,7 +276,7 @@ class FortuneWheel extends Component
                 'sectorId' => $sectorId,
                 'sectorIndex' => $sectorIndex
             ]);
-            
+
             // Stocke le résultat pour traitement après la fin de l'animation
             session()->put('wheel_result', [
                 'entry_id' => $this->entry->id,
@@ -294,7 +294,7 @@ class FortuneWheel extends Component
             ]);
         }
     }
-    
+
     /**
      * Calcule la probabilité de gain selon la règle du jeu
      * @return bool
@@ -303,7 +303,7 @@ class FortuneWheel extends Component
     {
         // Instancier le service de limite de gains
         $winLimitService = app(WinLimitService::class);
-        
+
         // Vérifier si on a atteint la limite quotidienne de gagnants
         if (!$winLimitService->canWinToday()) {
             Log::info('Limite quotidienne de gagnants atteinte, résultat forcé à perdant', [
@@ -312,17 +312,107 @@ class FortuneWheel extends Component
             ]);
             return false; // Forcer le résultat à perdant
         }
-        
-        // Si la limite n'est pas atteinte, calculer normalement
-        // Ajustement de la probabilité pour atteindre environ 2 gagnants par jour
-        // Supposons qu'il y ait en moyenne 200 participants par jour
-        // 2 gagnants sur 200 = 1% de chance
-        return rand(1, 100) === 1; // 1% de chance de gagner (1/100)
+
+        // Vérifier si le participant a déjà gagné à n'importe quel concours précédent
+        $participant = $this->entry->participant;
+        if ($participant) {
+            // Vérifier s'il a déjà gagné dans un autre concours
+            $hasWonBefore = Entry::where('has_won', true)
+                ->where('participant_id', $participant->id)
+                ->where('id', '!=', $this->entry->id)
+                ->exists();
+
+            if ($hasWonBefore) {
+                Log::info('Participant déjà gagnant à un concours précédent, résultat forcé à perdant', [
+                    'entry_id' => $this->entry->id,
+                    'participant_id' => $participant->id,
+                    'participant_phone' => $participant->phone
+                ]);
+                return false; // Forcer le résultat à perdant
+            }
+        }
+
+        // Si c'est un compte test, 100% de chances de gagner
+        if (session('is_test_account')) {
+            Log::info('Compte test détecté, 100% de chances de gagner', [
+                'entry_id' => $this->entry->id,
+                'participant_id' => $participant ? $participant->id : null
+            ]);
+            return true;
+        }
+
+        // Chargement de la configuration des heures promotionnelles
+        $configFile = 'promotional_hours_settings.json';
+        $promotionalEnabled = true; // Par défaut activé
+        $promotionalRate = 50; // Taux par défaut: 50%
+        $timeSlots = [
+            [
+                'name' => 'Midi',
+                'start_time' => '12:00',
+                'end_time' => '14:00',
+                'enabled' => true,
+            ],
+            [
+                'name' => 'Soirée',
+                'start_time' => '18:00',
+                'end_time' => '20:00',
+                'enabled' => true,
+            ],
+        ]; // Plages horaires par défaut
+
+        // Charger la configuration depuis le fichier si elle existe
+        if (\Illuminate\Support\Facades\Storage::exists($configFile)) {
+            $settings = json_decode(\Illuminate\Support\Facades\Storage::get($configFile), true) ?: [];
+            $promotionalEnabled = $settings['enabled'] ?? true;
+            $promotionalRate = $settings['promotional_rate'] ?? 50;
+            $timeSlots = $settings['time_slots'] ?? $timeSlots;
+        }
+
+        // Si les heures promotionnelles ne sont pas activées, utiliser le taux standard
+        if (!$promotionalEnabled) {
+            Log::info('Heures promotionnelles désactivées, taux standard appliqué (1%)', [
+                'entry_id' => $this->entry->id
+            ]);
+            return rand(1, 100) === 1; // 1% par défaut
+        }
+
+        // Obtenir l'heure actuelle en format GMT/UTC
+        $now = now()->timezone('UTC');
+        $currentTime = $now->format('H:i');
+
+        // Vérifier si l'heure actuelle est dans une plage horaire promotionnelle active
+        $isPromotionalTime = false;
+        $currentSlot = null;
+
+        foreach ($timeSlots as $slot) {
+            // Ignorer les plages horaires désactivées
+            if (!($slot['enabled'] ?? true)) continue;
+
+            // Vérifier si l'heure actuelle est dans cette plage
+            if ($currentTime >= $slot['start_time'] && $currentTime < $slot['end_time']) {
+                $isPromotionalTime = true;
+                $currentSlot = $slot;
+                break;
+            }
+        }
+
+        if ($isPromotionalTime) {
+            // Appliquer le taux de gain promotionnel
+            Log::info('Période promotionnelle détectée, chances de gain augmentées', [
+                'heure_actuelle' => $now->format('Y-m-d H:i:s'),
+                'plage_horaire' => $currentSlot['name'] ?? 'Inconnue',
+                'taux_gain' => $promotionalRate . '%'
+            ]);
+            return rand(1, 100) <= $promotionalRate;
+        }
+
+        // Par défaut: 1% de chance de gagner (1/100)
+        return rand(1, 100) === 1;
     }
-    
+
     /**
      * Détermine le secteur et l'angle final en fonction du résultat souhaité
-     * 
+     *
      * @param bool $isWinning
      * @return array
      */
@@ -330,36 +420,36 @@ class FortuneWheel extends Component
     {
         // Indices des secteurs disponibles
         $possibleIndices = [];
-        
+
         // Pour la roue, nous voulons des secteurs complets
         for ($i = 0; $i < self::SECTORS_COUNT; $i++) {
             // Vérifier si le secteur correspond au résultat souhaité (gagnant ou perdant)
             // Les secteurs pairs (0, 2, 4, 6, 8) sont gagnants, les impairs sont perdants
             $isSectorWinning = $i % 2 === 0;
-            
+
             if ($isSectorWinning === $isWinning) {
                 $possibleIndices[] = $i;
             }
         }
-        
+
         // Choisir un secteur au hasard parmi ceux qui correspondent au résultat souhaité
         $randomIndex = array_rand($possibleIndices);
         $sectorIndex = $possibleIndices[$randomIndex];
-        
+
         // Calculer l'angle du secteur
         // Chaque secteur fait 36 degrés (360 / 10 secteurs)
         $sectorAngle = $sectorIndex * self::SECTOR_ANGLE;
-        
+
         // Générer un angle aléatoire au sein du secteur choisi
         // Pour s'assurer que la roue s'arrête bien au milieu du secteur
         $minSectorAngle = $sectorAngle;
         $maxSectorAngle = $sectorAngle + self::SECTOR_ANGLE - 1;
         $preciseSectorAngle = rand($minSectorAngle, $maxSectorAngle);
-        
+
         // Ajouter plusieurs tours complets (entre 3 et 5 tours) pour une animation plus réaliste
-        $numSpins = rand(3, 5); 
+        $numSpins = rand(3, 5);
         $finalAngle = ($numSpins * 360) + (360 - $preciseSectorAngle);
-        
+
         Log::info('Angle final calculé', [
             'secteur' => $sectorIndex,
             'est_gagnant' => $isWinning ? 'oui' : 'non',
@@ -368,7 +458,7 @@ class FortuneWheel extends Component
             'angle_final' => $finalAngle,
             'tours' => $numSpins
         ]);
-        
+
         return [
             'index' => $sectorIndex,
             'id' => 'secteur-' . $sectorIndex,
@@ -376,7 +466,7 @@ class FortuneWheel extends Component
             'isWinning' => $isWinning
         ];
     }
-    
+
     /**
      * Gère la logique lorsque le joueur gagne
      */
@@ -388,7 +478,7 @@ class FortuneWheel extends Component
         ]);
         // Vérifier si un QR code existe déjà pour cette entrée
         $existingQrCode = $this->entry->qrCode;
-        
+
         if ($existingQrCode) {
             Log::info('QR Code existant utilisé dans handleWinning', [
                 'entry_id' => $this->entry->id,
@@ -441,23 +531,23 @@ class FortuneWheel extends Component
                 'contest_id' => $contest->id
             ]);
         }
-        
+
         // Récupérer le participant pour obtenir son numéro de téléphone
         $participant = $this->entry->participant;
-        
+
         // Envoyer une notification WhatsApp si un numéro de téléphone est disponible
         if ($participant && $participant->phone) {
             try {
                 // Créer une instance du service Infobip
                 $infobipService = new InfobipService();
-                
+
                 // Envoyer la notification WhatsApp
                 $infobipService->sendWhatsAppNotification(
-                    $participant->phone, 
+                    $participant->phone,
                     $participant->first_name . ' ' . $participant->last_name,
                     $qrCode
                 );
-                
+
                 // Journaliser le succès
                 Log::info('Notification WhatsApp envoyée avec succès', [
                     'participant_id' => $participant->id,
@@ -489,11 +579,11 @@ class FortuneWheel extends Component
         try {
             // Récupérer l'adresse IP du joueur
             $ip = request()->ip();
-            
+
             // Chemin du fichier d'historique à la racine du projet
             $historyFile = storage_path('app/spin_history.json');
             $csvFile = storage_path('app/public/participations.csv');
-            
+
             // Données à enregistrer
             $spinData = [
                 'timestamp' => Carbon::now()->toIso8601String(),
@@ -512,23 +602,23 @@ class FortuneWheel extends Component
                 'has_won_in_db' => $entry->has_won,
                 'ip_address' => $ip
             ];
-            
+
             // Créer ou charger le fichier existant
             $history = [];
             if (file_exists($historyFile)) {
                 $historyContent = file_get_contents($historyFile);
                 $history = json_decode($historyContent, true) ?: [];
             }
-            
+
             // Ajouter l'enregistrement actuel
             $history[] = $spinData;
-            
+
             // Sauvegarder le fichier mis à jour
             file_put_contents($historyFile, json_encode($history, JSON_PRETTY_PRINT));
-            
+
             // Mettre à jour le fichier CSV également
             $this->updateCsvHistory($entry, $isWinning, $ip, $csvFile);
-            
+
             Log::info('Historique de spin enregistré (JSON et CSV)', [
                 'entry_id' => $entry->id,
                 'angle' => $finalAngle,
@@ -545,7 +635,7 @@ class FortuneWheel extends Component
             ]);
         }
     }
-    
+
     /**
      * Met à jour le fichier CSV avec les informations de participation
      */
@@ -557,31 +647,31 @@ class FortuneWheel extends Component
             if (!is_dir($directory)) {
                 mkdir($directory, 0755, true);
             }
-            
+
             // En-têtes du CSV
             $headers = [
-                'Date', 
-                'ID', 
-                'Prénom', 
-                'Nom', 
-                'Email', 
-                'Téléphone', 
-                'Résultat', 
+                'Date',
+                'ID',
+                'Prénom',
+                'Nom',
+                'Email',
+                'Téléphone',
+                'Résultat',
                 'Adresse IP',
                 'Date de naissance',
                 'Adresse',
                 'Code postal',
                 'Ville'
             ];
-            
+
             // Créer le fichier avec les en-têtes s'il n'existe pas
             $fileExists = file_exists($csvFile);
             $handle = fopen($csvFile, 'a'); // ouverture en mode ajout
-            
+
             if (!$fileExists) {
                 fputcsv($handle, $headers);
             }
-            
+
             // Récupérer les infos du participant
             $participant = $entry->participant;
             if ($participant) {
@@ -599,13 +689,13 @@ class FortuneWheel extends Component
                     $participant->postal_code ?? 'N/A',
                     $participant->city ?? 'N/A'
                 ];
-                
+
                 // Écrire la ligne dans le CSV
                 fputcsv($handle, $data);
             }
-            
+
             fclose($handle);
-            
+
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du fichier CSV', [
                 'error' => $e->getMessage(),

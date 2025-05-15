@@ -51,7 +51,7 @@ class RegistrationForm extends Component
                 'reglement' => 'required|accepted',
             ];
         }
-        
+
         // Règles standard pour les utilisateurs normaux
         return [
             'firstName' => 'required|string|max:255',
@@ -369,6 +369,23 @@ class RegistrationForm extends Component
                 $this->previousContestsCount = Entry::where('participant_id', $participant->id)
                     ->distinct('contest_id')
                     ->count('contest_id');
+
+                // Vérifier si le participant a déjà gagné à un autre concours
+                $hasWonPreviously = Entry::where('participant_id', $participant->id)
+                    ->where('has_won', true)
+                    ->exists();
+
+                if ($hasWonPreviously && !session('is_test_account')) {
+                    \Log::info('Participant déjà gagnant à un précédent concours détecté pendant l\'inscription', [
+                        'participant_id' => $participant->id,
+                        'phone' => $participant->phone,
+                        'email' => $participant->email
+                    ]);
+
+                    // Nous laissons le participant s'inscrire, mais un message d'information est ajouté
+                    // La vérification dans calculateWinChance() empêchera de toute façon un nouveau gain
+                    session()->flash('warning', 'Vous avez déjà gagné à un de nos concours précédents. Un participant ne peut gagner qu\'une seule fois, tous concours confondus.');
+                }
 
                 $existingEntry = Entry::where('participant_id', $participant->id)
                     ->where('contest_id', $this->contestId)
