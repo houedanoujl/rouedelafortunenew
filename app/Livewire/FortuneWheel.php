@@ -32,6 +32,24 @@ class FortuneWheel extends Component
         $this->entry = $entry;
         $this->showWheel = !$entry->has_played;
 
+        // Vérifier si le participant a déjà gagné à un concours précédent
+        // Si oui, rediriger vers la page no-stock
+        if ($entry->participant) {
+            $hasWonBefore = $this->checkIfParticipantHasWonBefore($entry->participant);
+            if ($hasWonBefore) {
+                Log::info('Participant déjà gagnant à un concours précédent, redirection vers no-stock', [
+                    'entry_id' => $entry->id,
+                    'participant_id' => $entry->participant->id,
+                    'participant_phone' => $entry->participant->phone,
+                    'participant_name' => $entry->participant->first_name . ' ' . $entry->participant->last_name
+                ]);
+
+                // Définir hasStock à false pour forcer l'affichage de la roue no-stock
+                $this->hasStock = false;
+                return;
+            }
+        }
+
         // Vérifier les stocks AVANT l'affichage de la roue
         $this->checkStocksBeforeRender();
 
@@ -40,6 +58,55 @@ class FortuneWheel extends Component
 
         // Vérifier l'état des stocks et passer l'information au frontend
         $this->checkStockAvailability();
+    }
+
+    /**
+     * Vérifie si un participant a déjà gagné à un concours précédent
+     *
+     * @param \App\Models\Participant $participant
+     * @return bool
+     */
+    private function checkIfParticipantHasWonBefore($participant)
+    {
+        // Vérification uniquement par téléphone/email
+        $previousWinEntry = Entry::where('has_won', true)
+            ->whereHas('participant', function($query) use ($participant) {
+                $query->where('phone', $participant->phone);
+
+                if ($participant->email) {
+                    $query->orWhere('email', $participant->email);
+                }
+            })
+            ->with('prize')  // Charger le prix remporté
+            ->with('contest')  // Charger le concours
+            ->first();
+
+        $hasWonBefore = $previousWinEntry !== null;
+
+        // Si un gain précédent a été détecté, envoyer les informations au frontend
+        if ($hasWonBefore && $previousWinEntry) {
+            $prizeName = $previousWinEntry->prize ? $previousWinEntry->prize->name : 'lot inconnu';
+            $contestName = $previousWinEntry->contest ? $previousWinEntry->contest->name : 'concours inconnu';
+            $winDate = $previousWinEntry->played_at ? $previousWinEntry->played_at->format('d/m/Y') : 'date inconnue';
+
+            // Envoyer les informations du gain précédent au frontend
+            $this->dispatch('previous-win-info', [
+                'prize_name' => $prizeName,
+                'contest_name' => $contestName,
+                'win_date' => $winDate,
+                'participant_name' => $participant->first_name . ' ' . $participant->last_name,
+                'participant_phone' => $participant->phone
+            ]);
+
+            Log::info('Détails du gain précédent envoyés au frontend', [
+                'participant_id' => $participant->id,
+                'prize_name' => $prizeName,
+                'contest_name' => $contestName,
+                'win_date' => $winDate
+            ]);
+        }
+
+        return $hasWonBefore;
     }
 
     /**
@@ -316,17 +383,65 @@ class FortuneWheel extends Component
         // Vérifier si le participant a déjà gagné à n'importe quel concours précédent
         $participant = $this->entry->participant;
         if ($participant) {
-            // Vérifier s'il a déjà gagné dans un autre concours
+            // Vérifier s'il a déjà gagné dans un autre concours avec plusieurs critères
+            // 1. Vérification par téléphone/email (principale)
             $hasWonBefore = Entry::where('has_won', true)
-                ->where('participant_id', $participant->id)
-                ->where('id', '!=', $this->entry->id)
+                ->where('participant_id', '!=', $participant->id) // Exclure l'entrée actuelle
+                ->whereHas('participant', function($query) use ($participant) {
+                    $query->where('phone', $participant->phone);
+
+                    if ($participant->email) {
+                        $query->orWhere('email', $participant->email);
+                    }
+                })
                 ->exists();
+
+            // 2. Si non trouvé, vérification par nom/prénom (similitude)
+            if (!$hasWonBefore && $participant->first_name && $participant->last_name) {
+                $normalizedFirstName = $this->normalizeString($participant->first_name);
+                $normalizedLastName = $this->normalizeString($participant->last_name);
+
+                // Rechercher toutes les entrées gagnantes
+                $winningEntries = Entry::where('has_won', true)
+                    ->where('participant_id', '!=', $participant->id) // Exclure l'entrée actuelle
+                    ->with('participant')
+                    ->get();
+
+                // Vérifier manuellement chaque entrée pour les correspondances approximatives
+                foreach ($winningEntries as $entry) {
+                    if (!$entry->participant) continue;
+
+                    $existingFirstName = $this->normalizeString($entry->participant->first_name);
+                    $existingLastName = $this->normalizeString($entry->participant->last_name);
+
+                    // Vérifier la similarité des noms/prénoms
+                    similar_text($normalizedFirstName, $existingFirstName, $firstNamePercentage);
+                    similar_text($normalizedLastName, $existingLastName, $lastNamePercentage);
+
+                    // Si les noms sont très similaires (plus de 85% de similarité)
+                    if ($firstNamePercentage > 85 && $lastNamePercentage > 85) {
+                        $hasWonBefore = true;
+                        Log::info('Détection de participant similaire déjà gagnant', [
+                            'entry_id' => $this->entry->id,
+                            'nouveau_prenom' => $participant->first_name,
+                            'nouveau_nom' => $participant->last_name,
+                            'prenom_existant' => $entry->participant->first_name,
+                            'nom_existant' => $entry->participant->last_name,
+                            'similarite_prenom' => $firstNamePercentage,
+                            'similarite_nom' => $lastNamePercentage
+                        ]);
+                        break;
+                    }
+                }
+            }
 
             if ($hasWonBefore) {
                 Log::info('Participant déjà gagnant à un concours précédent, résultat forcé à perdant', [
                     'entry_id' => $this->entry->id,
                     'participant_id' => $participant->id,
-                    'participant_phone' => $participant->phone
+                    'participant_phone' => $participant->phone,
+                    'participant_email' => $participant->email,
+                    'participant_name' => $participant->first_name . ' ' . $participant->last_name
                 ]);
                 return false; // Forcer le résultat à perdant
             }
@@ -702,6 +817,27 @@ class FortuneWheel extends Component
                 'entry_id' => $entry->id
             ]);
         }
+    }
+
+    /**
+     * Normalise une chaîne pour la comparaison
+     * Enlève les accents, les espaces, et met tout en minuscules
+     *
+     * @param string $string
+     * @return string
+     */
+    private function normalizeString($string)
+    {
+        // Convertir en minuscules
+        $string = mb_strtolower($string);
+
+        // Enlever les accents
+        $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
+
+        // Enlever les caractères non alphanumériques
+        $string = preg_replace('/[^a-z0-9]/', '', $string);
+
+        return $string;
     }
 
     public function render()

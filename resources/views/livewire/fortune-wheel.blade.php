@@ -141,20 +141,20 @@
 
         // Vérification système des résultats
         function checkExpectedOutcome(isWinning, payload) {
-            
+
             // Logique cohérente avec le backend
             if (!isWinning) {
                 // Si il y a des prix valides, c'est le hasard qui a déterminé une perte
                 if (payload && payload.valid_count > 0) {
-                    
+
                 } else {
                     // Sinon c'est l'absence de stock qui force la perte
-                    
+
                 }
             } else {
-                
+
             }
-            
+
             return isWinning;
         }
 
@@ -234,7 +234,7 @@
             // Déterminer si c'est un segment gagnant basé sur le texte
             const isWinningSegmentFinal = winningSegment.text === 'GAGNÉ';
             const serverHasWon = {{ $entry->has_won ? 'true' : 'false' }};
-            
+
             // Mettre en avant le segment obtenu
             if (winningSegment) {
                 const oldFillStyle = winningSegment.fillStyle;
@@ -258,7 +258,7 @@
             console.log(`🎁 Résultat: ${isWinningSegmentFinal ? '✅ GAGNÉ' : '❌ PERDU'}`);
             console.log(`⏰ Date/Heure: ${new Date().toLocaleString()}`);
             console.log(`🔢 ID Participation: {{ $entry->id }}`);
-            // Informations supplémentaires sur le segment 
+            // Informations supplémentaires sur le segment
             console.log(`🎯 Segment: ${winningSegment.text}`);
             console.log(`🎯 Angle d'arrêt: ${theWheel.animation.stopAngle.toFixed(2)}°`);
 
@@ -274,7 +274,7 @@
                     loseSound.play();
                 }
             }
-            
+
             // Si on doit rediriger, programmer la redirection
             if (shouldRedirect) {
                 // Redirection après un délai pour que les sons soient joués
@@ -344,10 +344,10 @@
         window.addEventListener('DOMContentLoaded', function() {
             if (window.Livewire) {
                 // Pour Livewire v3
-                
+
             }
             // Pour compatibilité custom event (si utilisé)
-            
+
         });
 
         // Confettis pour les gagnants
@@ -381,7 +381,7 @@
         // Écouter les événements Livewire
         document.addEventListener('livewire:initialized', () => {
             @this.on('startSpinWithSound', (data) => {
-                
+
                 // Vérifier que les données sont valides
                 if (data) {
                     console.log(`
@@ -393,14 +393,14 @@
 █ du système entraînera la disqualification immédiate.         █
 █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
 `);
-                    
+
                     console.log(`🎁 RÉSULTAT: ${data.isWinning ? '✅ GAGNANT' : '❌ PERDANT'}`);
                     console.log(`👤 PARTICIPANT: ${JSON.stringify({
                         nom: '{{ $entry->participant ? $entry->participant->first_name . " " . $entry->participant->last_name : "Inconnu" }}',
                         telephone: '{{ $entry->participant ? $entry->participant->phone : "Non renseigné" }}',
                         email: '{{ $entry->participant ? $entry->participant->email : "Non renseigné" }}'
                     })}`);
-                    
+
                     // spinWheel(data);
                 } else {
                     console.log('❌ Erreur: Données manquantes pour le tour de roue');
@@ -419,7 +419,7 @@
 █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
 `);
             });
-            
+
             // Écouter l'événement de vérification de stock (Livewire v3)
             @this.on('stock-check', (data) => {
                 // Correction : si data est un tableau, on prend le premier élément
@@ -427,7 +427,7 @@
                 // Vérifier que les distributions existent avant d'accéder à leurs propriétés
                 const distributions = payload.distributions || [];
                 const validCount = payload.valid_count || 0;
-                
+
                 console.log('📊 ÉTAT DES STOCKS:', {
                     validCount: validCount,
                     hasPrizesInStock: validCount > 0 ? 'OUI' : 'NON',
@@ -438,7 +438,7 @@
 █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 █ 🎁 LOTS DISPONIBLES AUJOURD'HUI 🎁                            █
 █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█`);
-                
+
                 if (distributions.length === 0) {
                     console.log('❌ Aucun lot disponible');
                 } else {
@@ -449,10 +449,28 @@
                     });
                 }
             });
-            
+
             // Écouter l'événement de vérification de stock (Livewire v3)
             @this.on('stock-check', (data) => {
-                
+
+            });
+
+            @this.on('previous-win-info', (data) => {
+                console.log(`
+█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█ 🚫 ATTENTION: PARTICIPANT DÉJÀ GAGNANT 🚫                     █
+█                                                              █
+█ 👤 Participant: ${data.participant_name}
+█ 📱 Téléphone: ${data.participant_phone}
+█ 🏆 Lot déjà gagné: ${data.prize_name}
+█ 🏆 Concours: ${data.contest_name}
+█ 📅 Date de gain: ${data.win_date}
+█                                                              █
+█ Ce participant a déjà gagné précédemment et ne peut pas      █
+█ gagner une seconde fois selon le règlement. Il va être       █
+█ redirigé vers la roue "no-stock".                            █
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+`);
             });
         });
 
@@ -468,7 +486,7 @@
             }
             return winningSegments;
         }
-        
+
         function getLosingSegments() {
             // Les segments perdants sont les segments impairs (1, 3, 5, 7, 9)
             const losingSegments = [];

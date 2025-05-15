@@ -11,14 +11,14 @@
                 <!-- La roue -->
                 <canvas id="nostock-wheel" width="320" height="320" class="responsive-wheel"></canvas>
             </div>
-            
+
             <!-- Bouton pour tourner -->
             <button id="spinNoStockBtn" class="btn btn-danger btn-lg mt-4 d-block mx-auto spin-button" style="z-index: 20;">
                 Tourner la roue
             </button>
         </div>
     </div>
-    
+
     <!-- Message de résultat (caché par défaut) -->
     <div id="nostockResultMessage" class="alert my-3" style="display: none; max-width: 320px; margin: 0 auto;">
         <h4 id="nostockResultTitle"></h4>
@@ -106,7 +106,7 @@
                 'pointerAngle': 0,  // Important! Le pointeur est à 0 degrés (haut/12h)
                 'rotationAngle': 0  // Assurer que la roue commence à la position correcte
             });
-            
+
             // Positionner l'indicateur pour qu'il s'arrête exactement au milieu des segments
             nostockWheel.pins.centerAngle = 0;
             nostockWheel.pins.startAngle = 0;
@@ -153,7 +153,7 @@
             const resultMessage = document.getElementById('nostockResultMessage');
             const resultTitle = document.getElementById('nostockResultTitle');
             const resultText = document.getElementById('nostockResultText');
-            
+
             if (resultMessage && resultTitle && resultText) {
                 resultMessage.className = 'alert alert-danger my-3';
                 resultTitle.innerHTML = '<i class="fas fa-times-circle"></i> Dommage !';
@@ -249,7 +249,7 @@
                     // Désactiver le bouton pendant le chargement
                     spinBtn.disabled = true;
                     spinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
-                    
+
                     // Demander l'angle exact au backend
                     fetch('/wheel/api/no-stock-wheel-angle', {
                         method: 'POST',

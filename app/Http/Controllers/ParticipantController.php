@@ -538,7 +538,9 @@ class ParticipantController extends Controller
                 if ($hasWon && $entry->participant) {
                     $alreadyWon = $this->hasParticipantPreviouslyWon(
                         $entry->participant->phone,
-                        $entry->participant->email
+                        $entry->participant->email,
+                        $entry->participant->first_name,
+                        $entry->participant->last_name
                     );
 
                     if ($alreadyWon) {
@@ -546,7 +548,9 @@ class ParticipantController extends Controller
                             'entry_id' => $entry->id,
                             'participant_id' => $entry->participant->id,
                             'phone' => $entry->participant->phone,
-                            'email' => $entry->participant->email
+                            'email' => $entry->participant->email,
+                            'nom' => $entry->participant->last_name,
+                            'prenom' => $entry->participant->first_name
                         ]);
                         // Forcer le résultat à perdant
                         $hasWon = false;
@@ -856,14 +860,18 @@ class ParticipantController extends Controller
     }
 
     /**
-     * Vérifie si un participant a déjà gagné un prix à n'importe quel concours
+     * Vérifie si un participant a déjà gagné un prix à n'importe quel concours en utilisant
+     * différentes méthodes d'identification (téléphone, email, nom+prénom)
      *
      * @param string $phone Numéro de téléphone
      * @param string|null $email Email (optionnel)
+     * @param string|null $firstName Prénom (optionnel)
+     * @param string|null $lastName Nom (optionnel)
      * @return bool True si le participant a déjà gagné, false sinon
      */
-    private function hasParticipantPreviouslyWon($phone, $email = null)
+    private function hasParticipantPreviouslyWon($phone, $email = null, $firstName = null, $lastName = null)
     {
+        // Trouver toutes les entrées gagnantes basées sur le téléphone ou l'email
         $query = Entry::where('has_won', true)
             ->whereHas('participant', function($query) use ($phone, $email) {
                 $query->where('phone', $phone);
@@ -873,12 +881,83 @@ class ParticipantController extends Controller
                 }
             });
 
+        $alreadyWonByPhoneOrEmail = $query->exists();
+
+        // Si on a déjà trouvé par téléphone ou email, pas besoin de chercher plus loin
+        if ($alreadyWonByPhoneOrEmail) {
+            \Log::info('Participant déjà gagnant (détecté par téléphone/email)', [
+                'phone' => $phone,
+                'email' => $email,
+            ]);
+            return true;
+        }
+
+        // Si le prénom et le nom sont fournis, rechercher aussi les correspondances par nom/prénom
+        if ($firstName && $lastName) {
+            // Normaliser les noms (enlever accents, espaces, tout en minuscules)
+            $normalizedFirstName = $this->normalizeString($firstName);
+            $normalizedLastName = $this->normalizeString($lastName);
+
+            // Rechercher toutes les entrées gagnantes
+            $winningEntries = Entry::where('has_won', true)
+                ->with('participant')
+                ->get();
+
+            // Vérifier manuellement chaque entrée pour les correspondances approximatives
+            foreach ($winningEntries as $entry) {
+                if (!$entry->participant) continue;
+
+                $participantFirstName = $this->normalizeString($entry->participant->first_name);
+                $participantLastName = $this->normalizeString($entry->participant->last_name);
+
+                // Vérifier si les noms/prénoms sont similaires (avec une tolérance pour les erreurs de saisie)
+                $firstNameSimilarity = similar_text($normalizedFirstName, $participantFirstName, $firstNamePercentage);
+                $lastNameSimilarity = similar_text($normalizedLastName, $participantLastName, $lastNamePercentage);
+
+                // Si les noms sont très similaires (plus de 85% de similarité)
+                if ($firstNamePercentage > 85 && $lastNamePercentage > 85) {
+                    \Log::info('Participant déjà gagnant (détecté par similarité de nom/prénom)', [
+                        'nouveau_prenom' => $firstName,
+                        'nouveau_nom' => $lastName,
+                        'prenom_existant' => $entry->participant->first_name,
+                        'nom_existant' => $entry->participant->last_name,
+                        'similarite_prenom' => $firstNamePercentage,
+                        'similarite_nom' => $lastNamePercentage
+                    ]);
+                    return true;
+                }
+            }
+        }
+
         \Log::info('Vérification si le participant a déjà gagné', [
             'phone' => $phone,
             'email' => $email,
-            'a_déjà_gagné' => $query->exists()
+            'prenom' => $firstName,
+            'nom' => $lastName,
+            'a_déjà_gagné' => $alreadyWonByPhoneOrEmail
         ]);
 
-        return $query->exists();
+        return $alreadyWonByPhoneOrEmail;
+    }
+
+    /**
+     * Normalise une chaîne pour la comparaison
+     * Enlève les accents, les espaces, et met tout en minuscules
+     *
+     * @param string $string
+     * @return string
+     */
+    private function normalizeString($string)
+    {
+        // Convertir en minuscules
+        $string = mb_strtolower($string);
+
+        // Enlever les accents
+        $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
+
+        // Enlever les caractères non alphanumériques
+        $string = preg_replace('/[^a-z0-9]/', '', $string);
+
+        return $string;
     }
 }
