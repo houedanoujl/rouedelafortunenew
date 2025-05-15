@@ -429,9 +429,36 @@ class ParticipantController extends Controller
                 }
             }
 
-            // Définir des probabilités de gagner (1% chance de gagner)
-            $chanceToWin = 0.01; // 1% de chance de gagner
+            // Obtenir l'heure actuelle en format GMT/UTC
+            $now = now()->timezone('UTC');
+            $currentHour = (int) $now->format('H');
             
+            // Vérifier si l'heure actuelle est dans les plages spécifiées (12h-14h ou 18h-20h GMT)
+            $isPromotionalTime = ($currentHour >= 12 && $currentHour < 14) || 
+                                 ($currentHour >= 18 && $currentHour < 20);
+            
+            // Définir des probabilités de gagner selon l'heure
+            $chanceToWin = 0.01; // 1% par défaut
+            
+            // Vérifier si l'utilisateur est en mode test (d'après la mémoire existante)
+            if (session('is_test_account')) {
+                $chanceToWin = 1.0; // 100% pour les comptes de test
+                $hasPrizesInStock = true; // Forcer l'existence de prix pour les comptes de test
+                \Log::info('Compte de test détecté, 100% de chances de gagner');
+            }
+            // Si c'est une période promotionnelle, augmenter les chances de gain à 50%
+            elseif ($isPromotionalTime) {
+                $chanceToWin = 0.5; // 50% de chances durant les heures promotionnelles
+                \Log::info('Période promotionnelle détectée: ' . $now->format('Y-m-d H:i:s') . ' - Chances de gain augmentées à 50%');
+            }
+            
+            \Log::info('Paramètres de spin', [
+                'heure_actuelle' => $now->format('Y-m-d H:i:s'),
+                'période_promotionnelle' => $isPromotionalTime,
+                'chance_de_gain' => $chanceToWin * 100 . '%',
+                'prix_en_stock' => $hasPrizesInStock
+            ]);
+                
             // Créer 100 secteurs au total: X gagnants, Y perdants selon le pourcentage de chance
             $sectors = [];
 
