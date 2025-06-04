@@ -608,6 +608,11 @@ class ParticipantController extends Controller
                 $entry->has_won = $hasWon;
                 $entry->prize_id = $prizeId;
 
+                // Définir la date de gain si le participant a gagné
+                if ($hasWon) {
+                    $entry->won_date = now();
+                }
+
                 $entry->save();
 
                 // Force le débogage pour voir ce qui se passe exactement ici

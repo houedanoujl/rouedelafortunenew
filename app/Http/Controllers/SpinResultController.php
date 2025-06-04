@@ -12,7 +12,7 @@ class SpinResultController extends Controller
 {
     /**
      * Enregistre le résultat réel affiché lors du spin dans la session et met à jour la base de données
-     * 
+     *
      * @param  Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -26,40 +26,46 @@ class SpinResultController extends Controller
             'target_angle' => 'nullable|numeric',
             'wheel_type' => 'nullable|string'
         ]);
-        
+
         $entry = Entry::findOrFail($validated['entry_id']);
-        
+
         // Charger la probabilité depuis le fichier de configuration
         $winProbability = 20; // Valeur par défaut
         $configFile = 'wheel_settings.json';
-        
+
         if (Storage::exists($configFile)) {
             $content = Storage::get($configFile);
             $settings = json_decode($content, true);
             $winProbability = $settings['win_probability'] ?? 20;
         }
-        
+
         // Déterminer le résultat selon la probabilité configurée
         $isWinningResult = mt_rand(1, 100) <= $winProbability;
-        
+
         // Pour la roue no-stock, toujours perdant
         if ($request->input('wheel_type') === 'no-stock') {
             $isWinningResult = false;
         }
-        
+
         // Mettre à jour l'entrée
         $entry->has_played = true;
         $entry->has_won = $isWinningResult;
+
+        // Définir la date de gain si le participant a gagné
+        if ($isWinningResult) {
+            $entry->won_date = now();
+        }
+
         $entry->save();
-        
+
         // Générer un QR code si nécessaire (seulement pour les gagnants)
         if ($isWinningResult && !$entry->qrCode) {
             $this->generateQrCodeForEntry($entry);
         }
-        
+
         $sessionKey = 'spin_result_' . $validated['entry_id'];
         Session::put($sessionKey, $isWinningResult ? 'win' : 'lose');
-        
+
         Log::info('Résultat de spin enregistré', [
             'entry_id' => $validated['entry_id'],
             'win_probability' => $winProbability,
@@ -67,24 +73,24 @@ class SpinResultController extends Controller
             'segment_text' => $validated['segment_text'],
             'wheel_type' => $request->input('wheel_type', 'main')
         ]);
-        
+
         // Calcul de l'angle central du segment approprié
         $segments = [
             ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'],
             ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ'], ['text' => 'PERDU'], ['text' => 'GAGNÉ']
         ];
-        
+
         // Sélection des segments gagnants/perdants en fonction du résultat
         $targetIndexes = $isWinningResult ? [1,3,5,7,9] : [0,2,4,6,8];
-        
+
         // Choix du segment (randomisation pour plus de réalisme)
         $chosenIndex = $targetIndexes[array_rand($targetIndexes)];
         $target_angle = ($chosenIndex * 36) + 18; // Centre du segment
-        
+
         // Enregistrer les données dans l'historique
         $request->merge(['target_angle' => $target_angle]);
         $this->saveToSpinHistory($request, $entry, $isWinningResult);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Résultat enregistré avec succès',
@@ -95,10 +101,10 @@ class SpinResultController extends Controller
             'target_angle' => $target_angle
         ]);
     }
-    
+
     /**
      * Génère un code QR pour une entrée gagnante
-     * 
+     *
      * @param Entry $entry
      * @return void
      */
@@ -107,26 +113,26 @@ class SpinResultController extends Controller
         // Cette fonction est maintenant un stub pour éviter les duplications
         // La génération du QR code est gérée par SpinController::result qui affiche
         // le code au frontend
-        
+
         \Log::info('[QR] SpinResultController::generateQrCodeForEntry DISABLED', [
             'entry_id' => $entry->id,
             'message' => 'Cette fonction ne génère plus de QR code pour éviter les duplications'
         ]);
-        
+
         // NOTE: Ne plus générer de QR code ici pour éviter les duplications
         // La génération est centralisée dans SpinController::result
     }
-    
+
     private function saveToSpinHistory(Request $request, Entry $entry, $isWinningResult)
     {
         // Ne pas enregistrer si c'est la roue no-stock
         if ($request->input('wheel_type') === 'no-stock') {
             return;
         }
-        
+
         // Chemin vers le fichier JSON d'historique
         $path = storage_path('app/spin_history.json');
-        
+
         // Données à enregistrer
         $spinData = [
             'timestamp' => now()->toIso8601String(),
@@ -146,25 +152,25 @@ class SpinResultController extends Controller
             'ip_address' => $request->ip(),
             'console_logs' => $request->input('console_logs', [])
         ];
-        
+
         // Créer le fichier s'il n'existe pas
         if (!file_exists($path)) {
             file_put_contents($path, json_encode([$spinData], JSON_PRETTY_PRINT));
             return;
         }
-        
+
         // Lire le contenu existant
         $content = file_get_contents($path);
         $history = json_decode($content, true);
-        
+
         // S'assurer que l'historique est un tableau
         if (!is_array($history)) {
             $history = [];
         }
-        
+
         // Ajouter les nouvelles données
         $history[] = $spinData;
-        
+
         // Enregistrer le tout
         file_put_contents($path, json_encode($history, JSON_PRETTY_PRINT));
     }

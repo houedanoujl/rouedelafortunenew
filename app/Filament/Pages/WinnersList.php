@@ -45,53 +45,53 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                     ->label('Concours')
                     ->sortable()
                     ->searchable(),
-                    
+
                 TextColumn::make('participant.first_name')
                     ->label('Prénom')
                     ->searchable(),
-                    
+
                 TextColumn::make('participant.last_name')
                     ->label('Nom')
                     ->searchable(),
-                    
+
                 TextColumn::make('participant.phone')
                     ->label('Téléphone')
                     ->searchable(),
-                    
+
                 TextColumn::make('participant.email')
                     ->label('Email')
                     ->searchable(),
-                    
+
                 TextColumn::make('prize.name')
                     ->label('Lot gagné')
                     ->badge()
                     ->color('success')
                     ->searchable(),
-                    
+
                 TextColumn::make('prize.value')
                     ->label('Valeur')
                     ->money('EUR')
                     ->sortable(),
-                    
+
                 TextColumn::make('qrCode.code')
                     ->label('Code QR')
                     ->searchable()
                     ->copyable()
                     ->copyMessage('Code QR copié!'),
-                    
+
                 TextColumn::make('qrCode.scanned')
                     ->label('Scanné')
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'success' : 'warning')
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Oui' : 'Non'),
-                    
+
                 TextColumn::make('claimed')
                     ->label('Réclamé')
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'success' : 'warning')
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Oui' : 'Non'),
-                    
-                TextColumn::make('created_at')
+
+                TextColumn::make('won_date')
                     ->label('Date de gain')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
@@ -102,34 +102,34 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                     ->relationship('contest', 'name')
                     ->searchable()
                     ->preload(),
-                    
+
                 Tables\Filters\Filter::make('claimed')
                     ->label('Réclamé')
                     ->query(fn (Builder $query): Builder => $query->where('claimed', true))
                     ->toggle(),
-                    
+
                 Tables\Filters\Filter::make('not_claimed')
                     ->label('Non réclamé')
                     ->query(fn (Builder $query): Builder => $query->where('claimed', false))
                     ->toggle(),
-                    
-                Tables\Filters\Filter::make('created_at')
+
+                Tables\Filters\Filter::make('won_date')
                     ->label('Date de gain')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('created_from')
+                        \Filament\Forms\Components\DatePicker::make('won_from')
                             ->label('Depuis'),
-                        \Filament\Forms\Components\DatePicker::make('created_until')
+                        \Filament\Forms\Components\DatePicker::make('won_until')
                             ->label('Jusqu\'à'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['created_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                $data['won_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('won_date', '>=', $date),
                             )
                             ->when(
-                                $data['created_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                $data['won_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('won_date', '<=', $date),
                             );
                     }),
             ])
@@ -153,7 +153,7 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                             ->where('has_won', true)
                             ->with(['participant', 'contest', 'prize', 'qrCode'])
                             ->get();
-                        
+
                         // Préparer les entêtes du CSV
                         $headers = [
                             'Concours',
@@ -168,7 +168,7 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                             'Réclamé',
                             'Date de gain'
                         ];
-                        
+
                         // Préparer les données des lignes
                         $rows = $winners->map(function ($entry) {
                             return [
@@ -182,22 +182,22 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                                 $entry->qrCode->code ?? 'Non disponible',
                                 $entry->qrCode && $entry->qrCode->scanned ? 'Oui' : 'Non',
                                 $entry->claimed ? 'Oui' : 'Non',
-                                $entry->created_at ? $entry->created_at->format('d/m/Y H:i') : 'Non disponible'
+                                $entry->won_date ? $entry->won_date->format('d/m/Y H:i') : 'Non disponible'
                             ];
                         });
-                        
+
                         // Générer le contenu du CSV
                         $callback = function() use ($headers, $rows) {
                             $file = fopen('php://output', 'w');
                             fputcsv($file, $headers, ',');
-                            
+
                             foreach ($rows as $row) {
                                 fputcsv($file, $row, ',');
                             }
-                            
+
                             fclose($file);
                         };
-                        
+
                         // Retourner la réponse de téléchargement CSV
                         return Response::streamDownload(
                             $callback,
@@ -210,7 +210,7 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                     })
             ]);
     }
-    
+
     protected function getHeaderActions(): array
     {
         return [
