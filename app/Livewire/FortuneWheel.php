@@ -321,12 +321,6 @@ class FortuneWheel extends Component
             // Utiliser le résultat déterminé par le secteur, pas par le tirage au sort
             $this->entry->has_played = true;
             $this->entry->has_won = $isResultWinning;
-
-            // Définir la date de gain si le participant a gagné
-            if ($isResultWinning) {
-                $this->entry->won_date = now();
-            }
-
             $this->entry->save();
 
             // Si c'est un gain, incrémenter le compteur quotidien

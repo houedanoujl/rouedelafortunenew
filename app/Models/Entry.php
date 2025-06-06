@@ -23,8 +23,7 @@ class Entry extends Model
         'has_won',
         'claimed',
         'claimed_at',
-        'prize_id',
-        'won_date'
+        'prize_id'
     ];
 
     /**
@@ -36,8 +35,7 @@ class Entry extends Model
         'has_played' => 'boolean',
         'has_won' => 'boolean',
         'claimed' => 'boolean',
-        'claimed_at' => 'datetime',
-        'won_date' => 'datetime'
+        'claimed_at' => 'datetime'
     ];
 
     /**
@@ -63,7 +61,7 @@ class Entry extends Model
     {
         return $this->hasOne(QrCode::class);
     }
-
+    
     /**
      * Obtenir le prix associé à cette participation.
      */
