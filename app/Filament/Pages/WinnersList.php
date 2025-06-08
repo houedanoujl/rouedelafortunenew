@@ -142,22 +142,70 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                     ->modalCancelAction(false),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('export_csv')
-                    ->label('Exporter en CSV')
-                    ->color('success')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn (): string => route('admin.winners.export-csv'))
-                    ->openUrlInNewTab(false)
+                // Actions retirées - utilisation du bouton HTML direct dans la vue
             ]);
     }
     
-    protected function getHeaderActions(): array
+    public function exportToCsv()
     {
-        return [
-            Action::make('refresh')
-                ->label('Actualiser')
-                ->icon('heroicon-o-arrow-path')
-                ->action(fn () => $this->refreshTable()),
+        // Récupérer tous les gagnants
+        $winners = Entry::query()
+            ->where('has_won', true)
+            ->with(['participant', 'contest', 'prize', 'qrCode'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Créer le contenu CSV
+        $csvContent = "\xEF\xBB\xBF"; // BOM UTF-8
+        
+        // Entêtes
+        $headers = [
+            'Concours',
+            'Prénom',
+            'Nom',
+            'Téléphone',
+            'Email',
+            'Lot gagné',
+            'Valeur (EUR)',
+            'Code QR',
+            'Scanné',
+            'Réclamé',
+            'Date de gain'
         ];
+        
+        $csvContent .= implode(';', $headers) . "\n";
+        
+        // Données
+        foreach ($winners as $entry) {
+            $data = [
+                $entry->contest->name ?? 'Non disponible',
+                $entry->participant->first_name ?? 'Non disponible',
+                $entry->participant->last_name ?? 'Non disponible',
+                $entry->participant->phone ?? 'Non disponible',
+                $entry->participant->email ?? 'Non disponible',
+                $entry->prize->name ?? 'Non disponible',
+                $entry->prize->value ? number_format($entry->prize->value, 2, ',', ' ') : 'Non disponible',
+                $entry->qrCode->code ?? 'Non disponible',
+                ($entry->qrCode && $entry->qrCode->scanned) ? 'Oui' : 'Non',
+                $entry->claimed ? 'Oui' : 'Non',
+                $entry->created_at ? $entry->created_at->format('d/m/Y H:i') : 'Non disponible'
+            ];
+            
+            // Échapper les guillemets dans les données
+            $escapedData = array_map(function($field) {
+                return '"' . str_replace('"', '""', $field) . '"';
+            }, $data);
+            
+            $csvContent .= implode(';', $escapedData) . "\n";
+        }
+        
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="liste-gagnants-' . now()->format('Y-m-d-H-i') . '.csv"')
+            ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+            ->header('Expires', '0')
+            ->header('Pragma', 'public');
     }
+    
+    // Méthodes d'actions supprimées pour éviter les erreurs 500
 }
