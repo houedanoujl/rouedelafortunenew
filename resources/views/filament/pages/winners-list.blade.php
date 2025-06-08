@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <div class="mb-4">
         <button 
-            onclick="downloadCsv()" 
+            wire:click="exportCsv"
             class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
         >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -12,16 +12,4 @@
     </div>
 
     {{ $this->table }}
-
-    <script>
-    function downloadCsv() {
-        // Créer un lien temporaire et le cliquer
-        const link = document.createElement('a');
-        link.href = '{{ route('admin.winners.export-csv') }}';
-        link.download = 'liste-gagnants-' + new Date().toISOString().slice(0,10) + '.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-    </script>
 </x-filament-panels::page>
