@@ -12,6 +12,7 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WinnersList extends Page implements Tables\Contracts\HasTable
 {
@@ -82,8 +83,8 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                 TextColumn::make('qrCode.scanned')
                     ->label('Scanné')
                     ->badge()
-                    ->color(fn (bool $state): string => $state ? 'success' : 'warning')
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'Oui' : 'Non'),
+                    ->color(fn (?bool $state): string => $state ? 'success' : 'warning')
+                    ->formatStateUsing(fn (?bool $state): string => $state ? 'Oui' : 'Non'),
                     
                 TextColumn::make('claimed')
                     ->label('Réclamé')
@@ -147,68 +148,65 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
                     ->label('Exporter en CSV')
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->action(function () {
-                        // Récupérer les données des gagnants
-                        $winners = Entry::query()
-                            ->where('has_won', true)
-                            ->with(['participant', 'contest', 'prize', 'qrCode'])
-                            ->get();
-                        
-                        // Préparer les entêtes du CSV
-                        $headers = [
-                            'Concours',
-                            'Prénom',
-                            'Nom',
-                            'Téléphone',
-                            'Email',
-                            'Lot gagné',
-                            'Valeur (EUR)',
-                            'Code QR',
-                            'Scanné',
-                            'Réclamé',
-                            'Date de gain'
-                        ];
-                        
-                        // Préparer les données des lignes
-                        $rows = $winners->map(function ($entry) {
-                            return [
-                                $entry->contest->name ?? 'Non disponible',
-                                $entry->participant->first_name ?? 'Non disponible',
-                                $entry->participant->last_name ?? 'Non disponible',
-                                $entry->participant->phone ?? 'Non disponible',
-                                $entry->participant->email ?? 'Non disponible',
-                                $entry->prize->name ?? 'Non disponible',
-                                $entry->prize->value ? number_format($entry->prize->value, 2, ',', '') : 'Non disponible',
-                                $entry->qrCode->code ?? 'Non disponible',
-                                $entry->qrCode && $entry->qrCode->scanned ? 'Oui' : 'Non',
-                                $entry->claimed ? 'Oui' : 'Non',
-                                $entry->created_at ? $entry->created_at->format('d/m/Y H:i') : 'Non disponible'
-                            ];
-                        });
-                        
-                        // Générer le contenu du CSV
-                        $callback = function() use ($headers, $rows) {
-                            $file = fopen('php://output', 'w');
-                            fputcsv($file, $headers, ',');
-                            
-                            foreach ($rows as $row) {
-                                fputcsv($file, $row, ',');
-                            }
-                            
-                            fclose($file);
-                        };
-                        
-                        // Retourner la réponse de téléchargement CSV
-                        return Response::streamDownload(
-                            $callback,
-                            'liste-gagnants-' . now()->format('Y-m-d') . '.csv',
-                            [
-                                'Content-Type' => 'text/csv',
-                                'Content-Disposition' => 'attachment; filename="liste-gagnants-' . now()->format('Y-m-d') . '.csv"',
-                            ]
-                        );
-                    })
+                    ->action(fn () => $this->exportCsv())
             ]);
+    }
+    
+    public function exportCsv(): StreamedResponse
+    {
+        // Récupérer les données des gagnants avec les mêmes filtres que la table
+        $winners = $this->getFilteredTableQuery()->get();
+        
+        // Nom du fichier
+        $filename = 'liste-gagnants-' . now()->format('Y-m-d') . '.csv';
+        
+        return response()->streamDownload(function () use ($winners) {
+            $file = fopen('php://output', 'w');
+            
+            // Ajout du BOM UTF-8 pour Excel
+            fwrite($file, "\xEF\xBB\xBF");
+            
+            // Entêtes du CSV
+            $headers = [
+                'Concours',
+                'Prénom',
+                'Nom',
+                'Téléphone',
+                'Email',
+                'Lot gagné',
+                'Valeur (EUR)',
+                'Code QR',
+                'Scanné',
+                'Réclamé',
+                'Date de gain'
+            ];
+            
+            fputcsv($file, $headers, ';');
+            
+            // Données des lignes
+            foreach ($winners as $entry) {
+                $data = [
+                    $entry->contest->name ?? 'Non disponible',
+                    $entry->participant->first_name ?? 'Non disponible',
+                    $entry->participant->last_name ?? 'Non disponible',
+                    $entry->participant->phone ?? 'Non disponible',
+                    $entry->participant->email ?? 'Non disponible',
+                    $entry->prize->name ?? 'Non disponible',
+                    $entry->prize->value ? number_format($entry->prize->value, 2, ',', ' ') : 'Non disponible',
+                    $entry->qrCode->code ?? 'Non disponible',
+                    ($entry->qrCode && $entry->qrCode->scanned) ? 'Oui' : 'Non',
+                    $entry->claimed ? 'Oui' : 'Non',
+                    $entry->created_at ? $entry->created_at->format('d/m/Y H:i') : 'Non disponible'
+                ];
+                
+                fputcsv($file, $data, ';');
+            }
+            
+            fclose($file);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
     
     protected function getHeaderActions(): array
