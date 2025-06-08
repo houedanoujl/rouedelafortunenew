@@ -110,5 +110,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/whatsapp-logs/clear', [\App\Http\Controllers\Admin\WhatsAppLogsController::class, 'clear'])->name('admin.whatsapp.logs.clear');
     Route::get('/whatsapp/send-documents/{entry}', [\App\Http\Controllers\Admin\WhatsAppDocumentController::class, 'sendDocuments'])->name('admin.whatsapp.send-documents');
     Route::get('/spin-history-logs', [\App\Http\Controllers\SpinHistoryLogsController::class, 'index'])->name('admin.spin-history-logs');
-    Route::get('/winners/export-csv', [\App\Http\Controllers\Admin\WinnersExportController::class, 'exportCsv'])->name('admin.winners.export-csv');
 });
+
+// Route d'export CSV accessible depuis Filament (pas de middleware auth standard)
+Route::get('/admin/winners/export-csv', [\App\Http\Controllers\Admin\WinnersExportController::class, 'exportCsv'])->name('admin.winners.export-csv');

@@ -148,65 +148,75 @@ class WinnersList extends Page implements Tables\Contracts\HasTable
     
     public function exportCsv()
     {
-        // Récupérer tous les gagnants
-        $winners = Entry::query()
-            ->where('has_won', true)
-            ->with(['participant', 'contest', 'prize', 'qrCode'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        // Créer le contenu CSV
-        $csvContent = "\xEF\xBB\xBF"; // BOM UTF-8
-        
-        // Entêtes
-        $headers = [
-            'Concours',
-            'Prénom', 
-            'Nom',
-            'Téléphone',
-            'Email',
-            'Lot gagné',
-            'Valeur (EUR)',
-            'Code QR',
-            'Scanné',
-            'Réclamé',
-            'Date de gain'
-        ];
-        
-        $csvContent .= implode(';', $headers) . "\n";
-        
-        // Données
-        foreach ($winners as $entry) {
-            $data = [
-                $entry->contest->name ?? 'Non disponible',
-                $entry->participant->first_name ?? 'Non disponible', 
-                $entry->participant->last_name ?? 'Non disponible',
-                $entry->participant->phone ?? 'Non disponible',
-                $entry->participant->email ?? 'Non disponible',
-                $entry->prize->name ?? 'Non disponible',
-                $entry->prize->value ? number_format($entry->prize->value, 2, ',', ' ') : 'Non disponible',
-                $entry->qrCode->code ?? 'Non disponible',
-                ($entry->qrCode && $entry->qrCode->scanned) ? 'Oui' : 'Non',
-                $entry->claimed ? 'Oui' : 'Non',
-                $entry->created_at ? $entry->created_at->format('d/m/Y H:i') : 'Non disponible'
-            ];
+        try {
+            // Augmenter les limites pour l'export
+            ini_set('memory_limit', '256M');
+            ini_set('max_execution_time', 300); // 5 minutes
             
-            // Échapper les guillemets dans les données
-            $escapedData = array_map(function($field) {
-                return '"' . str_replace('"', '""', $field) . '"';
-            }, $data);
+            $filename = 'liste-gagnants-' . now()->format('Y-m-d-H-i') . '.csv';
             
-            $csvContent .= implode(';', $escapedData) . "\n";
+            return response()->streamDownload(function() {
+                $file = fopen('php://output', 'w');
+                
+                // Ajout du BOM UTF-8 pour Excel
+                fwrite($file, "\xEF\xBB\xBF");
+                
+                // Entêtes
+                $headers = [
+                    'Concours',
+                    'Prénom', 
+                    'Nom',
+                    'Téléphone',
+                    'Email',
+                    'Lot gagné',
+                    'Valeur (EUR)',
+                    'Code QR',
+                    'Scanné',
+                    'Réclamé',
+                    'Date de gain'
+                ];
+                
+                fputcsv($file, $headers, ';');
+                
+                // Traiter les données par chunks pour éviter les problèmes de mémoire
+                Entry::query()
+                    ->where('has_won', true)
+                    ->with(['participant', 'contest', 'prize', 'qrCode'])
+                    ->orderBy('created_at', 'desc')
+                    ->chunk(50, function($winners) use ($file) {
+                        foreach ($winners as $entry) {
+                            $data = [
+                                $entry->contest?->name ?? 'Non disponible',
+                                $entry->participant?->first_name ?? 'Non disponible', 
+                                $entry->participant?->last_name ?? 'Non disponible',
+                                $entry->participant?->phone ?? 'Non disponible',
+                                $entry->participant?->email ?? 'Non disponible',
+                                $entry->prize?->name ?? 'Non disponible',
+                                $entry->prize?->value ? number_format($entry->prize->value, 2, ',', ' ') : 'Non disponible',
+                                $entry->qrCode?->code ?? 'Non disponible',
+                                ($entry->qrCode && $entry->qrCode->scanned) ? 'Oui' : 'Non',
+                                $entry->claimed ? 'Oui' : 'Non',
+                                $entry->created_at ? $entry->created_at->format('d/m/Y H:i') : 'Non disponible'
+                            ];
+                            
+                            fputcsv($file, $data, ';');
+                        }
+                    });
+                
+                fclose($file);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
+            
+        } catch (\Exception $e) {
+            // Log l'erreur pour debug
+            \Log::error('Erreur export CSV: ' . $e->getMessage());
+            
+            // Retourner une notification d'erreur
+            $this->notify('danger', 'Erreur lors de l\'export: ' . $e->getMessage());
+            return null;
         }
-        
-        $filename = 'liste-gagnants-' . now()->format('Y-m-d-H-i') . '.csv';
-        
-        return response()->streamDownload(function() use ($csvContent) {
-            echo $csvContent;
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
     }
     
     public function exportToCsv()
